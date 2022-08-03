@@ -4,24 +4,72 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
+	"context"
+	"embed"
+	"errors"
 	"fmt"
+	"github.com/kcmvp/gbt/builder"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
+//go:embed *.tmpl
+var templateDir embed.FS
+
+var _projectRoot = "projectRoot"
+
+var hookMap = map[string]string{"commit-msg": "message_hook.go",
+	"pre-push": "push_hook.go"}
+
 // githookCmd represents the githook command
 var githookCmd = &cobra.Command{
 	Use:   "githook",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("githook called")
+	Short: "Generate git hook for project",
+	Long:  `Generate git hooks for project, includes: commit_message, pre_push`,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		dir, _ := os.Getwd()
+		var err error
+		for dir != string(os.PathSeparator) {
+			if _, err = os.Stat(filepath.Join(dir, ".git")); err != nil {
+				dir = filepath.Dir(dir)
+			} else {
+				ctx := context.WithValue(cmd.Context(), _projectRoot, dir)
+				cmd.SetContext(ctx)
+			}
+		}
+		if err != nil {
+			err = fmt.Errorf("current project is not versioned in git")
+		}
+		return err
 	},
+	Run: func(cmd *cobra.Command, args []string) {
+		generateHook(cmd.Context())
+	},
+}
+
+func generateHook(ctx context.Context) {
+	root := ctx.Value(_projectRoot).(string)
+	scriptDir := filepath.Join(root, builder.ScriptsDir)
+	os.MkdirAll(scriptDir, os.ModePerm)
+	for k, v := range hookMap {
+		hook := filepath.Join(root, ".git", "hooks", k)
+		if f, err := os.OpenFile(hook, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
+			fmt.Println(fmt.Sprintf("generate %s hook", k))
+			f.WriteString("#!/bin/sh\n\n")
+			f.WriteString(fmt.Sprintf("go run %s $1 $2 -event=%s\n", filepath.Join(scriptDir, v), k))
+			f.Close()
+		} else if errors.Is(err, os.ErrExist) {
+			fmt.Println(fmt.Sprintf("%s exists", hook))
+		}
+		tn := strings.Replace(v, ".go", ".tmpl", 1)
+		if data, err := templateDir.ReadFile(tn); err == nil {
+			generateFile(string(data), filepath.Join(scriptDir, v), nil)
+		}
+	}
+
 }
 
 func init() {

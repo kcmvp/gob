@@ -82,22 +82,6 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func projectRoot() string {
-	dir, _ := os.Getwd()
-	for dir != string(os.PathSeparator) {
-		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
-			return dir
-		} else {
-			dir = filepath.Dir(dir)
-		}
-	}
-	if dir == string(os.PathSeparator) {
-		fmt.Println("project is not in the git repository")
-		dir = ""
-	}
-	return dir
-}
-
 func generateFile(content string, targetName string, data interface{}) {
 	dir := filepath.Dir(targetName)
 	os.MkdirAll(dir, os.ModePerm)
