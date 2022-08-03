@@ -16,4 +16,6 @@
 # vendor/
 .idea
 gbt
+.golangci.yml
+scripts
 
