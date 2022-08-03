@@ -8,7 +8,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gbt/builder"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,7 +51,7 @@ var githookCmd = &cobra.Command{
 
 func generateHook(ctx context.Context) {
 	root := ctx.Value(_projectRoot).(string)
-	scriptDir := filepath.Join(root, builder.ScriptsDir)
+	scriptDir := filepath.Join(root, scriptDir)
 	os.MkdirAll(scriptDir, os.ModePerm)
 	for k, v := range hookMap {
 		hook := filepath.Join(root, ".git", "hooks", k)

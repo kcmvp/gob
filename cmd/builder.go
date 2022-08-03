@@ -5,10 +5,14 @@ package cmd
 
 import (
 	_ "embed"
-	"github.com/kcmvp/gbt/builder"
 	"github.com/spf13/cobra"
 	"path/filepath"
 )
+
+const golangCi = "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+
+//go:embed template/.golangci.yml
+var golangCiTmp string
 
 //go:embed template/builder.tmpl
 var builderTmp string
@@ -19,9 +23,9 @@ var builderCmd = &cobra.Command{
 	Short: "Generate build script for go project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code Scan and Build`,
 	Run: func(cmd *cobra.Command, args []string) {
-		generateFile(builderTmp, filepath.Join(builder.ScriptsDir, "builder.go"), nil)
-		builder.GolangCiLinter.Install()
-		generateFile(builder.GolangCiLinter.Content(), builder.GolangCiLinter.ConfigName(), nil)
+		generateFile(builderTmp, filepath.Join(scriptDir, "builder.go"), nil)
+		generateFile(golangCiTmp, ".golangci.yml", nil)
+		install(golangCi)
 	},
 }
 

@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gbt/builder"
 	"golang.org/x/mod/modfile"
 	"os"
 	"os/exec"
@@ -17,10 +16,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	scriptDir = "scripts"
+	mod       = "mod"
+)
+
 var modules = []string{"github.com/kcmvp/gbt/builder"}
 
 func importModule(ctx context.Context, module string, update bool) {
-	f := ctx.Value(builder.MOD).(*modfile.File)
+	f := ctx.Value(mod).(*modfile.File)
 	has := false
 	for _, require := range f.Require {
 		if has = require.Mod.Path == module; has {
@@ -54,7 +58,7 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			err = errors.New("please run the command in the module root directory")
 		} else {
-			ctx := context.WithValue(cmd.Context(), builder.MOD, f)
+			ctx := context.WithValue(cmd.Context(), mod, f)
 			cmd.SetContext(ctx)
 		}
 		return err
@@ -103,4 +107,14 @@ func generateFile(content string, targetName string, data interface{}) {
 			fmt.Printf("failed to generate file %s, %v\n", targetName, err)
 		}
 	}
+}
+
+func install(module string) error {
+	if out, err := exec.Command("go", "install", module).CombinedOutput(); err != nil {
+		fmt.Printf("failed to install %s from %v \n", module, err)
+		return err
+	} else {
+		fmt.Println(string(out))
+	}
+	return nil
 }

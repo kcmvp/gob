@@ -271,7 +271,7 @@ func (p *Project) Build(files ...string) *Project {
 
 func (p *Project) Scan(args ...string) *Project {
 	fmt.Println("scan source code ......")
-	GolangCiLinter.Exec(p)
+	golangCiLinter.Exec(p)
 	return p
 }
 

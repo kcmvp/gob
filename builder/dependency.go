@@ -13,24 +13,14 @@ import (
 	"strings"
 )
 
-const (
-	MOD        = "mod"
-	ScriptsDir = "scripts"
-)
-
 type (
 	ArgF   func() []string
 	ParseF func(issue *Issue, data []byte, file string)
 )
 
-//go:embed template/.golangci.yml
-var golangCiCfg string
-
-var GolangCiLinter = &Dependency{
-	module:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
-	command:    "golangci-lint",
-	content:    golangCiCfg,
-	configName: ".golangci.yml",
+var golangCiLinter = &Dependency{
+	module:  "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
+	command: "golangci-lint",
 	args: func() []string {
 		args := []string{"run", "-v", "./...", "--out-format=json"}
 		fmt.Printf("%s %s \n", "golangci-lint", args)
@@ -40,22 +30,10 @@ var GolangCiLinter = &Dependency{
 }
 
 type Dependency struct {
-	module     string
-	command    string
-	content    string
-	configName string
-	args       ArgF
-	parser     ParseF
-}
-
-func (s *Dependency) Install() error {
-	if out, err := exec.Command("go", "install", s.module).CombinedOutput(); err != nil {
-		fmt.Printf("failed to install %s from %v \n", s.module, err)
-		return err
-	} else {
-		fmt.Println(string(out))
-	}
-	return nil
+	module  string
+	command string
+	args    ArgF
+	parser  ParseF
 }
 
 func (s *Dependency) Exec(p *Project) {
@@ -64,13 +42,6 @@ func (s *Dependency) Exec(p *Project) {
 	msg, _ := exec.Command(s.command, args...).CombinedOutput()
 	fmt.Printf(string(msg))
 	s.parser(&p.quality.Issues, msg, dir)
-}
-
-func (d *Dependency) Content() string {
-	return d.content
-}
-func (d *Dependency) ConfigName() string {
-	return d.configName
 }
 
 var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
