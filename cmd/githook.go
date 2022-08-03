@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//go:embed *.tmpl
+//go:embed template
 var templateDir embed.FS
 
 var _projectRoot = "projectRoot"
@@ -51,21 +51,21 @@ var githookCmd = &cobra.Command{
 
 func generateHook(ctx context.Context) {
 	root := ctx.Value(_projectRoot).(string)
-	scriptDir := filepath.Join(root, scriptDir)
-	os.MkdirAll(scriptDir, os.ModePerm)
+	dir := filepath.Join(root, scriptDir)
+	os.MkdirAll(dir, os.ModePerm)
 	for k, v := range hookMap {
 		hook := filepath.Join(root, ".git", "hooks", k)
 		if f, err := os.OpenFile(hook, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
 			fmt.Println(fmt.Sprintf("generate %s hook", k))
 			f.WriteString("#!/bin/sh\n\n")
-			f.WriteString(fmt.Sprintf("go run %s $1 $2 -event=%s\n", filepath.Join(scriptDir, v), k))
+			f.WriteString(fmt.Sprintf("go run %s $1 $2 -event=%s\n", filepath.Join(dir, v), k))
 			f.Close()
 		} else if errors.Is(err, os.ErrExist) {
 			fmt.Println(fmt.Sprintf("%s exists", hook))
 		}
 		tn := strings.Replace(v, ".go", ".tmpl", 1)
 		if data, err := templateDir.ReadFile(tn); err == nil {
-			generateFile(string(data), filepath.Join(scriptDir, v), nil)
+			generateFile(string(data), filepath.Join(dir, v), nil)
 		}
 	}
 
