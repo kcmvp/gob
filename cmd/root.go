@@ -54,12 +54,16 @@ var rootCmd = &cobra.Command{
 		}
 	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		f, err := os.ReadFile("go.mod")
+		data, err := os.ReadFile("go.mod")
 		if err != nil {
 			err = errors.New("please run the command in the module root directory")
 		} else {
-			ctx := context.WithValue(cmd.Context(), mod, f)
-			cmd.SetContext(ctx)
+			if f, err := modfile.Parse("go.mod", data, nil); err != nil {
+				return fmt.Errorf("invalid go.mod file")
+			} else {
+				ctx := context.WithValue(cmd.Context(), mod, f)
+				cmd.SetContext(ctx)
+			}
 		}
 		return err
 	},
