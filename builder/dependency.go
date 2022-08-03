@@ -18,8 +18,13 @@ type (
 	ParseF func(issue *Issue, data []byte, file string)
 )
 
+type Dependency struct {
+	command string
+	args    ArgF
+	parser  ParseF
+}
+
 var golangCiLinter = &Dependency{
-	module:  "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
 	command: "golangci-lint",
 	args: func() []string {
 		args := []string{"run", "-v", "./...", "--out-format=json"}
@@ -27,13 +32,6 @@ var golangCiLinter = &Dependency{
 		return args
 	},
 	parser: golangCiParser,
-}
-
-type Dependency struct {
-	module  string
-	command string
-	args    ArgF
-	parser  ParseF
 }
 
 func (s *Dependency) Exec(p *Project) {
