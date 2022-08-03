@@ -2,7 +2,7 @@ package builder
 
 import (
 	"bytes"
-	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"github.com/thedevsaddam/gojsonq/v2"
@@ -13,21 +13,42 @@ import (
 	"strings"
 )
 
+const (
+	MOD        = "mod"
+	ScriptsDir = "scripts"
+)
+
 type (
 	ArgF   func() []string
 	ParseF func(issue *Issue, data []byte, file string)
-	CheckF func()
 )
 
-type GolangCi struct {
-	module  string
-	command string
-	args    ArgF
-	parser  ParseF
-	check   CheckF
+//go:embed template/.golangci.yml
+var golangCiCfg string
+
+var GolangCiLinter = &Dependency{
+	module:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
+	command:    "golangci-lint",
+	content:    golangCiCfg,
+	configName: ".golangci.yml",
+	args: func() []string {
+		args := []string{"run", "-v", "./...", "--out-format=json"}
+		fmt.Printf("%s %s \n", "golangci-lint", args)
+		return args
+	},
+	parser: golangCiParser,
 }
 
-func (s *GolangCi) install() error {
+type Dependency struct {
+	module     string
+	command    string
+	content    string
+	configName string
+	args       ArgF
+	parser     ParseF
+}
+
+func (s *Dependency) Install() error {
 	if out, err := exec.Command("go", "install", s.module).CombinedOutput(); err != nil {
 		fmt.Printf("failed to install %s from %v \n", s.module, err)
 		return err
@@ -37,16 +58,19 @@ func (s *GolangCi) install() error {
 	return nil
 }
 
-func (s *GolangCi) Scan(p Project) {
-	if s.install() == nil {
-		report := p.Ctx().Value(quality).(Report)
-		dir := filepath.Join(p.TargetDir(), s.command+".json")
-		args := append(s.args(), fmt.Sprintf("%s/...", p.ModuleDir()))
-		msg, _ := exec.Command(s.command, args...).CombinedOutput()
-		fmt.Printf(string(msg))
-		s.parser(&report.Issues, msg, dir)
-		p.WithCtx(context.WithValue(p.Ctx(), quality, report))
-	}
+func (s *Dependency) Exec(p *Project) {
+	dir := filepath.Join(p.TargetDir(), s.command+".json")
+	args := append(s.args(), fmt.Sprintf("%s/...", p.ModuleDir()))
+	msg, _ := exec.Command(s.command, args...).CombinedOutput()
+	fmt.Printf(string(msg))
+	s.parser(&p.quality.Issues, msg, dir)
+}
+
+func (d *Dependency) Content() string {
+	return d.content
+}
+func (d *Dependency) ConfigName() string {
+	return d.configName
 }
 
 var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
@@ -76,17 +100,4 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 
 	jq = gojsonq.New().FromString(string(prettyJSON.Bytes())).From("Issues")
 	issue.Files = jq.Distinct("Pos.Filename").Count()
-}
-
-func NewScanner() *GolangCi {
-	return &GolangCi{
-		module:  "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
-		command: "golangci-lint",
-		args: func() []string {
-			args := []string{"run", "-v", "./...", "--out-format=json"}
-			fmt.Printf("%s %s \n", "golangci-lint", args)
-			return args
-		},
-		parser: golangCiParser,
-	}
 }

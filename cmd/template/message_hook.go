@@ -1,14 +1,12 @@
-////go:build gbt
+//go:build gbt
 
 package main
 
 import (
 	"fmt"
+	"github.com/kcmvp/gbt/builder"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
-	"runtime"
 )
 
 const MsgPattern = "#[0-9]{1,7}:.*"
@@ -18,7 +16,10 @@ const MinLength = 10
 func main() {
 	input, _ := os.ReadFile(os.Args[1])
 	checkMessage(string(input))
-	scan()
+	project := builder.NewProject().Scan()
+	if project.Quality().Issues.Files > 0 {
+		os.Exit(1)
+	}
 	os.Exit(0)
 }
 
@@ -39,25 +40,4 @@ func checkMessage(msg string) {
 		fmt.Println(fmt.Sprintf("commit message is at least %d characters", MinLength))
 		os.Exit(1)
 	}
-}
-
-func scan() {
-	if _, file, _, ok := runtime.Caller(1); ok {
-		dir := filepath.Dir(file)
-		builder := filepath.Join(dir, "builder.go")
-		if _, err := os.Stat(builder); err == nil {
-			out, err := exec.Command("go", "run", builder, "-event=message_hook").CombinedOutput()
-			fmt.Println(string(out))
-			if err != nil {
-				os.Exit(1)
-			} else {
-				os.Exit(0)
-			}
-		} else {
-			fmt.Printf("%s does not exist\n", builder)
-		}
-	} else {
-		fmt.Println("runs into error")
-	}
-	os.Exit(1)
 }

@@ -1,27 +1,27 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 */
 package cmd
 
 import (
-	"fmt"
-
+	_ "embed"
+	"github.com/kcmvp/gbt/builder"
 	"github.com/spf13/cobra"
+	"path/filepath"
 )
+
+//go:embed template/builder.tmpl
+var builderTmp string
 
 // builderCmd represents the builder command
 var builderCmd = &cobra.Command{
 	Use:   "builder",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Generate build script for go project",
+	Long:  `Includes mostly used build actions: Clean, Test, Code Scan and Build`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("builder called")
+		generateFile(builderTmp, filepath.Join(builder.ScriptsDir, "builder.go"), nil)
+		builder.GolangCiLinter.Install()
+		generateFile(builder.GolangCiLinter.Content(), builder.GolangCiLinter.ConfigName(), nil)
 	},
 }
 

@@ -1,4 +1,4 @@
-//go:build gbt
+////go:build gbt
 
 package main
 
@@ -17,5 +17,5 @@ func main() {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "event", event)
 	project := builder.NewProject(0.35, 0.85).WithCtx(ctx)
-	project.Clean().Test().Scan().Check().Build()
+	project.Clean().Test().Scan().Report().Build()
 }

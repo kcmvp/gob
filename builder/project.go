@@ -28,7 +28,7 @@ const (
 	buildTarget          = "target"
 )
 
-type Report struct {
+type Quality struct {
 	Methods  int
 	Tests    int
 	Coverage Coverage
@@ -54,7 +54,7 @@ type Project struct {
 	rootDir         string
 	scriptsDir      string
 	targetDir       string
-	report          Report
+	quality         Quality
 }
 
 type testCase struct {
@@ -85,7 +85,7 @@ func NewProject(coverages ...float64) *Project {
 		moduleDir:       moduleDir(),
 		minLineCoverage: -1,
 		maxLineCoverage: -1,
-		report: Report{
+		quality: Quality{
 			Issues: Issue{
 				Linters: map[string]int{},
 			},
@@ -119,6 +119,10 @@ func (p *Project) RootDir() string {
 
 func (p *Project) TargetDir() string {
 	return p.targetDir
+}
+
+func (p *Project) Quality() Quality {
+	return p.quality
 }
 
 func (p *Project) WithCtx(ctx context.Context) *Project {
@@ -182,7 +186,7 @@ func process(p *Project) {
 		json.Unmarshal([]byte(text), &c)
 		testSet[c.Test] = true
 	}
-	p.report.Tests = len(testSet)
+	p.quality.Tests = len(testSet)
 
 	mc, err := os.Open(filepath.Join(p.targetDir, methodCoverageReport))
 	if err != nil {
@@ -198,15 +202,15 @@ func process(p *Project) {
 		coverage, _ := strconv.ParseFloat(strings.TrimRight(items[2], "%"), 64)
 		coverage = coverage / 100
 		if strings.EqualFold(items[0], "total:") {
-			p.report.Coverage.Line = coverage
+			p.quality.Coverage.Line = coverage
 		} else {
-			p.report.Methods++
+			p.quality.Methods++
 			if coverage > 0 {
 				testedMethod++
 			}
 		}
 	}
-	p.report.Coverage.Method = math.Floor(float64(testedMethod)/float64(p.report.Methods)*1000) / 1000
+	p.quality.Coverage.Method = math.Floor(float64(testedMethod)/float64(p.quality.Methods)*1000) / 1000
 }
 
 // Test run the test with -race, -cover, -fuzz and -bench.
@@ -265,17 +269,17 @@ func (p *Project) Build(files ...string) *Project {
 	return p
 }
 
-func (p *Project) Scan() *Project {
+func (p *Project) Scan(args ...string) *Project {
 	fmt.Println("scan source code ......")
-	//NewScanner().Scan(p)
-	data, _ := json.Marshal(p.report)
-	var prettyJSON bytes.Buffer
-	json.Indent(&prettyJSON, data, "", "\t")
-	os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
+	GolangCiLinter.Exec(p)
 	return p
 }
 
-func (p *Project) Check() *Project {
+func (p *Project) Report() *Project {
+	data, _ := json.Marshal(p.quality)
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, data, "", "\t")
+	os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
 	return p
 }
 
