@@ -16,6 +16,8 @@ const MinLength = 10
 func main() {
 	input, _ := os.ReadFile(os.Args[1])
 	checkMessage(string(input))
+	//@todo only scan header
+	//   new-from-rev: HEAD
 	project := builder.NewProject().Scan()
 	if project.Quality().Issues.Files > 0 {
 		os.Exit(1)

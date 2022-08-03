@@ -31,6 +31,3 @@ linters:
     - unused
 issues:
   fix: true
-  new: true
-  new-from-rev: HEAD
-

@@ -149,7 +149,7 @@ func (p *Project) Setup() *Project {
 			if lines, err := os.ReadFile(h); err == nil {
 				command := fmt.Sprintf(scriptLine, c, GitHook)
 				if !strings.Contains(string(lines), command) {
-					fmt.Printf("please delete %s and run command 'gbtc githook' to setup hook", h)
+					fmt.Printf("please delete %s and run command 'gbt githook' to setup hook", h)
 					os.Exit(1)
 				}
 			} else {
