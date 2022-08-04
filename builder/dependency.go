@@ -89,7 +89,7 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
 		log.Println(color.YellowString("please check %s for detail", filepath.Join("target", "golangci-lint.json")))
 	} else {
-		log.Println(color.CyanString("no new issues are found"))
+		log.Println(color.GreenString("no new issues are found"))
 	}
 }
 
