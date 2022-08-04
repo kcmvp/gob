@@ -30,7 +30,6 @@ var golangCiLinter = &Dependency{
 	command: "golangci-lint",
 	args: func() []string {
 		args := []string{"run", "-v", "./...", "--out-format=json"}
-		fmt.Printf("%s %s \n", "golangci-lint", args)
 		return args
 	},
 	parser:     golangCiParser,
@@ -41,8 +40,6 @@ func (s *Dependency) Exec(p *Project, args ...string) {
 	s.validation()
 	dir := filepath.Join(p.TargetDir(), s.command+".json")
 	args = append(s.args(), args...)
-	fmt.Printf("args are %v \n", args)
-	os.Exit(1)
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	msg, _ := exec.Command(s.command, args...).CombinedOutput()
 	//fmt.Printf(string(msg))

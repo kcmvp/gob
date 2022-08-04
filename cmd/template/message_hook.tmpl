@@ -7,6 +7,7 @@ import (
 	"github.com/kcmvp/gbt/builder"
 	"os"
 	"regexp"
+	"strings"
 )
 
 const MsgPattern = "#[0-9]{1,7}:.*"
@@ -38,8 +39,8 @@ func checkMessage(msg string) {
 	}
 	items := sp.Split(msg, -1)
 	// check message length
-	if len(items[1]) < MinLength {
-		fmt.Println(fmt.Sprintf("commit message is at least %d characters", MinLength))
+	if len(strings.TrimSpace(items[1])) < MinLength {
+		fmt.Printf("commit message is at least %d characters\n", MinLength)
 		os.Exit(1)
 	}
 }
