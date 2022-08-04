@@ -83,8 +83,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
@@ -101,7 +100,7 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func generateFile(ctx context.Context, content string, targetName string, data interface{}) {
+func generateFile(content string, targetName string, data interface{}) {
 	dir := filepath.Dir(targetName)
 	os.MkdirAll(dir, os.ModePerm)
 	if f, err := os.OpenFile(targetName, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {

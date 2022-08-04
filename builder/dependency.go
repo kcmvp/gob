@@ -42,7 +42,7 @@ var golangCiLinter = &Dependency{
 	validation: golangciValidation,
 }
 
-func (s *Dependency) Exec(p *Project, args ...string) {
+func (s *Dependency) Scan(p *Project, args ...string) {
 	s.validation()
 	if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
 		fmt.Printf("failed to create directory %v", err)

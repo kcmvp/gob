@@ -26,6 +26,8 @@ const (
 	scriptDir            = "scripts"
 	scriptLine           = "go run %s $1 $2\n"
 	buildTarget          = "target"
+	messageHook          = "message_hook.go"
+	pushHook             = "push_hook.go"
 )
 
 type Quality struct {
@@ -57,6 +59,7 @@ type Project struct {
 	scriptsDir      string
 	targetDir       string
 	quality         Quality
+	caller          string
 }
 
 type testCase struct {
@@ -141,11 +144,11 @@ func (p *Project) Ctx() context.Context {
 }
 
 func setup(project *Project) {
+	hookMap := map[string]string{
+		"commit-msg": messageHook,
+		"pre-push":   pushHook,
+	}
 	if len(project.rootDir) > 0 {
-		hookMap := map[string]string{
-			"commit-msg": "message_hook.go",
-			"pre-push":   "push_hook.go",
-		}
 		for h, c := range hookMap {
 			h = filepath.Join(project.rootDir, ".git", "hooks", h)
 			c = filepath.Join(project.rootDir, scriptDir, c)
@@ -161,12 +164,28 @@ func setup(project *Project) {
 			}
 		}
 	}
+	pcs := make([]uintptr, 10)
+	n := runtime.Callers(0, pcs)
+	pcs = pcs[:n]
+	frames := runtime.CallersFrames(pcs)
+	for {
+		frame, more := frames.Next()
+		if !more {
+			break
+		}
+		for _, v := range hookMap {
+			if strings.HasSuffix(frame.File, v) {
+				project.caller = v
+				break
+			}
+		}
+	}
 }
 
 func (p *Project) Clean() *Project {
-	fmt.Println("clean build directory ......")
+	log.Println("clean build directory ......")
 	if err := os.RemoveAll(p.targetDir); err != nil {
-		fmt.Printf("failed to delete %s\n", p.targetDir)
+		log.Printf("failed to delete %s\n", p.targetDir)
 		os.Exit(1)
 	}
 	return p
@@ -175,7 +194,7 @@ func (p *Project) Clean() *Project {
 func process(p *Project) {
 	file, err := os.Open(filepath.Join(p.targetDir, rawTestReport))
 	if err != nil {
-		fmt.Printf("failed to open the file %v \n", filepath.Join(p.targetDir, rawTestReport))
+		log.Printf("failed to open the file %v \n", filepath.Join(p.targetDir, rawTestReport))
 		os.Exit(1)
 	}
 	defer file.Close()
@@ -192,7 +211,7 @@ func process(p *Project) {
 
 	mc, err := os.Open(filepath.Join(p.targetDir, methodCoverageReport))
 	if err != nil {
-		fmt.Printf(fmt.Sprintf("failed to open the file %v", filepath.Join(p.targetDir, methodCoverageReport)))
+		log.Printf("failed to open the file %v", filepath.Join(p.targetDir, methodCoverageReport))
 		os.Exit(1)
 	}
 	defer mc.Close()
@@ -202,7 +221,7 @@ func process(p *Project) {
 		text := scanner.Text()
 		items := strings.Fields(text)
 		coverage, _ := strconv.ParseFloat(strings.TrimRight(items[2], "%"), 64)
-		coverage = coverage / 100
+		coverage /= 100
 		if strings.EqualFold(items[0], "total:") {
 			p.quality.Coverage.Line = coverage
 		} else {
@@ -222,7 +241,7 @@ func (p *Project) Test(args ...string) *Project {
 			return p
 		}
 	}
-	fmt.Println("run unit test ......")
+	log.Println("run unit test ......")
 	os.Chdir(p.moduleDir)
 	os.MkdirAll(p.targetDir, os.ModePerm)
 	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(p.targetDir, lineCoverageReport), "./..."}
@@ -246,14 +265,11 @@ func (p *Project) Test(args ...string) *Project {
 // Build walk from module directory and run build command for each executable
 // and place the executable at ${project_root}/bin; in case there are more than one executable.
 func (p *Project) Build(files ...string) *Project {
-	if v, _ := p.Ctx().Value("event").(string); len(v) > 0 {
-		return p
-	}
 	targetFiles := files
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")
 	}
-	fmt.Println("build project ......")
+	log.Println("build project ......")
 	os.MkdirAll(p.targetDir, os.ModePerm)
 	filepath.Walk(p.moduleDir, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
@@ -271,24 +287,24 @@ func (p *Project) Build(files ...string) *Project {
 	return p
 }
 
-func (p *Project) Scan() *Project {
-	fmt.Println("scan source code ......")
-	golangCiLinter.Exec(p)
+func (p *Project) Scan(args ...string) *Project {
+	log.Println("scan source code ......")
+	if strings.EqualFold(p.caller, messageHook) {
+		golangCiLinter.Scan(p, "--new-from-rev=HEAD")
+	} else {
+		golangCiLinter.Scan(p)
+		data, _ := json.Marshal(p.quality)
+		var prettyJSON bytes.Buffer
+		json.Indent(&prettyJSON, data, "", "\t")
+		os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
+		if strings.EqualFold(p.caller, pushHook) && len(args) > 1 {
+			p.pushGard(args...)
+		}
+	}
 	return p
 }
 
-func (p *Project) CommitScan() *Project {
-	fmt.Println("scan source code ......")
-	golangCiLinter.Exec(p, "--new-from-rev=HEAD")
-	return p
-}
-
-func (p *Project) Report() *Project {
-	data, _ := json.Marshal(p.quality)
-	var prettyJSON bytes.Buffer
-	json.Indent(&prettyJSON, data, "", "\t")
-	os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
-	return p
+func (p *Project) pushGard(revs ...string) {
 }
 
 func ProjectRoot(dir string) string {

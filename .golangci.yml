@@ -1,5 +1,7 @@
 run:
   tests: false
+  skip-dirs:
+    - scripts
 output:
   sort-results: true
 linters:

@@ -68,7 +68,7 @@ func generateHook(ctx context.Context) error {
 		}
 		tn := strings.Replace(v, ".go", ".tmpl", 1)
 		if data, err := templateDir.ReadFile(filepath.Join("template", tn)); err == nil {
-			generateFile(ctx, string(data), filepath.Join(scriptDir, v), nil)
+			generateFile(string(data), filepath.Join(scriptDir, v), nil)
 		} else {
 			return err
 		}

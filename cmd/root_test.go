@@ -34,8 +34,6 @@ func (s *CmdTestSuit) SetupTest() {
 			}
 		}
 	}
-	os.RemoveAll("scripts")
-	os.RemoveAll(".golangci.yml")
 }
 
 func (s *CmdTestSuit) BeforeTest(suiteName, testName string) {
@@ -44,13 +42,13 @@ func (s *CmdTestSuit) BeforeTest(suiteName, testName string) {
 	}
 }
 
-func (s *CmdTestSuit) AfterTest(suiteName, testName string) {
-	if strings.Contains(testName, "TestGithookCmd") {
-		for k := range supportedHooks() {
-			os.RemoveAll(filepath.Join(".git", "hooks", k))
-		}
-	}
-}
+//func (s *CmdTestSuit) AfterTest(suiteName, testName string) {
+//	if strings.Contains(testName, "TestGithookCmd") {
+//		for k := range supportedHooks() {
+//			os.RemoveAll(filepath.Join(".git", "hooks", k))
+//		}
+//	}
+//}
 
 func TestCmdTestSuit(t *testing.T) {
 	suite.Run(t, new(CmdTestSuit))

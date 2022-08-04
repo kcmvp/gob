@@ -17,7 +17,7 @@ const MinLength = 10
 func main() {
 	input, _ := os.ReadFile(os.Args[1])
 	checkMessage(string(input))
-	project := builder.NewProject().Clean().CommitScan()
+	project := builder.NewProject().Clean().Scan()
 	if project.Quality().Issues.Files > 0 {
 		fmt.Println("failed to commit the code")
 		os.Exit(1)

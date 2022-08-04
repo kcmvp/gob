@@ -1,0 +1,37 @@
+{
+	"Methods": 9,
+	"Tests": 8,
+	"Coverage": {
+		"Method": 0.888,
+		"Line": 0.452
+	},
+	"Issues": {
+		"Files": 5,
+		"Issues": 96,
+		"Linters": {
+			"containedctx": 1,
+			"errcheck": 13,
+			"errchkjson": 1,
+			"errorlint": 1,
+			"exhaustivestruct": 7,
+			"forbidigo": 6,
+			"forcetypeassert": 2,
+			"gochecknoglobals": 3,
+			"gochecknoinits": 3,
+			"gocritic": 1,
+			"goerr113": 3,
+			"golint": 7,
+			"gomnd": 3,
+			"gosec": 3,
+			"gosimple": 1,
+			"lll": 1,
+			"nestif": 1,
+			"nlreturn": 5,
+			"nosnakecase": 3,
+			"scopelint": 2,
+			"varnamelen": 4,
+			"wrapcheck": 1,
+			"wsl": 24
+		}
+	}
+}
