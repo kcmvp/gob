@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/mod/modfile"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,15 +19,17 @@ import (
 )
 
 const (
-	scriptDir = "scripts"
-	mod       = "mod"
-	gbt       = "github.com/kcmvp/gbt"
+	scriptDir          = "scripts"
+	gbt                = "github.com/kcmvp/gbt"
+	_ctxModFileKey     = "mod"
+	_ctxCmdOutputKey   = "cmdOutput"
+	_ctxProjectRootKey = "projectRoot"
 )
 
 var modules = []string{"github.com/kcmvp/gbt"}
 
 func importModule(ctx context.Context, module string, update bool) {
-	f := ctx.Value(mod).(*modfile.File)
+	f := ctx.Value(_ctxModFileKey).(*modfile.File)
 	if strings.EqualFold(gbt, f.Module.Mod.Path) {
 		fmt.Printf("ignore %s\n", gbt)
 		return
@@ -69,7 +72,8 @@ var rootCmd = &cobra.Command{
 			if f, err := modfile.Parse("go.mod", data, nil); err != nil {
 				return fmt.Errorf("invalid go.mod file")
 			} else {
-				ctx := context.WithValue(cmd.Context(), mod, f)
+				ctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)
+				ctx = context.WithValue(ctx, _ctxCmdOutputKey, cmd.OutOrStdout())
 				cmd.SetContext(ctx)
 			}
 		}
@@ -98,25 +102,26 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func generateFile(content string, targetName string, data interface{}) {
+func generateFile(ctx context.Context, content string, targetName string, data interface{}) {
 	dir := filepath.Dir(targetName)
 	os.MkdirAll(dir, os.ModePerm)
+	output, _ := ctx.Value(_ctxCmdOutputKey).(io.Writer)
 	if f, err := os.OpenFile(targetName, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
 		defer f.Close()
 		if t, err := template.New(targetName).Parse(content); err != nil {
-			fmt.Println(fmt.Sprintf("Failed to parse template, %+v", err))
+			fmt.Fprintf(output, "Failed to parse template, %+v", err)
 		} else {
 			if err = t.Execute(f, data); err != nil {
-				fmt.Println(fmt.Sprintf("Failed to create file %v, %+v", targetName, err))
+				fmt.Fprintf(output, "Failed to create file %v, %+v", targetName, err)
+			} else {
+				fmt.Fprintf(output, "generate file %v successfully", f.Name())
 			}
-			//abs, _ := filepath.Abs(f.Name())
-			fmt.Println(fmt.Sprintf("generate file %v successfully", f.Name()))
 		}
 	} else {
 		if errors.Is(err, os.ErrExist) {
-			fmt.Printf("%s exists\n", targetName)
+			fmt.Fprintf(output, "%s exists\n", targetName)
 		} else {
-			fmt.Printf("failed to generate file %s, %v\n", targetName, err)
+			fmt.Fprintf(output, "failed to generate file %s, %v\n", targetName, err)
 		}
 	}
 }
@@ -128,6 +133,7 @@ func install(module string, testCommand ...string) error {
 		if err != nil {
 			fmt.Println(string(out))
 			fmt.Printf("** failed to install %s \n", module)
+			fmt.Printf("** you can manually install it by 'go install %s' \n", module)
 		} else {
 			fmt.Printf("installed %s successfully\n", module)
 		}

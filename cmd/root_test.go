@@ -43,6 +43,14 @@ func (s *CmdTestSuit) BeforeTest(suiteName, testName string) {
 	}
 }
 
+func (s *CmdTestSuit) AfterTest(suiteName, testName string) {
+	if strings.Contains(testName, "TestGithookCmd") {
+		for k, _ := range hookMap {
+			os.RemoveAll(filepath.Join(".git", "hooks", k))
+		}
+	}
+}
+
 func TestCmdTestSuit(t *testing.T) {
 	suite.Run(t, new(CmdTestSuit))
 }
@@ -62,7 +70,7 @@ func (s *CmdTestSuit) TestRootCmd() {
 	rootCmd.Execute()
 	_, err := io.ReadAll(b)
 	require.NoError(s.T(), err)
-	v, ok := rootCmd.Context().Value(mod).(*modfile.File)
+	v, ok := rootCmd.Context().Value(_ctxModFileKey).(*modfile.File)
 	require.True(s.T(), ok)
 	require.NotNil(s.T(), v)
 }
@@ -87,4 +95,37 @@ func (s *CmdTestSuit) TestBuilderCmd() {
 	require.NoError(s.T(), err)
 	require.FileExists(s.T(), filepath.Join("scripts", "builder.go"))
 	require.FileExists(s.T(), ".golangci.yml")
+}
+
+func (s *CmdTestSuit) TestGithookCmd() {
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs([]string{"githook"})
+	err := rootCmd.Execute()
+	require.NoError(s.T(), err)
+	for k, v := range hookMap {
+		require.FileExists(s.T(), filepath.Join(".git", "hooks", k))
+		require.FileExists(s.T(), filepath.Join(scriptDir, v))
+	}
+}
+
+func (s *CmdTestSuit) TestGithookCmdMultiple() {
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs([]string{"githook"})
+	err := rootCmd.Execute()
+	require.NoError(s.T(), err)
+	for k, v := range hookMap {
+		require.FileExists(s.T(), filepath.Join(".git", "hooks", k))
+		require.FileExists(s.T(), filepath.Join(scriptDir, v))
+	}
+	err = rootCmd.Execute()
+	require.NoError(s.T(), err)
+	data, _ := io.ReadAll(b)
+	require.Contains(s.T(), string(data), "commit-msg exists")
+	require.Contains(s.T(), string(data), "pre-push exists")
+	for k, v := range hookMap {
+		require.FileExists(s.T(), filepath.Join(".git", "hooks", k))
+		require.FileExists(s.T(), filepath.Join(scriptDir, v))
+	}
 }

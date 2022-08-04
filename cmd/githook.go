@@ -8,17 +8,15 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/spf13/cobra"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/spf13/cobra"
 )
 
-//go:embed template
+//go:embed template/*.tmpl
 var templateDir embed.FS
-
-var _projectRoot = "projectRoot"
 
 var hookMap = map[string]string{"commit-msg": "message_hook.go",
 	"pre-push": "push_hook.go"}
@@ -35,8 +33,9 @@ var githookCmd = &cobra.Command{
 			if _, err = os.Stat(filepath.Join(dir, ".git")); err != nil {
 				dir = filepath.Dir(dir)
 			} else {
-				ctx := context.WithValue(cmd.Context(), _projectRoot, dir)
+				ctx := context.WithValue(cmd.Context(), _ctxProjectRootKey, dir)
 				cmd.SetContext(ctx)
+				break
 			}
 		}
 		if err != nil {
@@ -44,13 +43,13 @@ var githookCmd = &cobra.Command{
 		}
 		return err
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		generateHook(cmd.Context())
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return generateHook(cmd.Context())
 	},
 }
 
-func generateHook(ctx context.Context) {
-	root := ctx.Value(_projectRoot).(string)
+func generateHook(ctx context.Context) error {
+	root := ctx.Value(_ctxProjectRootKey).(string)
 	dir := filepath.Join(root, scriptDir)
 	os.MkdirAll(dir, os.ModePerm)
 	for k, v := range hookMap {
@@ -61,13 +60,17 @@ func generateHook(ctx context.Context) {
 			f.WriteString(fmt.Sprintf("go run %s $1 $2 -event=%s\n", filepath.Join(dir, v), k))
 			f.Close()
 		} else if errors.Is(err, os.ErrExist) {
-			fmt.Println(fmt.Sprintf("%s exists", hook))
+			output, _ := ctx.Value(_ctxCmdOutputKey).(io.Writer)
+			fmt.Fprintf(output, "%s exists\n", k)
 		}
 		tn := strings.Replace(v, ".go", ".tmpl", 1)
-		if data, err := templateDir.ReadFile(tn); err == nil {
-			generateFile(string(data), filepath.Join(dir, v), nil)
+		if data, err := templateDir.ReadFile(filepath.Join("template", tn)); err == nil {
+			generateFile(ctx, string(data), filepath.Join(scriptDir, v), nil)
+		} else {
+			return err
 		}
 	}
+	return nil
 
 }
 
