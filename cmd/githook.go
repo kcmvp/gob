@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,8 +59,7 @@ func generateHook(ctx context.Context) error {
 			f.WriteString(fmt.Sprintf("go run %s $1 $2 -event=%s\n", filepath.Join(dir, v), k))
 			f.Close()
 		} else if errors.Is(err, os.ErrExist) {
-			output, _ := ctx.Value(_ctxCmdOutputKey).(io.Writer)
-			fmt.Fprintf(output, "%s exists\n", k)
+			fmt.Printf("%s exists\n", k)
 		}
 		tn := strings.Replace(v, ".go", ".tmpl", 1)
 		if data, err := templateDir.ReadFile(filepath.Join("template", tn)); err == nil {

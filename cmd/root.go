@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/mod/modfile"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,10 +18,10 @@ import (
 )
 
 const (
-	scriptDir          = "scripts"
-	gbt                = "github.com/kcmvp/gbt"
-	_ctxModFileKey     = "mod"
-	_ctxCmdOutputKey   = "cmdOutput"
+	scriptDir      = "scripts"
+	gbt            = "github.com/kcmvp/gbt"
+	_ctxModFileKey = "mod"
+	//_ctxCmdOutputKey   = "cmdOutput"
 	_ctxProjectRootKey = "projectRoot"
 )
 
@@ -73,7 +72,7 @@ var rootCmd = &cobra.Command{
 				return fmt.Errorf("invalid go.mod file")
 			} else {
 				ctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)
-				ctx = context.WithValue(ctx, _ctxCmdOutputKey, cmd.OutOrStdout())
+				//ctx = context.WithValue(ctx, _ctxCmdOutputKey, cmd.OutOrStdout())
 				cmd.SetContext(ctx)
 			}
 		}
@@ -105,23 +104,22 @@ func init() {
 func generateFile(ctx context.Context, content string, targetName string, data interface{}) {
 	dir := filepath.Dir(targetName)
 	os.MkdirAll(dir, os.ModePerm)
-	output, _ := ctx.Value(_ctxCmdOutputKey).(io.Writer)
 	if f, err := os.OpenFile(targetName, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
 		defer f.Close()
 		if t, err := template.New(targetName).Parse(content); err != nil {
-			fmt.Fprintf(output, "Failed to parse template, %+v", err)
+			fmt.Printf("Failed to parse template, %+v\n", err)
 		} else {
 			if err = t.Execute(f, data); err != nil {
-				fmt.Fprintf(output, "Failed to create file %v, %+v", targetName, err)
+				fmt.Printf("Failed to create file %v, %+v\n", targetName, err)
 			} else {
-				fmt.Fprintf(output, "generate file %v successfully", f.Name())
+				fmt.Printf("generate file %v successfully\n", f.Name())
 			}
 		}
 	} else {
 		if errors.Is(err, os.ErrExist) {
-			fmt.Fprintf(output, "%s exists\n", targetName)
+			fmt.Printf("%s exists\n", targetName)
 		} else {
-			fmt.Fprintf(output, "failed to generate file %s, %v\n", targetName, err)
+			fmt.Printf("failed to generate file %s, %v\n", targetName, err)
 		}
 	}
 }

@@ -151,7 +151,7 @@ func (p *Project) Setup() *Project {
 			if lines, err := os.ReadFile(h); err == nil {
 				command := fmt.Sprintf(scriptLine, c, GitHook)
 				if !strings.Contains(string(lines), command) {
-					fmt.Printf("please delete %s and run command 'gbt githook' to setup hook", h)
+					fmt.Printf("please delete %s and run command 'gbt githook' to setup hook\n", h)
 					os.Exit(1)
 				}
 			} else {
@@ -294,7 +294,7 @@ func ProjectRoot(dir string) string {
 		}
 	}
 	if dir == string(os.PathSeparator) {
-		fmt.Printf("project %s is not in the git repository", dir)
+		fmt.Printf("project %s is not in the git repository\n", dir)
 		dir = ""
 	}
 	return dir
