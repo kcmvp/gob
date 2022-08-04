@@ -25,7 +25,7 @@ var builderCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		generateFile(builderTmp, filepath.Join(scriptDir, "builder.go"), nil)
 		generateFile(golangCiTmp, ".golangci.yml", nil)
-		return install(golangCi)
+		return install(golangCi, "golangci-lint", "version")
 	},
 }
 

@@ -109,8 +109,8 @@ func generateFile(content string, targetName string, data interface{}) {
 			if err = t.Execute(f, data); err != nil {
 				fmt.Println(fmt.Sprintf("Failed to create file %v, %+v", targetName, err))
 			}
-			abs, _ := filepath.Abs(f.Name())
-			fmt.Println(fmt.Sprintf("generate file %v successfully", abs))
+			//abs, _ := filepath.Abs(f.Name())
+			fmt.Println(fmt.Sprintf("generate file %v successfully", f.Name()))
 		}
 	} else {
 		if errors.Is(err, os.ErrExist) {
@@ -121,14 +121,19 @@ func generateFile(content string, targetName string, data interface{}) {
 	}
 }
 
-func install(module string) error {
-	fmt.Printf("installing %s ...\n", module)
-	out, err := exec.Command("go", "install", module).CombinedOutput()
-	if err != nil {
-		fmt.Println(string(out))
-		fmt.Printf("** failed to install %s \n", module)
+func install(module string, testCommand ...string) error {
+	if out, err := exec.Command(testCommand[0], testCommand[1:]...).CombinedOutput(); err != nil {
+		fmt.Printf("installing %s ...\n", module)
+		out, err = exec.Command("go", "install", module).CombinedOutput()
+		if err != nil {
+			fmt.Println(string(out))
+			fmt.Printf("** failed to install %s \n", module)
+		} else {
+			fmt.Printf("installed %s successfully\n", module)
+		}
+		return err
 	} else {
-		fmt.Printf("installed %s successfully\n", module)
+		fmt.Println(string(out))
+		return nil
 	}
-	return err
 }

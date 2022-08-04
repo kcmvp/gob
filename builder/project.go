@@ -40,6 +40,8 @@ type Coverage struct {
 	Line   float64
 }
 
+//@todo rename to GolangCi
+//@ add GolangCi version
 type Issue struct {
 	Files   int
 	Issues  int
