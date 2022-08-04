@@ -14,14 +14,16 @@ import (
 )
 
 type (
-	ArgF   func() []string
-	ParseF func(issue *Issue, data []byte, file string)
+	ArgF       func() []string
+	ParseF     func(issue *Issue, data []byte, file string)
+	Validation func() error
 )
 
 type Dependency struct {
-	command string
-	args    ArgF
-	parser  ParseF
+	command    string
+	args       ArgF
+	parser     ParseF
+	validation Validation
 }
 
 var golangCiLinter = &Dependency{
@@ -31,15 +33,19 @@ var golangCiLinter = &Dependency{
 		fmt.Printf("%s %s \n", "golangci-lint", args)
 		return args
 	},
-	parser: golangCiParser,
+	parser:     golangCiParser,
+	validation: golangciValidation,
 }
 
 func (s *Dependency) Exec(p *Project, args ...string) {
+	s.validation()
 	dir := filepath.Join(p.TargetDir(), s.command+".json")
 	args = append(s.args(), args...)
+	fmt.Printf("args are %v \n", args)
+	os.Exit(1)
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	msg, _ := exec.Command(s.command, args...).CombinedOutput()
-	fmt.Printf(string(msg))
+	//fmt.Printf(string(msg))
 	s.parser(&p.quality.Issues, msg, dir)
 }
 
@@ -70,4 +76,9 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 
 	jq = gojsonq.New().FromString(string(prettyJSON.Bytes())).From("Issues")
 	issue.Files = jq.Distinct("Pos.Filename").Count()
+}
+
+var golangciValidation = func() error {
+	_, err := os.Stat(".golangci.yml")
+	return err
 }
