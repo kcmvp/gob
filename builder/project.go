@@ -24,7 +24,7 @@ const (
 	quality              = "quality.json"
 	GitHook              = "git"
 	scriptDir            = "scripts"
-	scriptLine           = "go run %s $1 $2 -%s \n"
+	scriptLine           = "go run %s $1 $2\n"
 	buildTarget          = "target"
 )
 
@@ -108,6 +108,7 @@ func NewProject(coverages ...float64) *Project {
 	os.MkdirAll(project.targetDir, os.ModePerm)
 	os.MkdirAll(project.scriptsDir, os.ModePerm)
 	project.rootDir = ProjectRoot(project.moduleDir)
+	setup(project)
 	return project
 }
 
@@ -139,28 +140,27 @@ func (p *Project) Ctx() context.Context {
 	return p.ctx
 }
 
-func (p *Project) Setup() *Project {
-	if len(p.rootDir) > 0 {
+func setup(project *Project) {
+	if len(project.rootDir) > 0 {
 		hookMap := map[string]string{
 			"commit-msg": "message_hook.go",
 			"pre-push":   "push_hook.go",
 		}
 		for h, c := range hookMap {
-			h = filepath.Join(p.rootDir, ".git", h)
-			c = filepath.Join(p.rootDir, scriptDir, c)
+			h = filepath.Join(project.rootDir, ".git", "hooks", h)
+			c = filepath.Join(project.rootDir, scriptDir, c)
 			if lines, err := os.ReadFile(h); err == nil {
-				command := fmt.Sprintf(scriptLine, c, GitHook)
+				command := fmt.Sprintf(scriptLine, c)
 				if !strings.Contains(string(lines), command) {
 					fmt.Printf("please delete %s and run command 'gbt githook' to setup hook\n", h)
 					os.Exit(1)
 				}
 			} else {
-				fmt.Println("please run command 'gbtc githook' to setup project")
+				fmt.Printf("please run command 'gbt githook' to setup project %v\n", err)
 				os.Exit(1)
 			}
 		}
 	}
-	return p
 }
 
 func (p *Project) Clean() *Project {
