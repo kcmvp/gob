@@ -22,14 +22,14 @@ type (
 	Validation func() error
 )
 
-type Dependency struct {
+type GolangCi struct {
 	command    string
 	args       ArgF
 	parser     ParseF
 	validation Validation
 }
 
-var golangCiLinter = &Dependency{
+var golangCiLinter = &GolangCi{
 	command: "golangci-lint",
 	args: func() []string {
 		args := []string{"run", "-v", "./...", "--out-format=json"}
@@ -39,7 +39,7 @@ var golangCiLinter = &Dependency{
 	validation: golangciValidation,
 }
 
-func (s *Dependency) Scan(p *Project, args ...string) {
+func (s *GolangCi) Scan(p *Project, args ...string) {
 	s.validation()
 	if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
 		fmt.Printf("failed to create directory %v", err)
