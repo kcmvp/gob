@@ -17,9 +17,7 @@ const MinLength = 10
 func main() {
 	input, _ := os.ReadFile(os.Args[1])
 	checkMessage(string(input))
-	//@todo only scan header
-	//   new-from-rev: HEAD
-	project := builder.NewProject().CommitScan()
+	project := builder.NewProject().Clean().CommitScan()
 	if project.Quality().Issues.Files > 0 {
 		fmt.Println("failed to commit the code")
 		os.Exit(1)

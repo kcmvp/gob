@@ -1,3 +1,5 @@
+run:
+  tests: false
 output:
   sort-results: true
 linters:

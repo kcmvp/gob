@@ -18,9 +18,11 @@ import (
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var hookMap = map[string]string{
-	"commit-msg": "message_hook.go",
-	"pre-push":   "push_hook.go",
+func supportedHooks() map[string]string {
+	return map[string]string{
+		"commit-msg": "message_hook.go",
+		"pre-push":   "push_hook.go",
+	}
 }
 
 // githookCmd represents the githook command.
@@ -54,7 +56,7 @@ func generateHook(ctx context.Context) error {
 	root := ctx.Value(_ctxProjectRootKey).(string)
 	dir := filepath.Join(root, scriptDir)
 	os.MkdirAll(dir, os.ModePerm)
-	for k, v := range hookMap {
+	for k, v := range supportedHooks() {
 		hook := filepath.Join(root, ".git", "hooks", k)
 		if f, err := os.OpenFile(hook, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
 			fmt.Println(fmt.Sprintf("generate %s hook", k))

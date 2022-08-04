@@ -44,6 +44,10 @@ var golangCiLinter = &Dependency{
 
 func (s *Dependency) Exec(p *Project, args ...string) {
 	s.validation()
+	if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
+		fmt.Printf("failed to create directory %v", err)
+		os.Exit(1)
+	}
 	dir := filepath.Join(p.TargetDir(), s.command+".json")
 	args = append(s.args(), args...)
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
