@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"bufio"
 	"bytes"
 	_ "embed"
 	"encoding/json"
@@ -52,15 +53,22 @@ func (s *Dependency) Scan(p *Project, args ...string) {
 }
 
 var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
-	items := strings.Split(strings.Trim(string(data), "\n"), "\n")
-	item := items[0]
-	for _, item = range items {
-		if strings.HasPrefix(item, "{\"Issues\"") {
+	sc := bufio.NewScanner(strings.NewReader(string(data)))
+	var line string
+	for sc.Scan() {
+		line = sc.Text()
+		if strings.HasPrefix(line, "{\"Issues\"") {
 			break
+		} else {
+			cline := line
+			if strings.HasPrefix(line, "level=warning") {
+				cline = color.YellowString(line)
+			}
+			log.Println(cline)
 		}
 	}
 	var prettyJSON bytes.Buffer
-	if err := json.Indent(&prettyJSON, []byte(item), "", "\t"); err != nil {
+	if err := json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
 		if e, ok := err.(*json.SyntaxError); ok {
 			log.Printf("syntax error at byte offset %d", e.Offset)
 		}

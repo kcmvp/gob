@@ -7,7 +7,7 @@
 	},
 	"Issues": {
 		"Files": 5,
-		"Issues": 95,
+		"Issues": 94,
 		"Linters": {
 			"containedctx": 1,
 			"errcheck": 13,
@@ -16,7 +16,7 @@
 			"exhaustivestruct": 7,
 			"forbidigo": 6,
 			"forcetypeassert": 2,
-			"gochecknoglobals": 3,
+			"gochecknoglobals": 4,
 			"gochecknoinits": 3,
 			"gocritic": 1,
 			"goerr113": 3,
@@ -28,7 +28,6 @@
 			"nestif": 1,
 			"nlreturn": 5,
 			"nosnakecase": 3,
-			"scopelint": 2,
 			"varnamelen": 4,
 			"wrapcheck": 1,
 			"wsl": 23
