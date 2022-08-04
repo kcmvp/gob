@@ -34,9 +34,10 @@ var golangCiLinter = &Dependency{
 	parser: golangCiParser,
 }
 
-func (s *Dependency) Exec(p *Project) {
+func (s *Dependency) Exec(p *Project, args ...string) {
 	dir := filepath.Join(p.TargetDir(), s.command+".json")
-	args := append(s.args(), fmt.Sprintf("%s/...", p.ModuleDir()))
+	args = append(s.args(), args...)
+	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	msg, _ := exec.Command(s.command, args...).CombinedOutput()
 	fmt.Printf(string(msg))
 	s.parser(&p.quality.Issues, msg, dir)

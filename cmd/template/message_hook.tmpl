@@ -18,7 +18,7 @@ func main() {
 	checkMessage(string(input))
 	//@todo only scan header
 	//   new-from-rev: HEAD
-	project := builder.NewProject().Scan()
+	project := builder.NewProject().Scan("--new-from-rev=HEAD")
 	if project.Quality().Issues.Files > 0 {
 		os.Exit(1)
 	}
