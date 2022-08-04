@@ -7,7 +7,7 @@
 	},
 	"Issues": {
 		"Files": 5,
-		"Issues": 96,
+		"Issues": 95,
 		"Linters": {
 			"containedctx": 1,
 			"errcheck": 13,
@@ -31,7 +31,7 @@
 			"scopelint": 2,
 			"varnamelen": 4,
 			"wrapcheck": 1,
-			"wsl": 24
+			"wsl": 23
 		}
 	}
 }

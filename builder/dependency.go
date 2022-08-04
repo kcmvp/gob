@@ -11,12 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/thedevsaddam/gojsonq/v2"
-)
-
-const (
-	colorRed   = "\033[31m"
-	colorReset = "\033[0m"
 )
 
 type (
@@ -79,24 +75,14 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 			issue.Linters[k] = len(v)
 		}
 	}
-
 	jq = gojsonq.New().FromString(prettyJSON.String()).From("Issues")
 	issue.Files = jq.Distinct("Pos.Filename").Count()
-
-	jq = gojsonq.New().FromString(prettyJSON.String()).From("Issues")
-	v := jq.Select("FromLinter", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column", "SourceLines as Code", "Text as Msg")
-	if items, ok := v.Get().([]interface{}); ok {
-		for _, i := range items {
-			if o, ok := i.(map[string]interface{}); ok {
-				fmt.Printf(colorRed+"%s#%v:%v [%s]:%s\n", o["File"], o["Line"], o["Column"], o["FromLinter"], o["Msg"])
-				// if c, ok := o["Code"].([]interface{}); ok {
-				//	str := fmt.Sprintf("%v", c[0])
-				//	fmt.Printf(colorReset+"%v\n", strings.TrimSpace(str))
-				//}
-			}
-		}
+	if issue.Issues > 0 {
+		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
+		log.Println(color.YellowString("please check %s for detail", filepath.Join("target", "golangci-lint.json")))
+	} else {
+		log.Println(color.CyanString("no new issues are found"))
 	}
-	fmt.Println(colorReset + "")
 }
 
 var golangciValidation = func() error {

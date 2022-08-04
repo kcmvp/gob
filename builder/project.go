@@ -15,6 +15,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 const (
@@ -236,11 +238,6 @@ func process(p *Project) {
 
 // Test run the test with -race, -cover, -fuzz and -bench.
 func (p *Project) Test(args ...string) *Project {
-	if v, ok := p.Ctx().Value("event").(string); ok {
-		if strings.HasPrefix(v, "message") {
-			return p
-		}
-	}
 	log.Println("run unit test ......")
 	os.Chdir(p.moduleDir)
 	os.MkdirAll(p.targetDir, os.ModePerm)
@@ -249,8 +246,14 @@ func (p *Project) Test(args ...string) *Project {
 		params = append(params, args...)
 	}
 	out, err := exec.Command("go", params...).CombinedOutput()
-	fmt.Println(string(out))
 	if err != nil {
+		sc := bufio.NewScanner(strings.NewReader(string(out)))
+		for sc.Scan() {
+			line := sc.Text()
+			if !strings.HasPrefix(line, "{\"Time\":") {
+				log.Println(color.RedString(line))
+			}
+		}
 		os.Exit(1)
 	}
 	os.WriteFile(filepath.Join(p.targetDir, rawTestReport), out, os.ModePerm)
@@ -259,6 +262,7 @@ func (p *Project) Test(args ...string) *Project {
 	out, _ = exec.Command("go", params...).CombinedOutput()
 	os.WriteFile(filepath.Join(p.targetDir, methodCoverageReport), out, os.ModePerm)
 	process(p)
+	log.Println(color.CyanString("total tests :%d, line coverage: %f, method coverage %f", p.quality.Tests, p.quality.Coverage.Line, p.quality.Coverage.Method))
 	return p
 }
 

@@ -4,7 +4,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/kcmvp/gbt/builder"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -17,9 +19,9 @@ const MinLength = 10
 func main() {
 	input, _ := os.ReadFile(os.Args[1])
 	checkMessage(string(input))
-	project := builder.NewProject().Clean().CommitScan()
+	project := builder.NewProject().Clean().Scan()
 	if project.Quality().Issues.Files > 0 {
-		fmt.Println("failed to commit the code")
+		log.Print(color.RedString("failed to commit the code"))
 		os.Exit(1)
 	}
 	os.Exit(0)
@@ -33,13 +35,13 @@ func checkMessage(msg string) {
 		os.Exit(1)
 	}
 	if !reg.MatchString(msg) {
-		fmt.Println("commit message must follow format #{number}: xxxxxx")
+		log.Print(color.RedString("commit message must follow format #{number}: xxxxxx"))
 		os.Exit(1)
 	}
 	items := sp.Split(msg, -1)
 	// check message length
 	if len(strings.TrimSpace(items[1])) < MinLength {
-		fmt.Printf("commit message is at least %d characters\n", MinLength)
+		log.Println(color.RedString("commit message is at least %d characters\n", MinLength))
 		os.Exit(1)
 	}
 }
