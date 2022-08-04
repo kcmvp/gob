@@ -3,15 +3,16 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"golang.org/x/mod/modfile"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	"golang.org/x/mod/modfile"
 )
 
 type CmdTestSuit struct {
@@ -45,7 +46,7 @@ func (s *CmdTestSuit) BeforeTest(suiteName, testName string) {
 
 func (s *CmdTestSuit) AfterTest(suiteName, testName string) {
 	if strings.Contains(testName, "TestGithookCmd") {
-		for k, _ := range hookMap {
+		for k := range hookMap {
 			os.RemoveAll(filepath.Join(".git", "hooks", k))
 		}
 	}
@@ -83,7 +84,6 @@ func (s *CmdTestSuit) TestNonExists() {
 	msg, err := io.ReadAll(b)
 	fmt.Println(msg)
 	require.NoError(s.T(), err)
-
 }
 
 func (s *CmdTestSuit) TestBuilderCmd() {
@@ -121,9 +121,9 @@ func (s *CmdTestSuit) TestGithookCmdMultiple() {
 	}
 	err = rootCmd.Execute()
 	require.NoError(s.T(), err)
-	//data, _ := io.ReadAll(b)
-	//require.Contains(s.T(), string(data), "commit-msg exists")
-	//require.Contains(s.T(), string(data), "pre-push exists")
+	// data, _ := io.ReadAll(b)
+	// require.Contains(s.T(), string(data), "commit-msg exists")
+	// require.Contains(s.T(), string(data), "pre-push exists")
 	for k, v := range hookMap {
 		require.FileExists(s.T(), filepath.Join(".git", "hooks", k))
 		require.FileExists(s.T(), filepath.Join(scriptDir, v))

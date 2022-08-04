@@ -8,19 +8,22 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var hookMap = map[string]string{"commit-msg": "message_hook.go",
-	"pre-push": "push_hook.go"}
+var hookMap = map[string]string{
+	"commit-msg": "message_hook.go",
+	"pre-push":   "push_hook.go",
+}
 
-// githookCmd represents the githook command
+// githookCmd represents the githook command.
 var githookCmd = &cobra.Command{
 	Use:   "githook",
 	Short: "Generate git hook for project",
@@ -69,7 +72,6 @@ func generateHook(ctx context.Context) error {
 		}
 	}
 	return nil
-
 }
 
 func init() {

@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/mod/modfile"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,13 +14,14 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/mod/modfile"
 )
 
 const (
 	scriptDir      = "scripts"
 	gbt            = "github.com/kcmvp/gbt"
 	_ctxModFileKey = "mod"
-	//_ctxCmdOutputKey   = "cmdOutput"
+
 	_ctxProjectRootKey = "projectRoot"
 )
 
@@ -53,7 +53,7 @@ func importModule(ctx context.Context, module string, update bool) {
 	}
 }
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "gbt",
 	Short: "Generate go project scaffold",
@@ -72,7 +72,7 @@ var rootCmd = &cobra.Command{
 				return fmt.Errorf("invalid go.mod file")
 			} else {
 				ctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)
-				//ctx = context.WithValue(ctx, _ctxCmdOutputKey, cmd.OutOrStdout())
+				// ctx = context.WithValue(ctx, _ctxCmdOutputKey, cmd.OutOrStdout())
 				cmd.SetContext(ctx)
 			}
 		}

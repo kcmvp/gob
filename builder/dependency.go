@@ -5,12 +5,18 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/thedevsaddam/gojsonq/v2"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/thedevsaddam/gojsonq/v2"
+)
+
+const (
+	colorRed   = "\033[31m"
+	colorReset = "\033[0m"
 )
 
 type (
@@ -42,7 +48,6 @@ func (s *Dependency) Exec(p *Project, args ...string) {
 	args = append(s.args(), args...)
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	msg, _ := exec.Command(s.command, args...).CombinedOutput()
-	//fmt.Printf(string(msg))
 	s.parser(&p.quality.Issues, msg, dir)
 }
 
@@ -71,8 +76,23 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 		}
 	}
 
-	jq = gojsonq.New().FromString(string(prettyJSON.Bytes())).From("Issues")
+	jq = gojsonq.New().FromString(prettyJSON.String()).From("Issues")
 	issue.Files = jq.Distinct("Pos.Filename").Count()
+
+	jq = gojsonq.New().FromString(prettyJSON.String()).From("Issues")
+	v := jq.Select("FromLinter", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column", "SourceLines as Code", "Text as Msg")
+	if items, ok := v.Get().([]interface{}); ok {
+		for _, i := range items {
+			if o, ok := i.(map[string]interface{}); ok {
+				fmt.Printf(colorRed+"%s#%v:%v [%s]:%s\n", o["File"], o["Line"], o["Column"], o["FromLinter"], o["Msg"])
+				// if c, ok := o["Code"].([]interface{}); ok {
+				//	str := fmt.Sprintf("%v", c[0])
+				//	fmt.Printf(colorReset+"%v\n", strings.TrimSpace(str))
+				//}
+			}
+		}
+	}
+	fmt.Println(colorReset + "")
 }
 
 var golangciValidation = func() error {

@@ -40,8 +40,8 @@ type Coverage struct {
 	Line   float64
 }
 
-//@todo rename to GolangCi
-//@ add GolangCi version
+// @todo rename to GolangCi
+// @ add GolangCi version.
 type Issue struct {
 	Files   int
 	Issues  int
@@ -271,9 +271,15 @@ func (p *Project) Build(files ...string) *Project {
 	return p
 }
 
-func (p *Project) Scan(args ...string) *Project {
+func (p *Project) Scan() *Project {
 	fmt.Println("scan source code ......")
-	golangCiLinter.Exec(p, args...)
+	golangCiLinter.Exec(p)
+	return p
+}
+
+func (p *Project) CommitScan() *Project {
+	fmt.Println("scan source code ......")
+	golangCiLinter.Exec(p, "--new-from-rev=HEAD")
 	return p
 }
 

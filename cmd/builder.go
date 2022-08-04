@@ -5,8 +5,9 @@ package cmd
 
 import (
 	_ "embed"
-	"github.com/spf13/cobra"
 	"path/filepath"
+
+	"github.com/spf13/cobra"
 )
 
 const golangCi = "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
@@ -17,7 +18,7 @@ var golangCiTmp string
 //go:embed template/builder.tmpl
 var builderTmp string
 
-// builderCmd represents the builder command
+// builderCmd represents the builder command.
 var builderCmd = &cobra.Command{
 	Use:   "builder",
 	Short: "Generate build script for go project",
