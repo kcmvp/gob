@@ -6,31 +6,20 @@
 		"Line": 0.452
 	},
 	"Issues": {
-		"Files": 5,
-		"Issues": 94,
+		"Files": 4,
+		"Issues": 39,
 		"Linters": {
-			"containedctx": 1,
 			"errcheck": 13,
 			"errchkjson": 1,
 			"errorlint": 1,
-			"exhaustivestruct": 7,
-			"forbidigo": 6,
-			"forcetypeassert": 2,
-			"gochecknoglobals": 4,
-			"gochecknoinits": 3,
 			"gocritic": 1,
 			"goerr113": 3,
-			"golint": 7,
-			"gomnd": 3,
 			"gosec": 3,
-			"gosimple": 1,
-			"lll": 1,
+			"gosimple": 2,
 			"nestif": 1,
-			"nlreturn": 5,
-			"nosnakecase": 3,
-			"varnamelen": 4,
-			"wrapcheck": 1,
-			"wsl": 23
+			"nosnakecase": 7,
+			"revive": 4,
+			"wrapcheck": 3
 		}
 	}
 }
