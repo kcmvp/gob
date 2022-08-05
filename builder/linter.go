@@ -88,6 +88,9 @@ func (linter *Linter) parse(project *Project, data []byte) {
 
 	if issue.Issues > 0 {
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
+		if project.scanChanged {
+			fmt.Printf("hello")
+		}
 		log.Println(color.YellowString("please check %s for detail", filepath.Join("target", "golangci-lint.json")))
 	} else {
 		log.Println(color.GreenString("no new issues are found"))
