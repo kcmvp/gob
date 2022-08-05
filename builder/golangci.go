@@ -17,42 +17,41 @@ import (
 )
 
 type (
-	ArgF       func() []string
-	ParseF     func(issue *Issue, data []byte, file string)
-	Validation func() error
+	ParseF func(issue *LiterIssue, data []byte, file string)
+)
+
+const (
+	IssueNode   = "Issues"
+	golangCiCfg = ".golangci.yml"
 )
 
 type GolangCi struct {
-	command    string
-	args       ArgF
-	parser     ParseF
-	validation Validation
+	command string
+	args    []string
+	parser  ParseF
 }
 
 var golangCiLinter = &GolangCi{
 	command: "golangci-lint",
-	args: func() []string {
-		args := []string{"run", "-v", "./...", "--out-format=json"}
-		return args
-	},
-	parser:     golangCiParser,
-	validation: golangciValidation,
+	args:    []string{"run", "-v", "./...", "--out-format=json"},
 }
 
 func (s *GolangCi) Scan(p *Project, args ...string) {
-	s.validation()
+	s.validate()
 	if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
 		fmt.Printf("failed to create directory %v", err)
 		os.Exit(1)
 	}
 	dir := filepath.Join(p.TargetDir(), s.command+".json")
-	args = append(s.args(), args...)
+	args = append(s.args, args...)
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	msg, _ := exec.Command(s.command, args...).CombinedOutput()
-	s.parser(&p.quality.Issues, msg, dir)
+	fmt.Println(p.quality.LiterIssue)
+	fmt.Println(dir, msg)
+	//s.parser(&p.quality.LiterIssue, msg, dir)
 }
 
-var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
+var golangCiParser ParseF = func(issue *LiterIssue, data []byte, file string) {
 	sc := bufio.NewScanner(strings.NewReader(string(data)))
 	var line string
 	for sc.Scan() {
@@ -75,7 +74,7 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 	}
 	os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 
-	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From("Issues")
+	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From(IssueNode)
 	issue.Issues = jq.Count()
 	obj := jq.GroupBy("FromLinter").Get()
 	if m, ok := obj.(map[string][]interface{}); ok {
@@ -83,7 +82,7 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 			issue.Linters[k] = len(v)
 		}
 	}
-	jq = gojsonq.New().FromString(prettyJSON.String()).From("Issues")
+	jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issue.Files = jq.Distinct("Pos.Filename").Count()
 	if issue.Issues > 0 {
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
@@ -93,7 +92,8 @@ var golangCiParser ParseF = func(issue *Issue, data []byte, file string) {
 	}
 }
 
-var golangciValidation = func() error {
-	_, err := os.Stat(".golangci.yml")
-	return err
+func (s *GolangCi) validate() {
+	if _, err := os.Stat(".golangci.yml"); err != nil {
+		log.Fatalln(color.RedString("missed %s", golangCiCfg))
+	}
 }

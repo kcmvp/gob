@@ -5,9 +5,9 @@
 		"Method": 0.888,
 		"Line": 0.452
 	},
-	"Issues": {
+	"LiterIssue": {
 		"Files": 4,
-		"Issues": 39,
+		"Issues": 38,
 		"Linters": {
 			"errcheck": 13,
 			"errchkjson": 1,
@@ -19,7 +19,7 @@
 			"nestif": 1,
 			"nosnakecase": 7,
 			"revive": 4,
-			"wrapcheck": 3
+			"wrapcheck": 2
 		}
 	}
 }
