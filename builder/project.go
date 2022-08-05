@@ -144,14 +144,12 @@ func (p *Project) setup() {
 		"commit-msg": messageHook,
 		"pre-push":   pushHook,
 	}
-
 	// setup folders
 	p.targetDir = filepath.Join(p.moduleDir, buildTarget)
 	p.scriptsDir = filepath.Join(p.moduleDir, scriptDir)
 	os.MkdirAll(p.targetDir, os.ModePerm)
 	os.MkdirAll(p.scriptsDir, os.ModePerm)
 	p.rootDir = ProjectRoot(p.moduleDir)
-
 	// setup caller
 	pcs := make([]uintptr, 10)
 	n := runtime.Callers(0, pcs)

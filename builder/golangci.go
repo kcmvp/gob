@@ -69,7 +69,7 @@ func (linter *Linter) parse(project *Project, data []byte) {
 	os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 
 	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From(IssueNode)
-	//issue := project.quality.LinterIssues
+
 	issue := &LinterIssue{}
 
 	issue.Issues = jq.Count()
