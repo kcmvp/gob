@@ -1,0 +1,25 @@
+{
+	"Methods": 9,
+	"Tests": 8,
+	"Coverage": {
+		"Method": 0.888,
+		"Line": 0.452
+	},
+	"LiterIssues": {
+		"Files": 0,
+		"Issues": 0,
+		"Linters": {
+			"errcheck": 13,
+			"errchkjson": 1,
+			"errorlint": 1,
+			"gocritic": 1,
+			"goerr113": 3,
+			"gosec": 3,
+			"gosimple": 2,
+			"nestif": 1,
+			"nosnakecase": 7,
+			"revive": 4,
+			"wrapcheck": 2
+		}
+	}
+}
