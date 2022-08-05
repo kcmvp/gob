@@ -17,35 +17,35 @@ import (
 )
 
 const (
-	IssueNode   = "Issues"
-	golangCiCfg = ".golangci.yml"
+	IssueNode     = "Issues"
+	linterCfg     = ".golangci.yml"
+	linterCommand = "golangci-lint"
 )
 
-type GolangCi struct {
+type Linter struct {
 	command string
 	args    []string
 }
 
-var golangCiLinter = &GolangCi{
-	command: "golangci-lint",
+var linter = &Linter{
+	command: linterCommand,
 	args:    []string{"run", "-v", "./...", "--out-format=json"},
 }
 
-func (s *GolangCi) Scan(p *Project, args ...string) {
-	s.validate()
+func (linter *Linter) Scan(p *Project, args ...string) {
+	linter.validate()
 	if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
 		fmt.Printf("failed to create directory %v", err)
 		os.Exit(1)
 	}
-	dir := filepath.Join(p.TargetDir(), s.command+".json")
-	args = append(s.args, args...)
+	args = append(linter.args, args...)
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
-	output, _ := exec.Command(s.command, args...).CombinedOutput()
-	fmt.Println(p.quality.LiterIssues)
-	s.parse(p.quality.LiterIssues, output, dir)
+	output, _ := exec.Command(linter.command, args...).CombinedOutput()
+	linter.parse(p, output)
 }
 
-func (s *GolangCi) parse(issue LiterIssue, data []byte, file string) {
+func (linter *Linter) parse(project *Project, data []byte) {
+	file := filepath.Join(project.TargetDir(), linter.command+".json")
 	sc := bufio.NewScanner(strings.NewReader(string(data)))
 	var line string
 	for sc.Scan() {
@@ -69,11 +69,12 @@ func (s *GolangCi) parse(issue LiterIssue, data []byte, file string) {
 	os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 
 	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From(IssueNode)
+	issue := project.quality.LinterIssues
 	issue.Issues = jq.Count()
 	obj := jq.GroupBy("FromLinter").Get()
 	if m, ok := obj.(map[string][]interface{}); ok {
 		for k, v := range m {
-			issue.Linters[k] = len(v)
+			issue.Detail[k] = len(v)
 		}
 	}
 	jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
@@ -86,8 +87,8 @@ func (s *GolangCi) parse(issue LiterIssue, data []byte, file string) {
 	}
 }
 
-func (s *GolangCi) validate() {
+func (linter *Linter) validate() {
 	if _, err := os.Stat(".golangci.yml"); err != nil {
-		log.Fatalln(color.RedString("missed %s", golangCiCfg))
+		log.Fatalln(color.RedString("missed %s", linterCfg))
 	}
 }

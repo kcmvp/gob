@@ -32,10 +32,10 @@ const (
 )
 
 type Quality struct {
-	Methods     int
-	Tests       int
-	Coverage    Coverage
-	LiterIssues LiterIssue
+	Methods      int
+	Tests        int
+	Coverage     Coverage
+	LinterIssues LinterIssue
 }
 
 type Coverage struct {
@@ -43,12 +43,12 @@ type Coverage struct {
 	Line   float64
 }
 
-// @todo rename to GolangCi
-// @ add GolangCi version.
-type LiterIssue struct {
-	Files   int
-	Issues  int
-	Linters map[string]int
+// @todo rename to Linter
+// @ add Linter version.
+type LinterIssue struct {
+	Files  int
+	Issues int
+	Detail map[string]int
 }
 
 type Project struct {
@@ -92,8 +92,8 @@ func NewProject(coverages ...float64) *Project {
 		minLineCoverage: -1,
 		maxLineCoverage: -1,
 		quality: Quality{
-			LiterIssues: LiterIssue{
-				Linters: map[string]int{},
+			LinterIssues: LinterIssue{
+				Detail: map[string]int{},
 			},
 		},
 	}
@@ -296,9 +296,9 @@ func (p *Project) Build(files ...string) *Project {
 func (p *Project) Scan(args ...string) *Project {
 	log.Println("scan source code ......")
 	if strings.EqualFold(p.caller, messageHook) {
-		golangCiLinter.Scan(p, "--new-from-rev=HEAD")
+		linter.Scan(p, "--new-from-rev=HEAD")
 	} else {
-		golangCiLinter.Scan(p)
+		linter.Scan(p)
 		data, _ := json.Marshal(p.quality)
 		var prettyJSON bytes.Buffer
 		json.Indent(&prettyJSON, data, "", "\t")
