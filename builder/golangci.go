@@ -69,8 +69,9 @@ func (linter *Linter) parse(project *Project, data []byte) {
 	os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 
 	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From(IssueNode)
-	issue := project.quality.LinterIssues
-	//issue := &LinterIssue{}
+	//issue := project.quality.LinterIssues
+	issue := &LinterIssue{}
+
 	issue.Issues = jq.Count()
 	obj := jq.GroupBy("FromLinter").Get()
 	if m, ok := obj.(map[string][]interface{}); ok {
@@ -80,6 +81,7 @@ func (linter *Linter) parse(project *Project, data []byte) {
 	}
 	jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issue.Files = jq.Distinct("Pos.Filename").Count()
+	project.quality.LinterIssues = issue
 	if issue.Issues > 0 {
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
 		log.Println(color.YellowString("please check %s for detail", filepath.Join("target", "golangci-lint.json")))
