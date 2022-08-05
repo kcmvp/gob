@@ -39,11 +39,10 @@ func (linter *Linter) Scan(p *Project) {
 		fmt.Printf("failed to create directory %v", err)
 		os.Exit(1)
 	}
-	args := linter.args
+	args := append(linter.args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	if p.scanChanged {
 		args = append(linter.args, scanChangedFlag)
 	}
-	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	output, _ := exec.Command(linter.command, args...).CombinedOutput()
 	linter.parse(p, output)
 }
@@ -83,9 +82,9 @@ func (linter *Linter) parse(project *Project, data []byte) {
 			issue.Detail[k] = len(v)
 		}
 	}
+
 	jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issue.Files = jq.Distinct("Pos.Filename").Count()
-
 	if issue.Issues > 0 {
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
 		if project.scanChanged {

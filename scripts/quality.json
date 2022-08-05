@@ -6,11 +6,9 @@
 		"Line": 0
 	},
 	"LinterIssues": {
-		"Files": 0,
-		"Issues": 0,
+		"Files": 1,
+		"Issues": 1,
 		"Detail": {
-			"errcheck": 2,
-			"errchkjson": 1,
 			"gocritic": 1
 		}
 	}

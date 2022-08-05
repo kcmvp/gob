@@ -21,8 +21,7 @@ func main() {
 	checkMessage(string(input))
 	project := builder.NewProject().Clean().Scan()
 	if project.Quality().LinterIssues.Files > 0 {
-		log.Print(color.RedString("failed to commit the code"))
-		os.Exit(1)
+		log.Fatalln(color.RedString("failed to commit the code"))
 	}
 	os.Exit(0)
 }
