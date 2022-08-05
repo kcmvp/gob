@@ -16,10 +16,6 @@ import (
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
-type (
-	ParseF func(issue *LiterIssue, data []byte, file string)
-)
-
 const (
 	IssueNode   = "Issues"
 	golangCiCfg = ".golangci.yml"
@@ -28,7 +24,6 @@ const (
 type GolangCi struct {
 	command string
 	args    []string
-	parser  ParseF
 }
 
 var golangCiLinter = &GolangCi{
@@ -45,13 +40,12 @@ func (s *GolangCi) Scan(p *Project, args ...string) {
 	dir := filepath.Join(p.TargetDir(), s.command+".json")
 	args = append(s.args, args...)
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
-	msg, _ := exec.Command(s.command, args...).CombinedOutput()
-	fmt.Println(p.quality.LiterIssue)
-	fmt.Println(dir, msg)
-	//s.parser(&p.quality.LiterIssue, msg, dir)
+	output, _ := exec.Command(s.command, args...).CombinedOutput()
+	fmt.Println(p.quality.LiterIssues)
+	s.parse(p.quality.LiterIssues, output, dir)
 }
 
-var golangCiParser ParseF = func(issue *LiterIssue, data []byte, file string) {
+func (s *GolangCi) parse(issue LiterIssue, data []byte, file string) {
 	sc := bufio.NewScanner(strings.NewReader(string(data)))
 	var line string
 	for sc.Scan() {

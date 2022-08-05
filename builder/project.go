@@ -32,10 +32,10 @@ const (
 )
 
 type Quality struct {
-	Methods    int
-	Tests      int
-	Coverage   Coverage
-	LiterIssue LiterIssue
+	Methods     int
+	Tests       int
+	Coverage    Coverage
+	LiterIssues LiterIssue
 }
 
 type Coverage struct {
@@ -92,7 +92,7 @@ func NewProject(coverages ...float64) *Project {
 		minLineCoverage: -1,
 		maxLineCoverage: -1,
 		quality: Quality{
-			LiterIssue: LiterIssue{
+			LiterIssues: LiterIssue{
 				Linters: map[string]int{},
 			},
 		},

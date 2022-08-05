@@ -20,7 +20,7 @@ func main() {
 	input, _ := os.ReadFile(os.Args[1])
 	checkMessage(string(input))
 	project := builder.NewProject().Clean().Scan()
-	if project.Quality().LiterIssue.Files > 0 {
+	if project.Quality().LiterIssues.Files > 0 {
 		log.Print(color.RedString("failed to commit the code"))
 		os.Exit(1)
 	}
