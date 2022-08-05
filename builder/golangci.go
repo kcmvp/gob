@@ -70,6 +70,7 @@ func (linter *Linter) parse(project *Project, data []byte) {
 
 	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From(IssueNode)
 	issue := project.quality.LinterIssues
+	//issue := &LinterIssue{}
 	issue.Issues = jq.Count()
 	obj := jq.GroupBy("FromLinter").Get()
 	if m, ok := obj.(map[string][]interface{}); ok {

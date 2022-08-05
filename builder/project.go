@@ -35,7 +35,7 @@ type Quality struct {
 	Methods      int
 	Tests        int
 	Coverage     Coverage
-	LinterIssues LinterIssue
+	LinterIssues *LinterIssue
 }
 
 type Coverage struct {
@@ -92,7 +92,7 @@ func NewProject(coverages ...float64) *Project {
 		minLineCoverage: -1,
 		maxLineCoverage: -1,
 		quality: Quality{
-			LinterIssues: LinterIssue{
+			LinterIssues: &LinterIssue{
 				Detail: map[string]int{},
 			},
 		},
