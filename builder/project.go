@@ -35,7 +35,7 @@ type Quality struct {
 	Methods      int
 	Tests        int
 	Coverage     Coverage
-	LinterIssues *LinterIssue
+	LinterIssues LinterIssue
 }
 
 type Coverage struct {
@@ -59,8 +59,9 @@ type Project struct {
 	rootDir         string
 	scriptsDir      string
 	targetDir       string
-	quality         Quality
+	quality         *Quality
 	caller          string
+	scanChanged     bool
 }
 
 type testCase struct {
@@ -91,8 +92,8 @@ func NewProject(coverages ...float64) *Project {
 		moduleDir:       moduleDir(),
 		minLineCoverage: -1,
 		maxLineCoverage: -1,
-		quality: Quality{
-			LinterIssues: &LinterIssue{
+		quality: &Quality{
+			LinterIssues: LinterIssue{
 				Detail: map[string]int{},
 			},
 		},
@@ -123,7 +124,7 @@ func (p *Project) TargetDir() string {
 	return p.targetDir
 }
 
-func (p *Project) Quality() Quality {
+func (p *Project) Quality() *Quality {
 	return p.quality
 }
 
@@ -294,17 +295,17 @@ func (p *Project) Build(files ...string) *Project {
 func (p *Project) Scan(args ...string) *Project {
 	log.Println("scan source code ......")
 	if strings.EqualFold(p.caller, messageHook) {
-		linter.Scan(p, "--new-from-rev=HEAD")
-	} else {
-		linter.Scan(p)
-		data, _ := json.Marshal(p.quality)
-		var prettyJSON bytes.Buffer
-		json.Indent(&prettyJSON, data, "", "\t")
-		os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
-		if strings.EqualFold(p.caller, pushHook) && len(args) > 1 {
-			p.pushGard(args...)
-		}
+		p.scanChanged = true
 	}
+	linter.Scan(p)
+	data, _ := json.Marshal(p.quality)
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, data, "", "\t")
+	os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
+	if strings.EqualFold(p.caller, pushHook) && len(args) > 1 {
+		p.pushGard(args...)
+	}
+
 	return p
 }
 

@@ -6,13 +6,13 @@
 		"Line": 0.452
 	},
 	"LinterIssues": {
-		"Files": 4,
-		"Issues": 38,
+		"Files": 0,
+		"Issues": 0,
 		"Detail": {
 			"errcheck": 13,
 			"errchkjson": 1,
 			"errorlint": 1,
-			"gocritic": 1,
+			"gocritic": 2,
 			"goerr113": 3,
 			"gosec": 3,
 			"gosimple": 2,

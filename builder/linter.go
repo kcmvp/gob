@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	IssueNode     = "Issues"
-	linterCfg     = ".golangci.yml"
-	linterCommand = "golangci-lint"
+	IssueNode       = "Issues"
+	linterCfg       = ".golangci.yml"
+	linterCommand   = "golangci-lint"
+	scanChangedFlag = "--new-from-rev=HEAD"
 )
 
 type Linter struct {
@@ -32,13 +33,16 @@ var linter = &Linter{
 	args:    []string{"run", "-v", "./...", "--out-format=json"},
 }
 
-func (linter *Linter) Scan(p *Project, args ...string) {
+func (linter *Linter) Scan(p *Project) {
 	linter.validate()
 	if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
 		fmt.Printf("failed to create directory %v", err)
 		os.Exit(1)
 	}
-	args = append(linter.args, args...)
+	args := linter.args
+	if p.scanChanged {
+		args = append(linter.args, scanChangedFlag)
+	}
 	args = append(args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	output, _ := exec.Command(linter.command, args...).CombinedOutput()
 	linter.parse(p, output)
@@ -70,9 +74,7 @@ func (linter *Linter) parse(project *Project, data []byte) {
 
 	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From(IssueNode)
 
-	issue := &LinterIssue{
-		Detail: map[string]int{},
-	}
+	issue := project.Quality().LinterIssues
 
 	issue.Issues = jq.Count()
 	obj := jq.GroupBy("FromLinter").Get()
@@ -83,7 +85,7 @@ func (linter *Linter) parse(project *Project, data []byte) {
 	}
 	jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issue.Files = jq.Distinct("Pos.Filename").Count()
-	project.quality.LinterIssues = issue
+
 	if issue.Issues > 0 {
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
 		log.Println(color.YellowString("please check %s for detail", filepath.Join("target", "golangci-lint.json")))
