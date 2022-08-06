@@ -39,12 +39,34 @@ func (suit *ProjectSuit) BeforeTest(suiteName, testName string) {
 			if err != nil {
 				log.Fatalf("failed open the file %s", f)
 			}
-			defer gof.Close()
 			if _, err = gof.WriteString("//"); err != nil {
 				log.Fatalf("failed write the file %s, %+v", f, err)
 			}
+			gof.Close()
 		}
 	}
+}
+
+func CheckIfError(err error) {
+	if err == nil {
+		return
+	}
+	log.Fatalf("runs into error %+v", err)
+}
+
+func (suit *ProjectSuit) AfterTest(suitName, testName string) {
+	w, err := suit.repo.Worktree()
+	CheckIfError(err)
+
+	head, err := suit.repo.Head()
+	CheckIfError(err)
+	w.Add("builder/linter.go")
+	w.Add("builder/linter.go")
+
+	w.Checkout(&git.CheckoutOptions{
+		Hash: head.Hash(),
+	})
+
 }
 
 func (suit *ProjectSuit) TestScanCommitHook() {
