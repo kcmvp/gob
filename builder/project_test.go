@@ -60,8 +60,8 @@ func (suit *ProjectSuit) AfterTest(suitName, testName string) {
 
 	head, err := suit.repo.Head()
 	CheckIfError(err)
-	w.Add("builder/linter.go")
-	w.Add("builder/linter.go")
+	//w.Add("builder/linter.go")
+	//w.Add("builder/linter.go")
 
 	w.Checkout(&git.CheckoutOptions{
 		Hash: head.Hash(),
