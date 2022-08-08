@@ -301,15 +301,11 @@ func (p *Project) Scan(args ...string) *Project {
 	data, _ := json.Marshal(p.quality)
 	var prettyJSON bytes.Buffer
 	json.Indent(&prettyJSON, data, "", "\t")
-	os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
-	if strings.EqualFold(p.caller, pushHook) && len(args) > 1 {
-		p.pushGard(args...)
+	os.WriteFile(filepath.Join(p.targetDir, quality), prettyJSON.Bytes(), os.ModePerm)
+	if p.quality.Methods > 0 {
+		os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
 	}
-
 	return p
-}
-
-func (p *Project) pushGard(revs ...string) {
 }
 
 func ProjectRoot(dir string) string {

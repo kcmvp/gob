@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -33,17 +32,17 @@ func (suit *ProjectSuit) SetupTest() {
 
 func (suit *ProjectSuit) BeforeTest(suiteName, testName string) {
 	if strings.Contains(testName, "CommitHook") {
-		suit.project.scanChanged = true
-		for _, f := range []string{"linter.go", "project.go"} {
-			gof, err := os.OpenFile(filepath.Join(suit.project.ModuleDir(), "builder", f), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-			if err != nil {
-				log.Fatalf("failed open the file %s", f)
-			}
-			if _, err = gof.WriteString("//"); err != nil {
-				log.Fatalf("failed write the file %s, %+v", f, err)
-			}
-			gof.Close()
-		}
+		//suit.project.scanChanged = true
+		//for _, f := range []string{"linter.go", "project.go"} {
+		//	gof, err := os.OpenFile(filepath.Join(suit.project.ModuleDir(), "builder", f), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		//	if err != nil {
+		//		log.Fatalf("failed open the file %s", f)
+		//	}
+		//	if _, err = gof.WriteString("//"); err != nil {
+		//		log.Fatalf("failed write the file %s, %+v", f, err)
+		//	}
+		//	gof.Close()
+		//}
 	}
 }
 
@@ -52,21 +51,6 @@ func CheckIfError(err error) {
 		return
 	}
 	log.Fatalf("runs into error %+v", err)
-}
-
-func (suit *ProjectSuit) AfterTest(suitName, testName string) {
-	w, err := suit.repo.Worktree()
-	CheckIfError(err)
-
-	head, err := suit.repo.Head()
-	CheckIfError(err)
-	//w.Add("builder/linter.go")
-	//w.Add("builder/linter.go")
-
-	w.Checkout(&git.CheckoutOptions{
-		Hash: head.Hash(),
-	})
-
 }
 
 func (suit *ProjectSuit) TestScanCommitHook() {

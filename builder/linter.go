@@ -63,15 +63,14 @@ func (linter *Linter) parse(project *Project, data []byte) {
 			log.Println(cline)
 		}
 	}
+
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
-		if e, ok := err.(*json.SyntaxError); ok {
-			log.Printf("syntax error at byte offset %d", e.Offset)
-		}
+		log.Fatalln(color.RedString("runs into error %s", err))
 	}
 	os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 
-	jq := gojsonq.New().FromString(string(prettyJSON.Bytes())).From(IssueNode)
+	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 
 	issue := project.Quality().LinterIssues
 
@@ -85,10 +84,19 @@ func (linter *Linter) parse(project *Project, data []byte) {
 
 	jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issue.Files = jq.Distinct("Pos.Filename").Count()
-	if issue.Issues > 0 {
+	if issue.Issues > 0 { //nolint:nestif
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
 		if project.scanChanged {
-			fmt.Printf("hello")
+			jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode).Select("FromLinter", "Text", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
+			lines := jq.Get()
+			if v, ok := lines.([]interface{}); ok {
+				for _, m := range v {
+					if mm, ok := m.(map[string]interface{}); ok {
+						log.Println(color.RedString("%v-%v %v:%v - %v", mm["FromLinter"], mm["File"], mm["Line"], mm["Column"], mm["Text"]))
+					}
+				}
+			}
+			log.Fatalln(color.RedString("linters validation failed"))
 		}
 		log.Println(color.YellowString("please check %s for detail", filepath.Join("target", "golangci-lint.json")))
 	} else {
