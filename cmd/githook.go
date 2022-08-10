@@ -20,7 +20,7 @@ var templateDir embed.FS
 
 func supportedHooks() map[string]string {
 	return map[string]string{
-		"commit-msg": "message_hook.go",
+		"commit-msg": "commit_message.go",
 		"pre-push":   "push_hook.go",
 	}
 }

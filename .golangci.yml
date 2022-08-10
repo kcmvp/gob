@@ -31,8 +31,8 @@ linters:
     - module
     - performance
     - sql
-#    - style
-#    - test
+    #    - style
+    #    - test
     - unused
 issues:
   fix: true

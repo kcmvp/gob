@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"log"
@@ -13,7 +12,6 @@ import (
 type ProjectSuit struct {
 	suite.Suite
 	project *Project
-	repo    *git.Repository
 }
 
 func TestProjectSuit(t *testing.T) {
@@ -21,13 +19,8 @@ func TestProjectSuit(t *testing.T) {
 }
 
 func (suit *ProjectSuit) SetupTest() {
-	suit.project = NewProject()
+	suit.project = NewProject(DefaultHookCfg())
 	os.Chdir(suit.project.ModuleDir())
-	if repo, err := git.PlainOpen(suit.project.ModuleDir()); err != nil {
-		log.Fatalf("failed to read git repository %+v", err)
-	} else {
-		suit.repo = repo
-	}
 }
 
 func (suit *ProjectSuit) BeforeTest(suiteName, testName string) {
