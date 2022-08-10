@@ -3,7 +3,7 @@
 	"Tests": 24,
 	"Coverage": {
 		"Method": 0.457,
-		"Line": 0.24600000000000002
+		"Line": 0.244
 	},
 	"LinterIssues": {
 		"Files": 0,
