@@ -1,4 +1,4 @@
-//go:build gbt
+////go:build gbt
 
 package main
 
@@ -19,5 +19,5 @@ func main() {
 		os.Exit(0)
 	}
 	fmt.Println(refs)
-	builder.NewProject(builder.DefaultHookCfg()).Clean().Test().Scan(refs)
+	builder.NewProject(builder.DefaultHookCfg()).Clean().Test().Scan(refs...)
 }
