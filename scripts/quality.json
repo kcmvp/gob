@@ -3,11 +3,13 @@
 	"Tests": 24,
 	"Coverage": {
 		"Method": 0.457,
-		"Line": 0.244
+		"Line": 0.239
 	},
 	"LinterIssues": {
-		"Files": 0,
-		"Issues": 0,
-		"Detail": {}
+		"Files": 1,
+		"Issues": 1,
+		"Detail": {
+			"ineffassign": 1
+		}
 	}
 }

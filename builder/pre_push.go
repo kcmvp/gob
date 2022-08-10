@@ -38,20 +38,10 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error
 	// 1: should be the same (scripts/quality.json and target/quality.json)
 	// 2: should no degrade in test coverage and linter
 	data, err := os.ReadFile(filepath.Join(project.scriptsDir, quality))
-	if err != nil {
-		return err
-	}
+	FatalIfError(err)
 	previous := Quality{}
 	err = json.Unmarshal(data, &previous)
-	if err != nil {
-		return err
-	}
-
-	h, _ := gitHook.rep.Head()
-	fmt.Println(h.Hash())
-
-	fmt.Println(args)
-	os.Exit(1)
+	FatalIfError(err)
 
 	cm := project.quality.Coverage.Method
 	cl := project.quality.Coverage.Line
@@ -63,6 +53,26 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error
 		log.Println(color.RedString(msg))
 		return errors.New(msg)
 	}
+
+	// trace the changes
+	f := filepath.Join(project.scriptsDir, quality)
+	cmItera, err := gitHook.rep.Log(&git.LogOptions{
+		All:      true,
+		FileName: &f,
+	})
+	FatalIfError(err)
+	commit, err := cmItera.Next()
+	FatalIfError(err)
+	if commit != nil {
+		prev, err := commit.File(f)
+		FatalIfError(err)
+		content, err := prev.Contents()
+		FatalIfError(err)
+		fmt.Println(content)
+	}
+
+	fmt.Println(args)
+	os.Exit(1)
 
 	// l, err := gitHook.rep.CommitObject(plumbing.NewHash(refs[1]))
 	// common.FatalIfError(err)
