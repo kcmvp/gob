@@ -2,6 +2,7 @@ package builder
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -37,10 +38,14 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error
 	// 1: should be the same (scripts/quality.json and target/quality.json)
 	// 2: should no degrade in test coverage and linter
 	data, err := os.ReadFile(filepath.Join(project.scriptsDir, quality))
-	FatalIfError(err)
+	if err != nil {
+		return err
+	}
 	previous := Quality{}
 	err = json.Unmarshal(data, &previous)
-	FatalIfError(err)
+	if err != nil {
+		return err
+	}
 
 	cm := project.quality.Coverage.Method
 	cl := project.quality.Coverage.Line
@@ -48,7 +53,9 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error
 	pl := previous.Coverage.Line
 
 	if cm != pm || cl != pl {
-		log.Fatalln(color.RedString("test coverage decrease method : %f -> %f, line: %f -> %s", pm, cm, pl, cl))
+		msg := "test coverage changed, please run 'go run scripts/builder.go' to update"
+		log.Println(color.RedString(msg))
+		return errors.New(msg)
 	}
 	fmt.Println(args)
 

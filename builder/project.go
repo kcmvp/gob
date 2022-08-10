@@ -222,7 +222,9 @@ func (project *Project) Test(args ...string) *Project {
 				log.Println(color.RedString(line))
 			}
 		}
+		os.Exit(1)
 	}
+
 	os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm)
 	//  go tool cover -func ./targetDir/coverage.data
 	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
@@ -263,17 +265,20 @@ func (project *Project) Scan(args ...string) *Project {
 	project.gitHook.beforeScan(args...)
 	linter.Scan(project)
 
+	project.saveReport(filepath.Join(project.targetDir, quality))
+	project.gitHook.afterScan(project, args...)
+
+	return project
+}
+
+func (project *Project) saveReport(file string) {
 	data, err := json.Marshal(project.quality)
 	FatalIfError(err)
 	var prettyJSON bytes.Buffer
 	err = json.Indent(&prettyJSON, data, "", "\t")
 	FatalIfError(err)
-	err = os.WriteFile(filepath.Join(project.targetDir, quality), prettyJSON.Bytes(), os.ModePerm)
+	err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 	FatalIfError(err)
-
-	project.gitHook.afterScan(project, args...)
-
-	return project
 }
 
 // func projectRoot(dir string) string {

@@ -110,12 +110,8 @@ func (gitHook *GitHook) afterScan(project *Project, args ...string) {
 	switch gitHook.event {
 	case PrePush:
 		err = gitHook.prePushAfterScan(project, args...)
-	case CommitMessage:
-		err = gitHook.commitMessageAfterScan(project)
-	case None:
-
 	default:
-		//
+		project.saveReport(filepath.Join(project.scriptsDir, quality))
 	}
 	if err != nil {
 		os.Exit(1)

@@ -5,10 +5,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/kcmvp/gbt/builder"
-	"log"
 	"os"
 	"strings"
 )
@@ -17,50 +14,10 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	line, _ := reader.ReadString('\n')
 	refs := strings.Fields(line)
-	// do nothing for push delete
+	// do nothing for push delete, merge
 	if strings.Contains(refs[0], "delete") {
 		os.Exit(0)
 	}
-	//_, file, _, ok := runtime.Caller(0)
-	//fmt.Printf(filepath.Dir(file))
-	//os.Exit(1)
-	// run test for all the modules
-
-	project := builder.NewProject(0.35, 0.85)
-	rep, err := git.PlainOpen(project.RootDir())
-	checkIfError(err)
-	w, err := rep.Worktree()
-	checkIfError(err)
-	status, err := w.Status()
-	checkIfError(err)
-	// check uncommitted changes by git status --porcelain
-	if len(status) > 0 {
-		fmt.Println("uncommitted files found, please commit them first")
-		fmt.Printf("%+v", status)
-		os.Exit(1)
-	}
-
-	project.Clean().Test()
-
-	// check coverage
-	l, err := rep.CommitObject(plumbing.NewHash(refs[1]))
-	r, err := rep.CommitObject(plumbing.NewHash(refs[3]))
-	p, err := r.Patch(l)
-	checkIfError(err)
-	for _, patch := range p.FilePatches() {
-		f, t := patch.Files()
-		fmt.Printf(f.Path())
-		fmt.Printf(t.Path())
-	}
-
-	os.Exit(1)
-
-}
-
-func checkIfError(err error) {
-	if err == nil {
-		return
-	} else {
-		log.Fatalf("runs into error %v", err)
-	}
+	fmt.Println(refs)
+	builder.NewProject(builder.DefaultHookCfg()).Clean().Test().Scan(refs)
 }

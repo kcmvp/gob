@@ -13,19 +13,11 @@ import (
 	"strings"
 
 	"github.com/kcmvp/gbt/builder"
-
 	"github.com/spf13/cobra"
 )
 
 //go:embed template/*.tmpl
 var templateDir embed.FS
-
-// func supportedHooks() map[string]string {
-//	return map[string]string{
-//		"commit-msg": "commit_message.go",
-//		"pre-push":   "push_hook.go",
-//	}
-//}
 
 // githookCmd represents the githook command.
 var githookCmd = &cobra.Command{

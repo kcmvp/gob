@@ -1,0 +1,15 @@
+{
+	"Methods": 35,
+	"Tests": 24,
+	"Coverage": {
+		"Method": 0.457,
+		"Line": 0.24600000000000002
+	},
+	"LinterIssues": {
+		"Files": 1,
+		"Issues": 1,
+		"Detail": {
+			"gosimple": 1
+		}
+	}
+}

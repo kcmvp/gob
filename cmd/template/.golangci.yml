@@ -17,7 +17,7 @@ linters:
     - unused
     - varcheck
     - gosec
-    - gofumpt
+#    - gofumpt
     - nosnakecase
     - goconst
   presets:

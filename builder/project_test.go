@@ -1,3 +1,5 @@
+//go:build integrated
+
 package builder
 
 import (
@@ -44,6 +46,10 @@ func CheckIfError(err error) {
 		return
 	}
 	log.Fatalf("runs into error %+v", err)
+}
+
+func (suit *ProjectSuit) TestCoverage() {
+	suit.project.Clean().Test()
 }
 
 func (suit *ProjectSuit) TestScanCommitHook() {
