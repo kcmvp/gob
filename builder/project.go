@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,8 +36,8 @@ type Quality struct {
 }
 
 type Coverage struct {
-	Method float64
-	Line   float64
+	Method string
+	Line   string
 }
 
 // @todo rename to Linter
@@ -155,7 +154,7 @@ func (project *Project) setupHook(cfg *HookCfg) {
 	gitHook.validate()
 }
 
-func (project *Project) processTestResult() {
+func (project *Project) buildTestReport() {
 	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))
 	if err != nil {
 		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(project.targetDir, rawTestReport)))
@@ -183,9 +182,9 @@ func (project *Project) processTestResult() {
 		text := scanner.Text()
 		items := strings.Fields(text)
 		coverage, _ := strconv.ParseFloat(strings.TrimRight(items[2], "%"), 64)
-		coverage /= 100
+		//coverage /= 100
 		if strings.EqualFold(items[0], "total:") {
-			project.quality.Coverage.Line = coverage
+			project.quality.Coverage.Line = items[2]
 		} else {
 			project.quality.Methods++
 			if coverage > 0 {
@@ -193,7 +192,8 @@ func (project *Project) processTestResult() {
 			}
 		}
 	}
-	project.quality.Coverage.Method = math.Floor(float64(testedMethod)/float64(project.quality.Methods)*1000) / 1000
+	//project.quality.Coverage.Method = math.Floor(float64(testedMethod)/float64(project.quality.Methods)*1000) / 1000
+	project.quality.Coverage.Method = fmt.Sprintf("%.2f", float64(testedMethod)*100/float64(project.quality.Methods))
 }
 
 func (project *Project) Clean() *Project {
@@ -230,7 +230,7 @@ func (project *Project) Test(args ...string) *Project {
 	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
 	out, _ = exec.Command("go", params...).CombinedOutput()
 	os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)
-	project.processTestResult()
+	project.buildTestReport()
 	log.Println(color.CyanString("total tests :%d, line coverage: %f, method coverage %f", project.quality.Tests, project.quality.Coverage.Line, project.quality.Coverage.Method))
 	return project
 }
