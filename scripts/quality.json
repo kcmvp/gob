@@ -2,8 +2,8 @@
 	"Methods": 35,
 	"Tests": 24,
 	"Coverage": {
-		"Method": 0.457,
-		"Line": 0.23800000000000002
+		"Method": "45.71",
+		"Line": "23.9%"
 	},
 	"LinterIssues": {
 		"Files": 0,

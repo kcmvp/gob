@@ -182,7 +182,7 @@ func (project *Project) buildTestReport() {
 		text := scanner.Text()
 		items := strings.Fields(text)
 		coverage, _ := strconv.ParseFloat(strings.TrimRight(items[2], "%"), 64)
-		//coverage /= 100
+
 		if strings.EqualFold(items[0], "total:") {
 			project.quality.Coverage.Line = items[2]
 		} else {
@@ -192,8 +192,8 @@ func (project *Project) buildTestReport() {
 			}
 		}
 	}
-	//project.quality.Coverage.Method = math.Floor(float64(testedMethod)/float64(project.quality.Methods)*1000) / 1000
-	project.quality.Coverage.Method = fmt.Sprintf("%.2f", float64(testedMethod)*100/float64(project.quality.Methods))
+
+	project.quality.Coverage.Method = fmt.Sprintf("%.2f%%", float64(testedMethod)*100/float64(project.quality.Methods))
 }
 
 func (project *Project) Clean() *Project {
