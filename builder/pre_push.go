@@ -47,6 +47,12 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error
 		return err
 	}
 
+	h, _ := gitHook.rep.Head()
+	fmt.Println(h.Hash())
+
+	fmt.Println(args)
+	os.Exit(1)
+
 	cm := project.quality.Coverage.Method
 	cl := project.quality.Coverage.Line
 	pm := previous.Coverage.Method
@@ -57,7 +63,6 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error
 		log.Println(color.RedString(msg))
 		return errors.New(msg)
 	}
-	fmt.Println(args)
 
 	// l, err := gitHook.rep.CommitObject(plumbing.NewHash(refs[1]))
 	// common.FatalIfError(err)
