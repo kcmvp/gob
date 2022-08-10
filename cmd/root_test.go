@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"github.com/kcmvp/gbt/builder"
 	"io"
 	"os"
 	"path/filepath"
@@ -44,7 +45,7 @@ func (s *CmdTestSuit) BeforeTest(suiteName, testName string) {
 
 //func (s *CmdTestSuit) AfterTest(suiteName, testName string) {
 //	if strings.Contains(testName, "TestGithookCmd") {
-//		for k := range supportedHooks() {
+//		for k := range builder.HookMap {
 //			os.RemoveAll(filepath.Join(".git", "hooks", k))
 //		}
 //	}
@@ -101,8 +102,8 @@ func (s *CmdTestSuit) TestGithookCmd() {
 	rootCmd.SetArgs([]string{"githook"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
-	for k, v := range supportedHooks() {
-		require.FileExists(s.T(), filepath.Join(".git", "hooks", k))
+	for k, v := range builder.HookMap {
+		require.FileExists(s.T(), filepath.Join(".git", "hooks", string(k)))
 		require.FileExists(s.T(), filepath.Join(scriptDir, v))
 	}
 }
@@ -113,8 +114,8 @@ func (s *CmdTestSuit) TestGithookCmdMultiple() {
 	rootCmd.SetArgs([]string{"githook"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
-	for k, v := range supportedHooks() {
-		require.FileExists(s.T(), filepath.Join(".git", "hooks", k))
+	for k, v := range builder.HookMap {
+		require.FileExists(s.T(), filepath.Join(".git", "hooks", string(k)))
 		require.FileExists(s.T(), filepath.Join(scriptDir, v))
 	}
 	err = rootCmd.Execute()
@@ -122,8 +123,8 @@ func (s *CmdTestSuit) TestGithookCmdMultiple() {
 	// data, _ := io.ReadAll(b)
 	// require.Contains(s.T(), string(data), "commit-msg exists")
 	// require.Contains(s.T(), string(data), "pre-push exists")
-	for k, v := range supportedHooks() {
-		require.FileExists(s.T(), filepath.Join(".git", "hooks", k))
+	for k, v := range builder.HookMap {
+		require.FileExists(s.T(), filepath.Join(".git", "hooks", string(k)))
 		require.FileExists(s.T(), filepath.Join(scriptDir, v))
 	}
 }

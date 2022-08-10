@@ -3,16 +3,16 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/fatih/color"
+	"github.com/go-git/go-git/v5"
 )
 
 func (gitHook *GitHook) prePushBeforeScan() error {
 	w, err := gitHook.rep.Worktree()
-	//common.FatalIfError(err)
 	if err != nil {
 		return err
 	}

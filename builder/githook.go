@@ -17,10 +17,10 @@ const (
 	None          HookEvent = ""
 	CommitMessage HookEvent = "commit-msg"
 	PrePush       HookEvent = "pre-push"
-	//DefaultMsgP             = `#[0-9]{1,7}:\s?\S{10,}`
+
 	// commit message contains two parts which separated by a ':'
 	// the first part is a '#' followed by numbers, the second part is the message;
-	// in most case you just need to adjust those numbers to satisfy your requirement
+	// in most case you just need to adjust those numbers to satisfy your requirement.
 	DefaultMsgP = `#[0-9]{1,7}:\s?(\S+\s?){10,}`
 )
 
