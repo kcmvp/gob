@@ -6,10 +6,8 @@
 		"Line": 0.24600000000000002
 	},
 	"LinterIssues": {
-		"Files": 1,
-		"Issues": 1,
-		"Detail": {
-			"gosimple": 1
-		}
+		"Files": 0,
+		"Issues": 0,
+		"Detail": {}
 	}
 }
