@@ -2,6 +2,7 @@ package builder
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 	"log"
@@ -31,7 +32,7 @@ func (gitHook *GitHook) prePushBeforeScan() error {
 	return err
 }
 
-func (gitHook *GitHook) prePushAfterScan(project *Project, refs ...string) {
+func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error {
 	// @todo check coverage & linter
 	// 1: should be the same (scripts/quality.json and target/quality.json)
 	// 2: should no degrade in test coverage and linter
@@ -49,6 +50,7 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, refs ...string) {
 	if cm != pm || cl != pl {
 		log.Fatalln(color.RedString("test coverage decrease method : %f -> %f, line: %f -> %s", pm, cm, pl, cl))
 	}
+	fmt.Println(args)
 
 	// l, err := gitHook.rep.CommitObject(plumbing.NewHash(refs[1]))
 	// common.FatalIfError(err)
@@ -60,4 +62,5 @@ func (gitHook *GitHook) prePushAfterScan(project *Project, refs ...string) {
 	//	f, t := patch.Files()
 	//	fmt.Printf(f.Path())
 	//}
+	return err
 }

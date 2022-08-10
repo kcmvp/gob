@@ -95,6 +95,11 @@ func (suit *CommitMessageSuit) TestCommitMessageFormat() {
 			args:   []string{"#123456: 你好 hello world!"},
 			result: nil,
 		},
+		{
+			name:   "newLine#2",
+			args:   []string{"#123456: 你好 \nhello world!"},
+			result: nil,
+		},
 	}
 	for _, tt := range tests {
 		suit.T().Run(tt.name, func(t *testing.T) {

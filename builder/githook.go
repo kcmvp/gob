@@ -24,9 +24,9 @@ const (
 	DefaultMsgP = `#[0-9]{1,7}:\s?(\S+\s?){10,}`
 )
 
-var hookMap = map[HookEvent]string{
-	CommitMessage: "message_hook.go",
-	PrePush:       "push_hook.go",
+var HookMap = map[HookEvent]string{
+	CommitMessage: "commit_message.go",
+	PrePush:       "pre_push.go",
 }
 
 type HookCfg struct {
@@ -67,7 +67,7 @@ func (gitHook *GitHook) validate() {
 	if gitHook.rep == nil {
 		log.Println(color.YellowString("ignore validate as %s is not valid repository", gitHook.rootDir))
 	}
-	for h, c := range hookMap {
+	for h, c := range HookMap {
 		hf := filepath.Join(gitHook.rootDir, git.GitDirName, "hooks", string(h))
 		c = filepath.Join(gitHook.rootDir, scriptDir, c)
 		if _, err := os.Stat(c); err != nil {
@@ -106,14 +106,18 @@ func (gitHook *GitHook) beforeScan(args ...string) {
 }
 
 func (gitHook *GitHook) afterScan(project *Project, args ...string) {
+	var err error
 	switch gitHook.event {
 	case PrePush:
-		gitHook.prePushAfterScan(project, args...)
+		err = gitHook.prePushAfterScan(project, args...)
 	case CommitMessage:
-		gitHook.commitMessageAfterScan(project, args...)
+		err = gitHook.commitMessageAfterScan(project)
 	case None:
 
 	default:
 		//
+	}
+	if err != nil {
+		os.Exit(1)
 	}
 }

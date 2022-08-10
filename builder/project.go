@@ -50,9 +50,7 @@ type LinterIssue struct {
 }
 
 type Project struct {
-	ctx context.Context
-	// maxLineCoverage float64
-	// minLineCoverage float64
+	ctx       context.Context
 	moduleDir string
 	// rootDir    string
 	scriptsDir string
@@ -129,6 +127,10 @@ func (project *Project) Ctx() context.Context {
 	return project.ctx
 }
 
+func (project *Project) GitHook() HookEvent {
+	return project.gitHook.event
+}
+
 func (project *Project) setupHook(cfg *HookCfg) {
 	// validate folders
 	gitHook := newGitHook(project.moduleDir, cfg)
@@ -143,7 +145,7 @@ func (project *Project) setupHook(cfg *HookCfg) {
 		if !more {
 			break
 		}
-		for k, v := range hookMap {
+		for k, v := range HookMap {
 			if strings.HasSuffix(frame.File, v) {
 				gitHook.event = k
 				break
