@@ -231,7 +231,7 @@ func (project *Project) Test(args ...string) *Project {
 	out, _ = exec.Command("go", params...).CombinedOutput()
 	os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)
 	project.buildTestReport()
-	log.Println(color.CyanString("total tests :%d, line coverage: %f, method coverage %f", project.quality.Tests, project.quality.Coverage.Line, project.quality.Coverage.Method))
+	log.Println(color.GreenString("total tests :%d, line coverage: %s, method coverage %s", project.quality.Tests, project.quality.Coverage.Line, project.quality.Coverage.Method))
 	return project
 }
 

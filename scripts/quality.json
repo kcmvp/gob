@@ -2,7 +2,7 @@
 	"Methods": 35,
 	"Tests": 24,
 	"Coverage": {
-		"Method": "45.71",
+		"Method": "45.71%",
 		"Line": "23.9%"
 	},
 	"LinterIssues": {
