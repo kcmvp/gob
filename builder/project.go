@@ -16,37 +16,18 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/kcmvp/gbt/builder/report"
 )
 
 const (
 	lineCoverageReport   = "line.data"
 	methodCoverageReport = "method.data"
 	rawTestReport        = "test.data"
-	quality              = "quality.json"
+	quality              = "report.json"
 	scriptDir            = "scripts"
 	scriptLine           = "go run %s $1 $2\n"
 	buildTarget          = "target"
 )
-
-type Quality struct {
-	Methods      int
-	Tests        int
-	Coverage     Coverage
-	LinterIssues *LinterIssue
-}
-
-type Coverage struct {
-	Method string
-	Line   string
-}
-
-// @todo rename to Linter
-// @ add Linter version.
-type LinterIssue struct {
-	Files  int
-	Issues int
-	Detail map[string]int
-}
 
 type Project struct {
 	ctx       context.Context
@@ -54,9 +35,8 @@ type Project struct {
 	// rootDir    string
 	scriptsDir string
 	targetDir  string
-	quality    *Quality
-	// hook            HookEvent
-	gitHook *GitHook
+	quality    *report.Quality
+	gitHook    *GitHook
 }
 
 type testCase struct {
@@ -85,8 +65,8 @@ func moduleDir() string {
 func NewProject(cfg *HookCfg) *Project {
 	project := &Project{
 		moduleDir: moduleDir(),
-		quality: &Quality{
-			LinterIssues: &LinterIssue{
+		quality: &report.Quality{
+			LinterIssues: &report.LinterIssue{
 				Detail: map[string]int{},
 			},
 		},
@@ -110,7 +90,7 @@ func (project *Project) TargetDir() string {
 	return project.targetDir
 }
 
-func (project *Project) Quality() *Quality {
+func (project *Project) Quality() *report.Quality {
 	return project.quality
 }
 

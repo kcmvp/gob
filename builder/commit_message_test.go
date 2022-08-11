@@ -9,22 +9,22 @@ import (
 	"testing"
 )
 
-type CommitMessageSuit struct {
+type CommitMessageSuite struct {
 	suite.Suite
 	project *Project
 }
 
-func (suit *CommitMessageSuit) SetupTest() {
-	suit.project = NewProject(DefaultHookCfg())
-	os.Chdir(suit.project.ModuleDir())
+func (suite *CommitMessageSuite) SetupTest() {
+	suite.project = NewProject(DefaultHookCfg())
+	os.Chdir(suite.project.ModuleDir())
 }
 
 func TestMessageSuit(t *testing.T) {
-	suite.Run(t, new(CommitMessageSuit))
+	suite.Run(t, new(CommitMessageSuite))
 }
 
-func (suit *CommitMessageSuit) TestCommitMessageFormat() {
-	errR := errors.New(color.RedString("commit message must follow %s", suit.project.gitHook.cfg.MsgPattern))
+func (suite *CommitMessageSuite) TestCommitMessageFormat() {
+	errR := errors.New(color.RedString("commit message must follow %s", suite.project.gitHook.cfg.MsgPattern))
 	tests := []struct {
 		name   string
 		args   []string
@@ -102,8 +102,8 @@ func (suit *CommitMessageSuit) TestCommitMessageFormat() {
 		},
 	}
 	for _, tt := range tests {
-		suit.T().Run(tt.name, func(t *testing.T) {
-			err := suit.project.gitHook.commitMessageBeforeScan(tt.args...)
+		suite.T().Run(tt.name, func(t *testing.T) {
+			err := suite.project.gitHook.commitMessageBeforeScan(tt.args...)
 			require.Equal(t, tt.result, err)
 		})
 	}

@@ -88,7 +88,7 @@ func (gitHook *GitHook) validate() {
 
 func (gitHook *GitHook) beforeScan(args ...string) {
 	// 1: make sure there are no uncommitted files
-	// 2: make sure the existence of scripts/quality.json and not in stage states
+	// 2: make sure the existence of scripts/report.json and not in stage states
 	var err error
 	switch gitHook.event {
 	case PrePush:

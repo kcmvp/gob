@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
+	"github.com/kcmvp/gbt/builder/report"
 )
 
 func (gitHook *GitHook) prePushBeforeScan() error {
@@ -35,11 +36,11 @@ func (gitHook *GitHook) prePushBeforeScan() error {
 
 func (gitHook *GitHook) prePushAfterScan(project *Project, args ...string) error {
 	// @todo check coverage & linter
-	// 1: should be the same (scripts/quality.json and target/quality.json)
+	// 1: should be the same (scripts/report.json and target/report.json)
 	// 2: should no degrade in test coverage and linter
 	data, err := os.ReadFile(filepath.Join(project.scriptsDir, quality))
 	FatalIfError(err)
-	previous := Quality{}
+	previous := report.Quality{}
 	err = json.Unmarshal(data, &previous)
 	FatalIfError(err)
 
