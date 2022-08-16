@@ -86,6 +86,7 @@ func builtin() []action {
 		}
 		frame, more = frames.Next()
 	}
+	os.Exit(1)
 	return nil
 }
 
