@@ -1,4 +1,4 @@
-package builder
+package githook
 
 import "github.com/stretchr/testify/suite"
 

@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/kcmvp/gbt/builder"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,11 +20,9 @@ import (
 )
 
 const (
-	scriptDir      = "scripts"
 	gbt            = "github.com/kcmvp/gbt"
 	_ctxModFileKey = "mod"
-
-	_ctxProjectRootKey = "projectRoot"
+	_ctxProject    = "currentProject"
 )
 
 var modules = []string{"github.com/kcmvp/gbt"}
@@ -30,7 +30,6 @@ var modules = []string{"github.com/kcmvp/gbt"}
 func importModule(ctx context.Context, module string, update bool) {
 	f := ctx.Value(_ctxModFileKey).(*modfile.File)
 	if strings.EqualFold(gbt, f.Module.Mod.Path) {
-		fmt.Printf("ignore %s\n", gbt)
 		return
 	}
 	has := false
@@ -56,14 +55,15 @@ func importModule(ctx context.Context, module string, update bool) {
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "gbt",
-	Short: "Generate go project scaffold",
-	Long:  `Generate go project scaffolds (builder, hook)`,
+	Short: "Generate go currentProject scaffold",
+	Long:  `Generate go currentProject scaffolds (builder, hook)`,
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, module := range modules {
 			importModule(cmd.Context(), module, false)
 		}
 	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		pwd, _ := os.Getwd()
 		data, err := os.ReadFile("go.mod")
 		if err != nil {
 			err = errors.New("please run the command in the module root directory")
@@ -72,7 +72,7 @@ var rootCmd = &cobra.Command{
 				return fmt.Errorf("invalid go.mod file")
 			} else {
 				ctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)
-				// ctx = context.WithValue(ctx, _ctxCmdOutputKey, cmd.OutOrStdout())
+				ctx = context.WithValue(ctx, _ctxProject, builder.NewProject(pwd))
 				cmd.SetContext(ctx)
 			}
 		}
@@ -139,4 +139,13 @@ func install(module string, testCommand ...string) error {
 		fmt.Println(string(out))
 		return nil
 	}
+}
+
+func currentProject(cmd *cobra.Command) *builder.Project {
+	if p, ok := cmd.Context().Value(_ctxProject).(*builder.Project); ok {
+		return p
+	} else {
+		log.Fatalln("failed to get current project")
+	}
+	return nil
 }

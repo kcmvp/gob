@@ -1,19 +1,7 @@
-package builder
+package linter
 
 import (
-	"bufio"
-	"bytes"
 	_ "embed"
-	"encoding/json"
-	"fmt"
-	"log"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-
-	"github.com/fatih/color"
-	"github.com/thedevsaddam/gojsonq/v2"
 )
 
 const (
@@ -33,21 +21,22 @@ var linter = &Linter{
 	args:    []string{"run", "-v", "./...", "--out-format=json"},
 }
 
-func (linter *Linter) Scan(p *Project) {
-	linter.validate()
-	if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
-		fmt.Printf("failed to create directory %v", err)
-		os.Exit(1)
-	}
-	args := append(linter.args, fmt.Sprintf("%s/...", p.ModuleDir()))
-	if p.gitHook.event == CommitMessage {
-		args = append(linter.args, scanChangedFlag)
-	}
-	output, _ := exec.Command(linter.command, args...).CombinedOutput()
-	linter.parse(p, output)
+func Scan(formatOnly bool) {
+	//linter.validate()
+	//if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
+	//	fmt.Printf("failed to create directory %v", err)
+	//	os.Exit(1)
+	//}
+	//args := append(linter.args, fmt.Sprintf("%s/...", p.ModuleDir()))
+	//if p.gitHook.event == hook.CommitMessage {
+	//	args = append(linter.args, scanChangedFlag)
+	//}
+	//output, _ := exec.Command(linter.command, args...).CombinedOutput()
+	//linter.parse(p, output)
 }
 
-func (linter *Linter) parse(project *Project, data []byte) {
+/*
+func (linter *Linter) parse(project *builder.Project, data []byte) {
 	file := filepath.Join(project.TargetDir(), linter.command+".json")
 	sc := bufio.NewScanner(strings.NewReader(string(data)))
 	var line string
@@ -56,7 +45,7 @@ func (linter *Linter) parse(project *Project, data []byte) {
 		line = sc.Text()
 		if strings.HasPrefix(line, "{\"Issues\"") {
 			break
-		} else if project.GitHook() != CommitMessage {
+		} else if project.GitHook() != hook.CommitMessage {
 			cline := line
 			if strings.HasPrefix(line, "level=warning") {
 				cline = color.YellowString(line)
@@ -87,7 +76,7 @@ func (linter *Linter) parse(project *Project, data []byte) {
 	issue.Files = jq.Distinct("Pos.Filename").Count()
 	if issue.Issues > 0 { //nolint:nestif
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
-		if project.GitHook() == CommitMessage {
+		if project.GitHook() == hook.CommitMessage {
 			jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode).Select("FromLinter", "Text", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
 			lines := jq.Get()
 			if v, ok := lines.([]interface{}); ok {
@@ -109,3 +98,4 @@ func (linter *Linter) validate() {
 		log.Fatalln(color.RedString("missed %s", linterCfg))
 	}
 }
+*/

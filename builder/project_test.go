@@ -21,7 +21,7 @@ func TestProjectSuit(t *testing.T) {
 }
 
 func (suit *ProjectSuit) SetupTest() {
-	suit.project = NewProject(DefaultHookCfg())
+	suit.project = NewProject(hook.DefaultHookCfg())
 	os.Chdir(suit.project.ModuleDir())
 }
 

@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/kcmvp/gbt/builder"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,12 +15,12 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-type CmdTestSuit struct {
+type CmdTestSuite struct {
 	suite.Suite
 	root, current string
 }
 
-func (s *CmdTestSuit) SetupTest() {
+func (s *CmdTestSuite) SetupTest() {
 	_, file, _, ok := runtime.Caller(0)
 	s.current = filepath.Dir(file)
 	if ok {
@@ -37,25 +36,17 @@ func (s *CmdTestSuit) SetupTest() {
 	}
 }
 
-func (s *CmdTestSuit) BeforeTest(suiteName, testName string) {
+func (s *CmdTestSuite) BeforeTest(suiteName, testName string) {
 	if strings.EqualFold(testName, "TestRootCmdNotInRoot") {
 		os.Chdir(s.current)
 	}
 }
 
-//func (s *CmdTestSuit) AfterTest(suiteName, testName string) {
-//	if strings.Contains(testName, "TestGithookCmd") {
-//		for k := range builder.HookMap {
-//			os.RemoveAll(filepath.Join(".git", "hooks", k))
-//		}
-//	}
-//}
-
 func TestCmdTestSuit(t *testing.T) {
-	suite.Run(t, new(CmdTestSuit))
+	suite.Run(t, new(CmdTestSuite))
 }
 
-func (s *CmdTestSuit) TestRootCmdNotInRoot() {
+func (s *CmdTestSuite) TestRootCmdNotInRoot() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
 	rootCmd.SetArgs([]string{})
@@ -63,7 +54,7 @@ func (s *CmdTestSuit) TestRootCmdNotInRoot() {
 	require.Errorf(s.T(), err, "Error: please run the command in the module root directory")
 }
 
-func (s *CmdTestSuit) TestRootCmd() {
+func (s *CmdTestSuite) TestRootCmd() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
 	rootCmd.SetArgs([]string{})
@@ -75,7 +66,7 @@ func (s *CmdTestSuit) TestRootCmd() {
 	require.NotNil(s.T(), v)
 }
 
-func (s *CmdTestSuit) TestNonExists() {
+func (s *CmdTestSuite) TestNonExists() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
 	rootCmd.SetArgs([]string{"Hello"})
@@ -85,46 +76,13 @@ func (s *CmdTestSuit) TestNonExists() {
 	require.NoError(s.T(), err)
 }
 
-func (s *CmdTestSuit) TestBuilderCmd() {
+func (s *CmdTestSuite) TestBuilderCmd() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"builder"})
+	rootCmd.SetArgs([]string{"gen", "builder"})
 	rootCmd.Execute()
 	_, err := io.ReadAll(b)
 	require.NoError(s.T(), err)
 	require.FileExists(s.T(), filepath.Join("scripts", "builder.go"))
 	require.FileExists(s.T(), ".golangci.yml")
-}
-
-func (s *CmdTestSuit) TestGithookCmd() {
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"githook"})
-	err := rootCmd.Execute()
-	require.NoError(s.T(), err)
-	for k, v := range builder.HookMap {
-		require.FileExists(s.T(), filepath.Join(".git", "hooks", string(k)))
-		require.FileExists(s.T(), filepath.Join(scriptDir, v))
-	}
-}
-
-func (s *CmdTestSuit) TestGithookCmdMultiple() {
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"githook"})
-	err := rootCmd.Execute()
-	require.NoError(s.T(), err)
-	for k, v := range builder.HookMap {
-		require.FileExists(s.T(), filepath.Join(".git", "hooks", string(k)))
-		require.FileExists(s.T(), filepath.Join(scriptDir, v))
-	}
-	err = rootCmd.Execute()
-	require.NoError(s.T(), err)
-	// data, _ := io.ReadAll(b)
-	// require.Contains(s.T(), string(data), "commit-msg exists")
-	// require.Contains(s.T(), string(data), "pre-push exists")
-	for k, v := range builder.HookMap {
-		require.FileExists(s.T(), filepath.Join(".git", "hooks", string(k)))
-		require.FileExists(s.T(), filepath.Join(scriptDir, v))
-	}
 }
