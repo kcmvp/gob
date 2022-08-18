@@ -1,3 +1,4 @@
+version: {{.}}
 run:
   tests: false
   skip-dirs:

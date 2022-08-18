@@ -7,17 +7,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// genCmd represents the gen command
-var genCmd = &cobra.Command{
-	Use:   "gen",
-	Short: "Generate builder, githooks and other most common infra code",
+// setupCmd represents the setup command
+var setupCmd = &cobra.Command{
+	Use:   "setup",
+	Short: "Generate builder, git hook and other frameworks' scaffold",
 	//Run: func(cmd *cobra.Command, args []string) {
 	//	fmt.Println("gen called")
 	//},
 }
 
 func init() {
-	rootCmd.AddCommand(genCmd)
+	rootCmd.AddCommand(setupCmd)
 
 	// Here you will define your flags and configuration settings.
 

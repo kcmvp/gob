@@ -9,14 +9,14 @@ const DefaultHookMsg = `#[0-9]{1,7}:\s?(\S+\s?){10,}`
 
 type HookMsgPattern string
 
-type BuildOption struct {
+type buildOption struct {
 	MinCoverage float64
 	MaxCoverage float64
 	MsgPattern  HookMsgPattern
 }
 
-func DefaultOption() *BuildOption {
-	return &BuildOption{
+func defaultOption() *buildOption {
+	return &buildOption{
 		MinCoverage: 0.35,
 		MaxCoverage: 0.90,
 		MsgPattern:  DefaultHookMsg,

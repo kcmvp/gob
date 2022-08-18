@@ -1,4 +1,4 @@
-package report
+package builder
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ import (
 	"github.com/fatih/color"
 )
 
-type Quality struct {
+type Report struct {
 	Methods      int
 	Tests        int
 	Coverage     Coverage
@@ -51,7 +51,7 @@ func reporting() {
 
 }
 
-func CoverageReport(rawTestReport, methodCoverageReport string, quality *Quality) {
+func CoverageReport(rawTestReport, methodCoverageReport string, quality *Report) {
 	file, err := os.Open(rawTestReport)
 	if err != nil {
 		log.Fatalln(color.RedString("failed to open the file %v \n", rawTestReport))
@@ -100,7 +100,7 @@ func buildTestReport(rawData, methodData string) {
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	quality := Quality{}
+	quality := Report{}
 
 	testSet := map[string]bool{}
 	for scanner.Scan() {

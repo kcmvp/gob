@@ -2,34 +2,82 @@ package linter
 
 import (
 	_ "embed"
+	"github.com/kcmvp/gbt/infra"
+	"os/exec"
+	"strings"
 )
 
 const (
-	IssueNode       = "Issues"
-	linterCfg       = ".golangci.yml"
-	linterCommand   = "golangci-lint"
-	scanChangedFlag = "--new-from-rev=HEAD"
+	IssueNode   = "Issues"
+	Cfg         = ".golangci.yml"
+	cmd         = "golangci-lint"
+	changedOnly = "--new-from-rev=HEAD"
+	module      = "github.com/golangci/golangci-lint/cmd/golangci-lint"
 )
 
-type Linter struct {
-	command string
-	args    []string
+var linter infra.Installable
+
+func init() {
+	linter = infra.NewInstallable(module, cmd)
 }
 
-var linter = &Linter{
-	command: linterCommand,
-	args:    []string{"run", "-v", "./...", "--out-format=json"},
+func Install(ver string) (string, error) {
+	return linter.Install(ver, func() string {
+		output, err := exec.Command(cmd, "version").CombinedOutput()
+		if err == nil {
+			return strings.Fields(string(output))[3]
+		} else {
+			return ""
+		}
+	})
 }
 
-func Scan(formatOnly bool) {
-	//linter.validate()
+//func Setup(dir string) error {
+//	var ver string
+//	if bts, err := os.ReadFile(filepath.Join(dir, Cfg)); err != nil {
+//		log.Fatalln(color.RedString("can not find %s, please run 'gbt setup linter' to setup golangci-linter", Cfg))
+//	} else {
+//		ver = strings.Split(string(bts), "\n")[0]
+//		if strings.HasPrefix(ver, version) {
+//			t := strings.Split(ver, ":")
+//			if len(t) != 2 {
+//				log.Fatalln(color.RedString("could not get version of golangci-linter"))
+//			} else {
+//				ver = strings.TrimSpace(t[1])
+//			}
+//		} else {
+//			log.Fatalln(color.RedString("could not get version of golangci-linter"))
+//		}
+//	}
+//
+//	infra.GoInstall(GolangCi, ver, func(ver string) bool {
+//		output, err := exec.Command(LinterCommand, version).CombinedOutput()
+//		return err == nil && strings.Fields(string(output))[3] == ver
+//	})
+//	cmd := exec.Command("dd", "dd")
+//	return nil
+//}
+
+//type Linter struct {
+//	command string
+//	args    []string
+//}
+
+//var linter = &Linter{
+//	command: linterCommand,
+//	args:    []string{"run", "-v", "./...", "--out-format=json"},
+//}
+
+func Scan(dir string, formatOnly bool) {
+	//setup(dir)
+	//linter.Setup()
 	//if err := os.MkdirAll(p.TargetDir(), os.ModePerm); err != nil {
 	//	fmt.Printf("failed to create directory %v", err)
 	//	os.Exit(1)
 	//}
 	//args := append(linter.args, fmt.Sprintf("%s/...", p.ModuleDir()))
 	//if p.gitHook.event == hook.CommitMessage {
-	//	args = append(linter.args, scanChangedFlag)
+	//	args = append(linter.args, changedOnly)
 	//}
 	//output, _ := exec.Command(linter.command, args...).CombinedOutput()
 	//linter.parse(p, output)
@@ -62,7 +110,7 @@ func (linter *Linter) parse(project *builder.Project, data []byte) {
 
 	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 
-	issue := project.Quality().LinterIssues
+	issue := project.Report().LinterIssues
 
 	issue.Issues = jq.Count()
 	obj := jq.GroupBy("FromLinter").Get()
@@ -93,7 +141,7 @@ func (linter *Linter) parse(project *builder.Project, data []byte) {
 	}
 }
 
-func (linter *Linter) validate() {
+func (linter *Linter) Setup() {
 	if _, err := os.Stat(".golangci.yml"); err != nil {
 		log.Fatalln(color.RedString("missed %s", linterCfg))
 	}

@@ -8,15 +8,12 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gbt/builder"
 	"github.com/kcmvp/gbt/builder/githook"
 	"github.com/spf13/cobra"
-	"log"
 	"os"
 	"path/filepath"
-	"text/template"
 )
 
 //go:embed template/*.tmpl
@@ -39,50 +36,33 @@ var githookCmd = &cobra.Command{
 	},
 }
 
+type Hook struct {
+	Target string
+	Type   string
+}
+
 func generateHook(ctx context.Context) error {
 	project, _ := ctx.Value(_ctxProject).(*builder.Project)
-
 	scriptDir := project.ScriptDir()
 	gitDir := project.GirDir()
 
-	var err error
-	var file *os.File
-	var data []byte
-
 	for s, g := range githook.Hooks() {
-		v := fmt.Sprintf("%s.go", g)
-		abs, _ := filepath.Abs(filepath.Join(scriptDir, v))
-		file, err = os.OpenFile(abs, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm)
+		gof := fmt.Sprintf("%s.go", g)
+		abs, _ := filepath.Abs(filepath.Join(scriptDir, gof))
+		tf, err := templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", g)))
 		if err != nil {
-			if errors.Is(err, os.ErrExist) {
-				log.Println(color.YellowString("%s exists", v))
-			} else {
-				return fmt.Errorf("failed to create hook %+v", err)
-			}
-		} else {
-			if data, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", g))); err == nil {
-				t, _ := template.New(g).Parse(string(data))
-				if err = t.Execute(file, nil); err != nil {
-					return fmt.Errorf("failed to create hook %w, %s", err, s)
-				}
-			}
+			return err
 		}
-
-		file, err = os.Create(filepath.Join(gitDir, "hooks", s))
+		generateFile(string(tf), abs, nil, false)
+		tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl"))
 		if err != nil {
-			return fmt.Errorf("failed to create hook %w, %s", err, s)
-		} else {
-			// generate hook
-			data, _ = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", s)))
-			t, _ := template.New(s).Parse(string(data))
-			if err = t.Execute(file, abs); err != nil {
-				return fmt.Errorf("failed to create hook %w, %s", err, s)
-			}
+			return err
 		}
+		generateFile(string(tf), filepath.Join(gitDir, "hooks", s), Hook{abs, s}, true)
 	}
 	return nil
 }
 
 func init() {
-	genCmd.AddCommand(githookCmd)
+	setupCmd.AddCommand(githookCmd)
 }

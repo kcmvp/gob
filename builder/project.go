@@ -24,6 +24,7 @@ const (
 )
 
 type Project struct {
+	versioned bool
 	moduleDir string
 	scriptDir string
 	targetDir string
@@ -32,7 +33,6 @@ type Project struct {
 }
 
 func NewProject(root string) *Project {
-	//root := rootDir()
 	p := &Project{
 		moduleDir: root,
 		targetDir: filepath.Join(root, targetDir),
