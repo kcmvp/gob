@@ -23,7 +23,7 @@ const (
 	targetDir            = "target"
 )
 
-type Project struct {
+type project struct {
 	versioned bool
 	moduleDir string
 	scriptDir string
@@ -32,8 +32,8 @@ type Project struct {
 	gitVerify action
 }
 
-func NewProject(root string) *Project {
-	p := &Project{
+func newProject(root string) *project {
+	p := &project{
 		moduleDir: root,
 		targetDir: filepath.Join(root, targetDir),
 		scriptDir: filepath.Join(root, scriptDir),
@@ -45,23 +45,23 @@ func NewProject(root string) *Project {
 	return p
 }
 
-func (project *Project) ModuleDir() string {
+func (project *project) ModuleDir() string {
 	return project.moduleDir
 }
 
-func (project *Project) TargetDir() string {
+func (project *project) TargetDir() string {
 	return project.targetDir
 }
 
-func (project *Project) GirDir() string {
+func (project *project) GirDir() string {
 	return filepath.Join(project.ModuleDir(), ".git")
 }
 
-func (project *Project) ScriptDir() string {
+func (project *project) ScriptDir() string {
 	return project.scriptDir
 }
 
-func (project *Project) clean() {
+func (project *project) clean() {
 	log.Printf("clean directory %s \n", project.targetDir)
 	if err := os.RemoveAll(project.targetDir); err != nil {
 		log.Fatalln(color.RedString("failed to delete %s\n", project.targetDir))
@@ -69,7 +69,7 @@ func (project *Project) clean() {
 }
 
 // Test run the test with -race, -cover, -fuzz and -bench.
-func (project *Project) test(args ...string) {
+func (project *project) test(args ...string) {
 	log.Println("run unit test ......")
 	os.Chdir(project.moduleDir)
 	os.MkdirAll(project.targetDir, os.ModePerm)
@@ -99,7 +99,7 @@ func (project *Project) test(args ...string) {
 
 // Build walk from module directory and run build command for each executable
 // and place the executable at ${project_root}/bin; in case there are more than one executable.
-func (project *Project) build(files ...string) *Project {
+func (project *project) build(files ...string) *project {
 	targetFiles := files
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")
@@ -122,7 +122,7 @@ func (project *Project) build(files ...string) *Project {
 	return project
 }
 
-//func (project *Project) saveReport(file string) {
+//func (project *project) saveReport(file string) {
 //	data, err := json.Marshal(project.quality)
 //	FatalIfError(err)
 //	var prettyJSON bytes.Buffer

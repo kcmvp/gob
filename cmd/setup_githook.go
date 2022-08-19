@@ -27,7 +27,7 @@ var githookCmd = &cobra.Command{
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := os.Stat(git.GitDirName)
 		if errors.Is(err, os.ErrNotExist) {
-			err = fmt.Errorf("currentProject currentProject is not versioned in git: %w", err)
+			err = fmt.Errorf("project is not versioned in git: %w", err)
 		}
 		return err
 	},
@@ -42,9 +42,9 @@ type Hook struct {
 }
 
 func generateHook(ctx context.Context) error {
-	project, _ := ctx.Value(_ctxBuilder).(*builder.Project)
-	scriptDir := project.ScriptDir()
-	gitDir := project.GirDir()
+	builder, _ := ctx.Value(_ctxBuilder).(*builder.Builder)
+	scriptDir := builder.ScriptDir()
+	gitDir := filepath.Join(builder.RootDir(), ".git")
 
 	for s, g := range githook.Hooks() {
 		gof := fmt.Sprintf("%s.go", g)

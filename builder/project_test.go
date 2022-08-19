@@ -13,7 +13,7 @@ import (
 
 type ProjectSuit struct {
 	suite.Suite
-	project *Project
+	project *project
 }
 
 func TestProjectSuit(t *testing.T) {
@@ -21,7 +21,7 @@ func TestProjectSuit(t *testing.T) {
 }
 
 func (suit *ProjectSuit) SetupTest() {
-	suit.project = NewProject(hook.DefaultHookCfg())
+	suit.project = newProject(hook.DefaultHookCfg())
 	os.Chdir(suit.project.ModuleDir())
 }
 

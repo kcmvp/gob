@@ -39,7 +39,7 @@ var once sync.Once
 
 type Builder struct {
 	fsm     *fsm.FSM
-	project *Project
+	project *project
 	repo    *git.Repository
 	hook    action
 	report  *Report
@@ -62,7 +62,7 @@ func NewBuilder(dir ...string) *Builder {
 		}
 		instance = &Builder{
 			fsm.NewFSM(string(initialized), events(), callBacks()),
-			NewProject(root),
+			newProject(root),
 			repo,
 			action(hook),
 			&Report{},
@@ -153,6 +153,10 @@ func callBacks() fsm.Callbacks {
 
 func (builder *Builder) ScriptDir() string {
 	return builder.project.ScriptDir()
+}
+
+func (builder *Builder) RootDir() string {
+	return builder.project.ModuleDir()
 }
 
 func (builder *Builder) Run(actions ...action) {
