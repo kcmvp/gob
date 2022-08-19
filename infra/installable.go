@@ -80,7 +80,7 @@ func (i *defaultIns) Install(ver string) (string, error) {
 	installed := false
 	for _, v := range i.Installed() {
 		if installed = ver == v; installed {
-			log.Printf("use existing version of %s %s\n", i.cmd, ver)
+			break
 		}
 	}
 	if !installed {
