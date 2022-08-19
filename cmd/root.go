@@ -16,7 +16,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gbt/builder"
-
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
 )
@@ -59,7 +58,7 @@ var rootCmd = &cobra.Command{
 	Use:   "gbt",
 	Short: "Generate project scaffold",
 	Long:  `Generate project scaffolds (builder, hook)`,
-	//Run: func(cmd *cobra.Command, args []string) {
+	// Run: func(cmd *cobra.Command, args []string) {
 	//	for _, module := range modules {
 	//		importModule(cmd.Context(), module, false)
 	//	}

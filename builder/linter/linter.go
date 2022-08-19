@@ -2,11 +2,14 @@ package linter
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
@@ -64,23 +67,50 @@ func ConfiguredVer() (string, error) {
 	return ver, err
 }
 
-func Scan(dir string, scanChanged bool) {
+func Scan(target string, scanChanged, formatOnly bool) {
 	if ver, err := ConfiguredVer(); err == nil {
 		if ver, err = linter.Install(ver); err == nil {
-			msg := "scanning all source code"
-			args := []string{"run", "-v", "./...", dir, "--out-format=json"}
+			msg := "lint all source code"
+			// args := []string{"run", "-v", "./...", dir, "--out-format=json"}
+			args := []string{"run", "-v", "./...", "--out-format=json"}
 			if scanChanged {
 				args = append(args, "--new-from-rev=HEAD")
-				msg = "scanning the source from commit HEAD(only changes)"
+				msg = "lint source from commit HEAD"
 			}
 			log.Println(color.GreenString(msg))
 			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
 			output, _ := exec.Command(vCmd, args...).CombinedOutput()
-			fmt.Printf(string(output))
+			if !formatOnly {
+				save(target, output)
+			}
 		} else {
 			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", Cfg))
 		}
 	}
+}
+
+func save(target string, data []byte) {
+	file := filepath.Join(target, fmt.Sprintf("%s.json", cmd))
+	sc := bufio.NewScanner(strings.NewReader(string(data)))
+	var line string
+	for sc.Scan() {
+		line = sc.Text()
+		if strings.HasPrefix(line, "{\"Issues\"") {
+			break
+		} else {
+			cline := line
+			if strings.HasPrefix(line, "level=warning") {
+				cline = color.YellowString(line)
+			}
+			log.Println(cline)
+		}
+	}
+
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
+		log.Fatalln(color.RedString("runs into error %s", err))
+	}
+	os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 }
 
 /*

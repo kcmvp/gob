@@ -4,16 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gbt/builder/githook"
-	"github.com/kcmvp/gbt/builder/linter"
-	"github.com/looplab/fsm"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
+
 )
 
 type action string
@@ -120,7 +116,7 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			linter.Scan(instance.project.ModuleDir(), true)
+			linter.Scan(instance.project.ModuleDir(), true, true)
 		},
 		// commit-msg : validate message
 		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
@@ -133,9 +129,9 @@ func callBacks() fsm.Callbacks {
 		// Lint
 		string(Lint): func(ctx context.Context, event *fsm.Event) {
 			if len(instance.hook) > 0 {
-				linter.Scan(instance.project.ModuleDir(), true)
+				linter.Scan(instance.project.TargetDir(), true, false)
 			} else {
-				linter.Scan(instance.project.ModuleDir(), false)
+				linter.Scan(instance.project.TargetDir(), false, false)
 			}
 		},
 		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
