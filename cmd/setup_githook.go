@@ -8,12 +8,13 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gbt/builder"
 	"github.com/kcmvp/gbt/builder/githook"
 	"github.com/spf13/cobra"
-	"os"
-	"path/filepath"
 )
 
 //go:embed template/*.tmpl

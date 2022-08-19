@@ -6,6 +6,7 @@ package cmd
 
 import (
 	_ "embed"
+
 	"github.com/kcmvp/gbt/builder/linter"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,7 @@ var golangCiTmp string
 
 var version string
 
-// linterCmd represents the linter command
+// linterCmd represents the linter command.
 var linterCmd = &cobra.Command{
 	Use:   "linter",
 	Short: "setup linter for the project",

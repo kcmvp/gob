@@ -1,11 +1,12 @@
 package githook
 
 import (
-	"github.com/fatih/color"
 	"log"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 var hooks = []string{"pre-commit", "commit-msg", "pre-push"}

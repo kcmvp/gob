@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// setupCmd represents the setup command
+// setupCmd represents the setup command.
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Generate builder, git hook and other frameworks' scaffold",
-	//Run: func(cmd *cobra.Command, args []string) {
+	// Run: func(cmd *cobra.Command, args []string) {
 	//	fmt.Println("gen called")
-	//},
+	// },
 }
 
 func init() {

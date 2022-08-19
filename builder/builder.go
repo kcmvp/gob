@@ -18,24 +18,28 @@ import (
 
 type action string
 
-var initialized action = "initialized" //0
+var initialized action = "initialized" // 0
 
-// for pre-commit git hook
+// for pre-commit git hook.
 var preCommitHook action = "pre-commit" // -1
 
-// for commit-msg git hook
+// for commit-msg git hook.
 var commitMsgHook action = "commit-msg" // -2
 
-// for pre-push git hook
+// for pre-push git hook.
 var prePushHook action = "pre-push" // -3
 
-var Clean action = "clean" // 1
-var Lint action = "lint"   // 2
-var Test action = "test"   // 3
-var Build action = "build" // 4
+var (
+	Clean action = "clean" // 1
+	Lint  action = "lint"  // 2
+	Test  action = "test"  // 3
+	Build action = "build" // 4
+)
 
-var instance *Builder
-var once sync.Once
+var (
+	instance *Builder
+	once     sync.Once
+)
 
 type Builder struct {
 	fsm     *fsm.FSM
@@ -116,7 +120,7 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			linter.Scan(instance.project.ModuleDir(), true, true)
+			linter.Scan(instance.project.ModuleDir(), true)
 		},
 		// commit-msg : validate message
 		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
@@ -126,11 +130,12 @@ func callBacks() fsm.Callbacks {
 		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
 			log.Println("prePushHook")
 		},
-
 		// Lint
 		string(Lint): func(ctx context.Context, event *fsm.Event) {
-			if instance.hook == commitMsgHook {
-				linter.Scan(instance.project.ModuleDir(), true, false)
+			if len(instance.hook) > 0 {
+				linter.Scan(instance.project.ModuleDir(), true)
+			} else {
+				linter.Scan(instance.project.ModuleDir(), false)
 			}
 		},
 		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
@@ -176,7 +181,6 @@ func (builder *Builder) Run(actions ...action) {
 }
 
 func resort(builtIn action, actions ...action) []action {
-
 	switch builtIn {
 	case preCommitHook:
 		return []action{preCommitHook}

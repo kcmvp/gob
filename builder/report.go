@@ -48,15 +48,12 @@ type testCase struct {
 }
 
 func reporting() {
-
 }
 
 func (report *Report) GenLinterReport() {
-
 }
 
 func (report *Report) GenTestReport() {
-
 }
 
 func CoverageReport(rawTestReport, methodCoverageReport string, quality *Report) {

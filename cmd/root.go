@@ -7,14 +7,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/kcmvp/gbt/builder"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/fatih/color"
+	"github.com/kcmvp/gbt/builder"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
@@ -62,7 +63,7 @@ var rootCmd = &cobra.Command{
 	//	for _, module := range modules {
 	//		importModule(cmd.Context(), module, false)
 	//	}
-	//},
+	// },
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		pwd, _ := os.Getwd()
 		data, err := os.ReadFile("go.mod")

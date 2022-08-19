@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// lintCmd represents the lint command
+// lintCmd represents the lint command.
 var lintCmd = &cobra.Command{
 	Use:   "lint",
 	Short: "run code lint against project",

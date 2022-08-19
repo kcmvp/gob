@@ -4,12 +4,13 @@ import (
 	"bufio"
 	_ "embed"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/kcmvp/gbt/infra"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/kcmvp/gbt/infra"
 )
 
 const (
@@ -63,15 +64,19 @@ func ConfiguredVer() (string, error) {
 	return ver, err
 }
 
-func Scan(dir string, changesFile, formatOnly bool) {
+func Scan(dir string, scanChanged bool) {
 	if ver, err := ConfiguredVer(); err == nil {
-		if ver, err = linter.Install(ver); err != nil {
-			args := []string{"run", "-v", "./...", dir, "--out-format=json", "--new-from-rev=HEAD"}
+		if ver, err = linter.Install(ver); err == nil {
+			msg := "scanning all source code"
+			args := []string{"run", "-v", "./...", dir, "--out-format=json"}
+			if scanChanged {
+				args = append(args, "--new-from-rev=HEAD")
+				msg = "scanning the source from commit HEAD(only changes)"
+			}
+			log.Println(color.GreenString(msg))
 			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
 			output, _ := exec.Command(vCmd, args...).CombinedOutput()
-			if !formatOnly {
-				fmt.Printf(string(output))
-			}
+			fmt.Printf(string(output))
 		} else {
 			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", Cfg))
 		}

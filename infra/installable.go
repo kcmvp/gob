@@ -3,7 +3,6 @@ package infra
 import (
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
 	"io"
 	"io/fs"
 	"log"
@@ -11,6 +10,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 type VerFunc func(cmd string) string
@@ -47,9 +48,9 @@ func NewInstallable(module, cmd string, verFunc VerFunc) Installable {
 
 func (i *defaultIns) Installed() []string {
 	// Executables are installed in the directory named by the GOBIN environment
-	//variable, which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH
-	//environment variable is not set.
-	var vs []string
+	// variable, which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH
+	// environment variable is not set.
+	vm := map[string]byte{}
 	h, _ := os.UserHomeDir()
 	goBin := filepath.Join(h, "go", "bin")
 	filepath.Walk(goBin, func(path string, info fs.FileInfo, err error) error {
@@ -58,11 +59,15 @@ func (i *defaultIns) Installed() []string {
 		}
 		if !info.IsDir() && strings.HasPrefix(info.Name(), i.cmd) {
 			v := i.verFunc(info.Name())
-			vs = append(vs, v)
+			vm[v] = 1
 			i.tagVersion(path, v)
 		}
 		return err
 	})
+	var vs []string
+	for s := range vm {
+		vs = append(vs, s)
+	}
 	if len(vs) > 0 {
 		log.Printf("installed versions of %s: %+v \n", i.cmd, vs)
 	}

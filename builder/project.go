@@ -94,7 +94,6 @@ func (project *project) test(args ...string) {
 	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
 	out, _ = exec.Command("go", params...).CombinedOutput()
 	os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)
-	//log.Println(color.GreenString("total tests :%d, line coverage: %s, method coverage %s", project.quality.Tests, project.quality.Coverage.Line, project.quality.Coverage.Method))
 }
 
 // Build walk from module directory and run build command for each executable
@@ -122,7 +121,7 @@ func (project *project) build(files ...string) *project {
 	return project
 }
 
-//func (project *project) saveReport(file string) {
+// func (project *project) saveReport(file string) {
 //	data, err := json.Marshal(project.quality)
 //	FatalIfError(err)
 //	var prettyJSON bytes.Buffer
