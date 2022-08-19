@@ -15,7 +15,7 @@ import (
 	"text/template"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gbt/builder"
+	"github.com/kcmvp/gos/builder"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
 )

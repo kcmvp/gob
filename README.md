@@ -1,3 +1,3 @@
-# gbt
+# gos
 
 Generate golang project scaffold

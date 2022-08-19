@@ -1,11 +1,10 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
-	"github.com/kcmvp/gbt/builder"
+	"github.com/kcmvp/gos/builder"
 	"github.com/spf13/cobra"
 )
 

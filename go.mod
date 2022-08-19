@@ -1,4 +1,4 @@
-module github.com/kcmvp/gbt
+module github.com/kcmvp/gos
 
 go 1.18
 

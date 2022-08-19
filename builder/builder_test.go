@@ -1,7 +1,7 @@
 package builder_test
 
 import (
-	"github.com/kcmvp/gbt/builder"
+	"github.com/kcmvp/gos/builder"
 	"testing"
 )
 

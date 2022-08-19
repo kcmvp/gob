@@ -5,7 +5,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/kcmvp/gbt/builder"
+	"github.com/kcmvp/gos/builder"
 	"os"
 	"strings"
 )

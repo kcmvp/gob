@@ -1,8 +1,8 @@
-//go:build gbt
+//go:build gos
 
 package main
 
-import "github.com/kcmvp/gbt/builder"
+import "github.com/kcmvp/gos/builder"
 
 func main() {
 	//input, _ := os.ReadFile(os.Args[1])

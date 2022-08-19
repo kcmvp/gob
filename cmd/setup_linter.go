@@ -1,13 +1,12 @@
 /*
 Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
-
 */
 package cmd
 
 import (
 	_ "embed"
 
-	"github.com/kcmvp/gbt/builder/linter"
+	"github.com/kcmvp/gos/builder/linter"
 	"github.com/spf13/cobra"
 )
 

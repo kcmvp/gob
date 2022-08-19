@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gbt/infra"
+	"github.com/kcmvp/gos/infra"
 )
 
 const (

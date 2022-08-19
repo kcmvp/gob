@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gbt/builder"
-	"github.com/kcmvp/gbt/builder/githook"
+	"github.com/kcmvp/gos/builder"
+	"github.com/kcmvp/gos/builder/githook"
 	"github.com/spf13/cobra"
 )
 
