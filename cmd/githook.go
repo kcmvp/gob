@@ -12,18 +12,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kcmvp/gbt/builder"
 	"github.com/spf13/cobra"
 )
 
 //go:embed template/*.tmpl
 var templateDir embed.FS
-
-func supportedHooks() map[string]string {
-	return map[string]string{
-		"commit-msg": "message_hook.go",
-		"pre-push":   "push_hook.go",
-	}
-}
 
 // githookCmd represents the githook command.
 var githookCmd = &cobra.Command{
@@ -56,8 +50,8 @@ func generateHook(ctx context.Context) error {
 	root := ctx.Value(_ctxProjectRootKey).(string)
 	dir := filepath.Join(root, scriptDir)
 	os.MkdirAll(dir, os.ModePerm)
-	for k, v := range supportedHooks() {
-		hook := filepath.Join(root, ".git", "hooks", k)
+	for k, v := range builder.HookMap {
+		hook := filepath.Join(root, ".git", "hooks", string(k))
 		if f, err := os.OpenFile(hook, os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
 			fmt.Println(fmt.Sprintf("generate %s hook", k))
 			f.WriteString("#!/bin/sh\n\n")

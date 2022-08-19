@@ -1,0 +1,17 @@
+{
+	"Methods": 35,
+	"Tests": 24,
+	"Coverage": {
+		"Method": "45.71%",
+		"Line": "23.9%"
+	},
+	"LinterIssues": {
+		"Files": 1,
+		"Issues": 3,
+		"Detail": {
+			"deadcode": 1,
+			"errcheck": 1,
+			"gocritic": 1
+		}
+	}
+}

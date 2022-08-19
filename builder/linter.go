@@ -40,7 +40,7 @@ func (linter *Linter) Scan(p *Project) {
 		os.Exit(1)
 	}
 	args := append(linter.args, fmt.Sprintf("%s/...", p.ModuleDir()))
-	if p.scanChanged {
+	if p.gitHook.event == CommitMessage {
 		args = append(linter.args, scanChangedFlag)
 	}
 	output, _ := exec.Command(linter.command, args...).CombinedOutput()
@@ -51,11 +51,12 @@ func (linter *Linter) parse(project *Project, data []byte) {
 	file := filepath.Join(project.TargetDir(), linter.command+".json")
 	sc := bufio.NewScanner(strings.NewReader(string(data)))
 	var line string
+	// don't print detail in the commit message hook
 	for sc.Scan() {
 		line = sc.Text()
 		if strings.HasPrefix(line, "{\"Issues\"") {
 			break
-		} else {
+		} else if project.GitHook() != CommitMessage {
 			cline := line
 			if strings.HasPrefix(line, "level=warning") {
 				cline = color.YellowString(line)
@@ -86,17 +87,16 @@ func (linter *Linter) parse(project *Project, data []byte) {
 	issue.Files = jq.Distinct("Pos.Filename").Count()
 	if issue.Issues > 0 { //nolint:nestif
 		log.Println(color.YellowString("total %d issues are found in %d files", issue.Issues, issue.Files))
-		if project.scanChanged {
+		if project.GitHook() == CommitMessage {
 			jq = gojsonq.New().FromString(prettyJSON.String()).From(IssueNode).Select("FromLinter", "Text", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
 			lines := jq.Get()
 			if v, ok := lines.([]interface{}); ok {
 				for _, m := range v {
 					if mm, ok := m.(map[string]interface{}); ok {
-						log.Println(color.RedString("%v-%v %v:%v - %v", mm["FromLinter"], mm["File"], mm["Line"], mm["Column"], mm["Text"]))
+						log.Println(color.RedString("[%v]: %v %v:%v - %v", mm["FromLinter"], mm["File"], mm["Line"], mm["Column"], mm["Text"]))
 					}
 				}
 			}
-			log.Fatalln(color.RedString("linters validation failed"))
 		}
 		log.Println(color.YellowString("please check %s for detail", filepath.Join("target", "golangci-lint.json")))
 	} else {

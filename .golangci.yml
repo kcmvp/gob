@@ -13,7 +13,7 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
+#    - typecheck
     - unused
     - varcheck
     - gosec
@@ -21,18 +21,18 @@ linters:
     - nosnakecase
     - goconst
   presets:
-    - bugs
+#    - bugs
     - comment
     - complexity
-    - error
+#    - error
     - format
     - import
     - metalinter
     - module
     - performance
     - sql
-#    - style
-#    - test
+    #    - style
+    #    - test
     - unused
 issues:
   fix: true

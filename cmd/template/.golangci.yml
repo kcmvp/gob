@@ -13,11 +13,11 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
+#    - typecheck
     - unused
     - varcheck
     - gosec
-    - gofumpt
+#    - gofumpt
     - nosnakecase
     - goconst
   presets:

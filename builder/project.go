@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,51 +16,27 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/kcmvp/gbt/builder/report"
 )
 
 const (
 	lineCoverageReport   = "line.data"
 	methodCoverageReport = "method.data"
 	rawTestReport        = "test.data"
-	quality              = "quality.json"
+	quality              = "report.json"
 	scriptDir            = "scripts"
 	scriptLine           = "go run %s $1 $2\n"
 	buildTarget          = "target"
-	messageHook          = "message_hook.go"
-	pushHook             = "push_hook.go"
 )
 
-type Quality struct {
-	Methods      int
-	Tests        int
-	Coverage     Coverage
-	LinterIssues *LinterIssue
-}
-
-type Coverage struct {
-	Method float64
-	Line   float64
-}
-
-// @todo rename to Linter
-// @ add Linter version.
-type LinterIssue struct {
-	Files  int
-	Issues int
-	Detail map[string]int
-}
-
 type Project struct {
-	ctx             context.Context
-	maxLineCoverage float64
-	minLineCoverage float64
-	moduleDir       string
-	rootDir         string
-	scriptsDir      string
-	targetDir       string
-	quality         *Quality
-	caller          string
-	scanChanged     bool
+	ctx       context.Context
+	moduleDir string
+	// rootDir    string
+	scriptsDir string
+	targetDir  string
+	quality    *report.Quality
+	gitHook    *GitHook
 }
 
 type testCase struct {
@@ -87,71 +62,59 @@ func moduleDir() string {
 	panic("Can't figure out module directory")
 }
 
-func NewProject(coverages ...float64) *Project {
+func NewProject(cfg *HookCfg) *Project {
 	project := &Project{
-		moduleDir:       moduleDir(),
-		minLineCoverage: -1,
-		maxLineCoverage: -1,
-		quality: &Quality{
-			LinterIssues: &LinterIssue{
+		moduleDir: moduleDir(),
+		quality: &report.Quality{
+			LinterIssues: &report.LinterIssue{
 				Detail: map[string]int{},
 			},
 		},
 	}
-	if len(coverages) == 1 {
-		project.minLineCoverage = coverages[0]
-		project.maxLineCoverage = 100
-	} else if len(coverages) >= 2 {
-		project.minLineCoverage = coverages[0]
-		project.maxLineCoverage = coverages[1]
-	}
-	if project.minLineCoverage > 0 && project.minLineCoverage >= project.maxLineCoverage {
-		log.Fatalf(color.RedString("invalid coverage range %f ~ %f", project.minLineCoverage, project.maxLineCoverage))
-	}
-	project.setup()
+	project.targetDir = filepath.Join(project.moduleDir, buildTarget)
+	project.scriptsDir = filepath.Join(project.moduleDir, scriptDir)
+	err := os.MkdirAll(project.targetDir, os.ModePerm)
+	FatalIfError(err)
+	err = os.MkdirAll(project.scriptsDir, os.ModePerm)
+	FatalIfError(err)
+	// project.rootDir = projectRoot(project.moduleDir)
+	project.setupHook(cfg)
 	return project
 }
 
-func (p *Project) ModuleDir() string {
-	return p.moduleDir
+func (project *Project) ModuleDir() string {
+	return project.moduleDir
 }
 
-func (p *Project) RootDir() string {
-	return p.rootDir
+func (project *Project) TargetDir() string {
+	return project.targetDir
 }
 
-func (p *Project) TargetDir() string {
-	return p.targetDir
+func (project *Project) Quality() *report.Quality {
+	return project.quality
 }
 
-func (p *Project) Quality() *Quality {
-	return p.quality
+func (project *Project) WithCtx(ctx context.Context) *Project {
+	project.ctx = ctx
+	return project
 }
 
-func (p *Project) WithCtx(ctx context.Context) *Project {
-	p.ctx = ctx
-	return p
-}
-
-func (p *Project) Ctx() context.Context {
-	if p.ctx == nil {
-		p.ctx = context.Background()
+func (project *Project) Ctx() context.Context {
+	if project.ctx == nil {
+		project.ctx = context.Background()
 	}
-	return p.ctx
+	return project.ctx
 }
 
-func (p *Project) setup() {
-	hookMap := map[string]string{
-		"commit-msg": messageHook,
-		"pre-push":   pushHook,
-	}
-	// setup folders
-	p.targetDir = filepath.Join(p.moduleDir, buildTarget)
-	p.scriptsDir = filepath.Join(p.moduleDir, scriptDir)
-	os.MkdirAll(p.targetDir, os.ModePerm)
-	os.MkdirAll(p.scriptsDir, os.ModePerm)
-	p.rootDir = ProjectRoot(p.moduleDir)
-	// setup caller
+func (project *Project) GitHook() HookEvent {
+	return project.gitHook.event
+}
+
+func (project *Project) setupHook(cfg *HookCfg) {
+	// validate folders
+	gitHook := newGitHook(project.moduleDir, cfg)
+	project.gitHook = gitHook
+
 	pcs := make([]uintptr, 10)
 	n := runtime.Callers(0, pcs)
 	pcs = pcs[:n]
@@ -161,38 +124,20 @@ func (p *Project) setup() {
 		if !more {
 			break
 		}
-		for _, v := range hookMap {
+		for k, v := range HookMap {
 			if strings.HasSuffix(frame.File, v) {
-				p.caller = v
+				gitHook.event = k
 				break
 			}
 		}
 	}
-
-	// setup hooks
-	for h, c := range hookMap {
-		h = filepath.Join(p.RootDir(), ".git", "hooks", h)
-		c = filepath.Join(p.RootDir(), scriptDir, c)
-		if _, err := os.Stat(c); err != nil {
-			log.Fatalln(color.RedString("can not find %s, run command 'gbt githook' to initialize the hook", c))
-		}
-		command := fmt.Sprintf(scriptLine, c)
-		if lines, err := os.ReadFile(h); err != nil || !strings.Contains(string(lines), command) {
-			if f, err := os.Create(c); err == nil {
-				f.WriteString("#!/bin/sh\n\n")
-				f.WriteString(fmt.Sprintf("go run %s $1 $2\n", c))
-				f.Close()
-			} else {
-				log.Fatalln(color.RedString("failed to generate %s", h))
-			}
-		}
-	}
+	gitHook.validate()
 }
 
-func (p *Project) processTestResult() {
-	file, err := os.Open(filepath.Join(p.targetDir, rawTestReport))
+func (project *Project) buildTestReport() {
+	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))
 	if err != nil {
-		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(p.targetDir, rawTestReport)))
+		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(project.targetDir, rawTestReport)))
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -204,11 +149,11 @@ func (p *Project) processTestResult() {
 		json.Unmarshal([]byte(text), &c)
 		testSet[c.Test] = true
 	}
-	p.quality.Tests = len(testSet)
+	project.quality.Tests = len(testSet)
 
-	mc, err := os.Open(filepath.Join(p.targetDir, methodCoverageReport))
+	mc, err := os.Open(filepath.Join(project.targetDir, methodCoverageReport))
 	if err != nil {
-		log.Fatalln(color.RedString("failed to open the file %v", filepath.Join(p.targetDir, methodCoverageReport)))
+		log.Fatalln(color.RedString("failed to open the file %v", filepath.Join(project.targetDir, methodCoverageReport)))
 	}
 	defer mc.Close()
 	testedMethod := 0
@@ -217,33 +162,34 @@ func (p *Project) processTestResult() {
 		text := scanner.Text()
 		items := strings.Fields(text)
 		coverage, _ := strconv.ParseFloat(strings.TrimRight(items[2], "%"), 64)
-		coverage /= 100
+
 		if strings.EqualFold(items[0], "total:") {
-			p.quality.Coverage.Line = coverage
+			project.quality.Coverage.Line = items[2]
 		} else {
-			p.quality.Methods++
+			project.quality.Methods++
 			if coverage > 0 {
 				testedMethod++
 			}
 		}
 	}
-	p.quality.Coverage.Method = math.Floor(float64(testedMethod)/float64(p.quality.Methods)*1000) / 1000
+
+	project.quality.Coverage.Method = fmt.Sprintf("%.2f%%", float64(testedMethod)*100/float64(project.quality.Methods))
 }
 
-func (p *Project) Clean() *Project {
+func (project *Project) Clean() *Project {
 	log.Println("clean build directory ......")
-	if err := os.RemoveAll(p.targetDir); err != nil {
-		log.Fatalln(color.RedString("failed to delete %s\n", p.targetDir))
+	if err := os.RemoveAll(project.targetDir); err != nil {
+		log.Fatalln(color.RedString("failed to delete %s\n", project.targetDir))
 	}
-	return p
+	return project
 }
 
 // Test run the test with -race, -cover, -fuzz and -bench.
-func (p *Project) Test(args ...string) *Project {
+func (project *Project) Test(args ...string) *Project {
 	log.Println("run unit test ......")
-	os.Chdir(p.moduleDir)
-	os.MkdirAll(p.targetDir, os.ModePerm)
-	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(p.targetDir, lineCoverageReport), "./..."}
+	os.Chdir(project.moduleDir)
+	os.MkdirAll(project.targetDir, os.ModePerm)
+	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(project.targetDir, lineCoverageReport), "./..."}
 	if len(args) > 0 {
 		params = append(params, args...)
 	}
@@ -256,69 +202,94 @@ func (p *Project) Test(args ...string) *Project {
 				log.Println(color.RedString(line))
 			}
 		}
+		os.Exit(1)
 	}
-	os.WriteFile(filepath.Join(p.targetDir, rawTestReport), out, os.ModePerm)
+
+	os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm)
 	//  go tool cover -func ./targetDir/coverage.data
-	params = []string{"tool", "cover", "-func", filepath.Join(p.targetDir, lineCoverageReport)}
+	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
 	out, _ = exec.Command("go", params...).CombinedOutput()
-	os.WriteFile(filepath.Join(p.targetDir, methodCoverageReport), out, os.ModePerm)
-	p.processTestResult()
-	log.Println(color.CyanString("total tests :%d, line coverage: %f, method coverage %f", p.quality.Tests, p.quality.Coverage.Line, p.quality.Coverage.Method))
-	return p
+	os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)
+	project.buildTestReport()
+	log.Println(color.GreenString("total tests :%d, line coverage: %s, method coverage %s", project.quality.Tests, project.quality.Coverage.Line, project.quality.Coverage.Method))
+	return project
 }
 
 // Build walk from module directory and run build command for each executable
 // and place the executable at ${project_root}/bin; in case there are more than one executable.
-func (p *Project) Build(files ...string) *Project {
+func (project *Project) Build(files ...string) *Project {
 	targetFiles := files
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")
 	}
 	log.Println("build project ......")
-	os.MkdirAll(p.targetDir, os.ModePerm)
-	filepath.Walk(p.moduleDir, func(path string, info fs.FileInfo, err error) error {
+	os.MkdirAll(project.targetDir, os.ModePerm)
+	filepath.Walk(project.moduleDir, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
 		for _, t := range targetFiles {
 			if strings.EqualFold(info.Name(), t) {
-				if output, err := exec.Command("go", "build", "-o", p.targetDir, path).CombinedOutput(); err != nil {
+				if output, err := exec.Command("go", "build", "-o", project.targetDir, path).CombinedOutput(); err != nil {
 					fmt.Println(string(output))
 				}
 			}
 		}
 		return nil
 	})
-	return p
+	return project
 }
 
-func (p *Project) Scan(args ...string) *Project {
+func (project *Project) Scan(args ...string) *Project {
 	log.Println("scan source code ......")
-	if strings.EqualFold(p.caller, messageHook) {
-		p.scanChanged = true
-	}
-	linter.Scan(p)
-	data, _ := json.Marshal(p.quality)
-	var prettyJSON bytes.Buffer
-	json.Indent(&prettyJSON, data, "", "\t")
-	os.WriteFile(filepath.Join(p.targetDir, quality), prettyJSON.Bytes(), os.ModePerm)
-	if p.quality.Methods > 0 {
-		os.WriteFile(filepath.Join(p.scriptsDir, quality), prettyJSON.Bytes(), os.ModePerm)
-	}
-	return p
+	project.gitHook.beforeScan(args...)
+	linter.Scan(project)
+
+	project.saveReport(filepath.Join(project.targetDir, quality))
+	project.gitHook.afterScan(project, args...)
+
+	return project
 }
 
-func ProjectRoot(dir string) string {
-	for dir != string(os.PathSeparator) {
-		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
-			return dir
-		} else {
-			dir = filepath.Dir(dir)
-		}
+func (project *Project) saveReport(file string) {
+	data, err := json.Marshal(project.quality)
+	FatalIfError(err)
+	var prettyJSON bytes.Buffer
+	err = json.Indent(&prettyJSON, data, "", "\t")
+	FatalIfError(err)
+	err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
+	FatalIfError(err)
+}
+
+// func projectRoot(dir string) string {
+//	tmp := dir
+//	for tmp != string(os.PathSeparator) {
+//		if _, err := os.Stat(filepath.Join(tmp, git.GitDirName)); err == nil {
+//			return tmp
+//		} else {
+//			tmp = filepath.Dir(tmp)
+//		}
+//	}
+//	if tmp == string(os.PathSeparator) {
+//		log.Println(color.YellowString("%s is not valid git project", dir))
+//		dir = ""
+//	}
+//	return dir
+//}
+
+func FatalIfError(err error) {
+	if err == nil {
+		return
 	}
-	if dir == string(os.PathSeparator) {
-		fmt.Printf("project %s is not in the git repository\n", dir)
-		dir = ""
+	log.Println(color.RedString("runs into error %+v", err))
+	pcs := make([]uintptr, 10)
+	n := runtime.Callers(0, pcs)
+	pcs = pcs[:n]
+	frames := runtime.CallersFrames(pcs)
+	frame, more := frames.Next()
+	for more {
+		log.Println(color.RedString("%s#%d", frame.File, frame.Line))
+		frame, more = frames.Next()
 	}
-	return dir
+	os.Exit(1)
 }
