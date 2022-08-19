@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/fatih/color"
@@ -77,7 +78,7 @@ func Scan(target string, scanChanged, formatOnly bool) {
 				args = append(args, "--new-from-rev=HEAD")
 				msg = "lint source from commit HEAD"
 			}
-			log.Println(color.GreenString(msg))
+			log.Println(msg)
 			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
 			output, _ := exec.Command(vCmd, args...).CombinedOutput()
 			if !formatOnly {
@@ -92,17 +93,22 @@ func Scan(target string, scanChanged, formatOnly bool) {
 func save(target string, data []byte) {
 	file := filepath.Join(target, fmt.Sprintf("%s.json", cmd))
 	sc := bufio.NewScanner(strings.NewReader(string(data)))
+
+	r, _ := regexp.Compile(`".*"`)
+	n, _ := regexp.Compile(`config_reader|lintersdb|before processing:.*after processing:`)
 	var line string
 	for sc.Scan() {
 		line = sc.Text()
 		if strings.HasPrefix(line, "{\"Issues\"") {
 			break
 		} else {
-			cline := line
-			if strings.HasPrefix(line, "level=warning") {
-				cline = color.YellowString(line)
+			if strings.HasPrefix(line, "level=warning") || n.MatchString(line) {
+				msg := strings.ReplaceAll(r.FindString(line), "\"", "")
+				if strings.HasPrefix(line, "level=warning") {
+					msg = color.YellowString(msg)
+				}
+				log.Println(msg)
 			}
-			log.Println(cline)
 		}
 	}
 
@@ -111,6 +117,7 @@ func save(target string, data []byte) {
 		log.Fatalln(color.RedString("runs into error %s", err))
 	}
 	os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
+	log.Printf("lint report is generated at %s \n", file)
 }
 
 /*
