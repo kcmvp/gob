@@ -2,9 +2,6 @@ package builder
 
 import (
 	"bufio"
-	"bytes"
-	"context"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -12,11 +9,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gbt/builder/report"
 )
 
 const (
@@ -25,167 +20,56 @@ const (
 	rawTestReport        = "test.data"
 	quality              = "report.json"
 	scriptDir            = "scripts"
-	scriptLine           = "go run %s $1 $2\n"
-	buildTarget          = "target"
+	targetDir            = "target"
 )
 
-type Project struct {
-	ctx       context.Context
+type project struct {
+	versioned bool
 	moduleDir string
-	// rootDir    string
-	scriptsDir string
-	targetDir  string
-	quality    *report.Quality
-	gitHook    *GitHook
+	scriptDir string
+	targetDir string
+	gitCheck  action
+	gitVerify action
 }
 
-type testCase struct {
-	Package string
-	Test    string
-	Action  string
-	Output  string
-	Elapsed float64
-}
-
-func moduleDir() string {
-	_, file, _, ok := runtime.Caller(2)
-	if ok {
-		p := filepath.Dir(file)
-		for {
-			if _, err := os.ReadFile(filepath.Join(p, "go.mod")); err == nil {
-				return p
-			} else {
-				p = filepath.Dir(p)
-			}
-		}
+func newProject(root string) *project {
+	p := &project{
+		moduleDir: root,
+		targetDir: filepath.Join(root, targetDir),
+		scriptDir: filepath.Join(root, scriptDir),
 	}
-	panic("Can't figure out module directory")
+	err := os.MkdirAll(p.targetDir, os.ModePerm)
+	FatalIfError(err)
+	err = os.MkdirAll(p.scriptDir, os.ModePerm)
+	FatalIfError(err)
+	return p
 }
 
-func NewProject(cfg *HookCfg) *Project {
-	project := &Project{
-		moduleDir: moduleDir(),
-		quality: &report.Quality{
-			LinterIssues: &report.LinterIssue{
-				Detail: map[string]int{},
-			},
-		},
-	}
-	project.targetDir = filepath.Join(project.moduleDir, buildTarget)
-	project.scriptsDir = filepath.Join(project.moduleDir, scriptDir)
-	err := os.MkdirAll(project.targetDir, os.ModePerm)
-	FatalIfError(err)
-	err = os.MkdirAll(project.scriptsDir, os.ModePerm)
-	FatalIfError(err)
-	// project.rootDir = projectRoot(project.moduleDir)
-	project.setupHook(cfg)
-	return project
-}
-
-func (project *Project) ModuleDir() string {
+func (project *project) ModuleDir() string {
 	return project.moduleDir
 }
 
-func (project *Project) TargetDir() string {
+func (project *project) TargetDir() string {
 	return project.targetDir
 }
 
-func (project *Project) Quality() *report.Quality {
-	return project.quality
+func (project *project) GirDir() string {
+	return filepath.Join(project.ModuleDir(), ".git")
 }
 
-func (project *Project) WithCtx(ctx context.Context) *Project {
-	project.ctx = ctx
-	return project
+func (project *project) ScriptDir() string {
+	return project.scriptDir
 }
 
-func (project *Project) Ctx() context.Context {
-	if project.ctx == nil {
-		project.ctx = context.Background()
-	}
-	return project.ctx
-}
-
-func (project *Project) GitHook() HookEvent {
-	return project.gitHook.event
-}
-
-func (project *Project) setupHook(cfg *HookCfg) {
-	// validate folders
-	gitHook := newGitHook(project.moduleDir, cfg)
-	project.gitHook = gitHook
-
-	pcs := make([]uintptr, 10)
-	n := runtime.Callers(0, pcs)
-	pcs = pcs[:n]
-	frames := runtime.CallersFrames(pcs)
-	for {
-		frame, more := frames.Next()
-		if !more {
-			break
-		}
-		for k, v := range HookMap {
-			if strings.HasSuffix(frame.File, v) {
-				gitHook.event = k
-				break
-			}
-		}
-	}
-	gitHook.validate()
-}
-
-func (project *Project) buildTestReport() {
-	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))
-	if err != nil {
-		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(project.targetDir, rawTestReport)))
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-
-	testSet := map[string]bool{}
-	for scanner.Scan() {
-		text := scanner.Text()
-		c := testCase{}
-		json.Unmarshal([]byte(text), &c)
-		testSet[c.Test] = true
-	}
-	project.quality.Tests = len(testSet)
-
-	mc, err := os.Open(filepath.Join(project.targetDir, methodCoverageReport))
-	if err != nil {
-		log.Fatalln(color.RedString("failed to open the file %v", filepath.Join(project.targetDir, methodCoverageReport)))
-	}
-	defer mc.Close()
-	testedMethod := 0
-	scanner = bufio.NewScanner(mc)
-	for scanner.Scan() {
-		text := scanner.Text()
-		items := strings.Fields(text)
-		coverage, _ := strconv.ParseFloat(strings.TrimRight(items[2], "%"), 64)
-
-		if strings.EqualFold(items[0], "total:") {
-			project.quality.Coverage.Line = items[2]
-		} else {
-			project.quality.Methods++
-			if coverage > 0 {
-				testedMethod++
-			}
-		}
-	}
-
-	project.quality.Coverage.Method = fmt.Sprintf("%.2f%%", float64(testedMethod)*100/float64(project.quality.Methods))
-}
-
-func (project *Project) Clean() *Project {
-	log.Println("clean build directory ......")
+func (project *project) clean() {
+	log.Printf("clean directory %s \n", project.targetDir)
 	if err := os.RemoveAll(project.targetDir); err != nil {
 		log.Fatalln(color.RedString("failed to delete %s\n", project.targetDir))
 	}
-	return project
 }
 
 // Test run the test with -race, -cover, -fuzz and -bench.
-func (project *Project) Test(args ...string) *Project {
+func (project *project) test(args ...string) {
 	log.Println("run unit test ......")
 	os.Chdir(project.moduleDir)
 	os.MkdirAll(project.targetDir, os.ModePerm)
@@ -210,14 +94,11 @@ func (project *Project) Test(args ...string) *Project {
 	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
 	out, _ = exec.Command("go", params...).CombinedOutput()
 	os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)
-	project.buildTestReport()
-	log.Println(color.GreenString("total tests :%d, line coverage: %s, method coverage %s", project.quality.Tests, project.quality.Coverage.Line, project.quality.Coverage.Method))
-	return project
 }
 
 // Build walk from module directory and run build command for each executable
 // and place the executable at ${project_root}/bin; in case there are more than one executable.
-func (project *Project) Build(files ...string) *Project {
+func (project *project) build(files ...string) *project {
 	targetFiles := files
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")
@@ -240,41 +121,14 @@ func (project *Project) Build(files ...string) *Project {
 	return project
 }
 
-func (project *Project) Scan(args ...string) *Project {
-	log.Println("scan source code ......")
-	project.gitHook.beforeScan(args...)
-	linter.Scan(project)
-
-	project.saveReport(filepath.Join(project.targetDir, quality))
-	project.gitHook.afterScan(project, args...)
-
-	return project
-}
-
-func (project *Project) saveReport(file string) {
-	data, err := json.Marshal(project.quality)
-	FatalIfError(err)
-	var prettyJSON bytes.Buffer
-	err = json.Indent(&prettyJSON, data, "", "\t")
-	FatalIfError(err)
-	err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
-	FatalIfError(err)
-}
-
-// func projectRoot(dir string) string {
-//	tmp := dir
-//	for tmp != string(os.PathSeparator) {
-//		if _, err := os.Stat(filepath.Join(tmp, git.GitDirName)); err == nil {
-//			return tmp
-//		} else {
-//			tmp = filepath.Dir(tmp)
-//		}
-//	}
-//	if tmp == string(os.PathSeparator) {
-//		log.Println(color.YellowString("%s is not valid git project", dir))
-//		dir = ""
-//	}
-//	return dir
+// func (project *project) saveReport(file string) {
+//	data, err := json.Marshal(project.quality)
+//	FatalIfError(err)
+//	var prettyJSON bytes.Buffer
+//	err = json.Indent(&prettyJSON, data, "", "\t")
+//	FatalIfError(err)
+//	err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
+//	FatalIfError(err)
 //}
 
 func FatalIfError(err error) {
@@ -292,4 +146,19 @@ func FatalIfError(err error) {
 		frame, more = frames.Next()
 	}
 	os.Exit(1)
+}
+
+func testCaller() bool {
+	pcs := make([]uintptr, 10)
+	n := runtime.Callers(0, pcs)
+	pcs = pcs[:n]
+	frames := runtime.CallersFrames(pcs)
+	frame, more := frames.Next()
+	for more {
+		if strings.HasSuffix(frame.File, "_test.go") {
+			return true
+		}
+		frame, more = frames.Next()
+	}
+	return false
 }

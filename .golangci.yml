@@ -1,3 +1,5 @@
+# Don't remove this line, it controls the version of golangci-linter at runtime.
+# version: v1.48.0
 run:
   tests: false
   skip-dirs:
@@ -17,14 +19,14 @@ linters:
     - unused
     - varcheck
     - gosec
-    - gofumpt
+#    - gofumpt
     - nosnakecase
     - goconst
   presets:
-#    - bugs
+    - bugs
     - comment
     - complexity
-#    - error
+    - error
     - format
     - import
     - metalinter
