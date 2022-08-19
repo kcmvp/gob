@@ -23,7 +23,7 @@ import (
 const (
 	gbt            = "github.com/kcmvp/gbt"
 	_ctxModFileKey = "mod"
-	_ctxProject    = "currentProject"
+	_ctxBuilder    = "builder"
 )
 
 var modules = []string{"github.com/kcmvp/gbt"}
@@ -73,7 +73,7 @@ var rootCmd = &cobra.Command{
 				return fmt.Errorf("invalid go.mod file")
 			} else {
 				ctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)
-				ctx = context.WithValue(ctx, _ctxProject, builder.NewProject(pwd))
+				ctx = context.WithValue(ctx, _ctxBuilder, builder.NewBuilder(pwd))
 				cmd.SetContext(ctx)
 			}
 		}
@@ -120,9 +120,9 @@ func generateFile(content string, targetName string, data interface{}, trunk boo
 	}
 }
 
-func currentProject(cmd *cobra.Command) *builder.Project {
-	if p, ok := cmd.Context().Value(_ctxProject).(*builder.Project); ok {
-		return p
+func getBuilder(cmd *cobra.Command) *builder.Builder {
+	if b, ok := cmd.Context().Value(_ctxBuilder).(*builder.Builder); ok {
+		return b
 	} else {
 		log.Fatalln("failed to get current project")
 	}

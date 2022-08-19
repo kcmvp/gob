@@ -62,7 +62,7 @@ func (project *Project) ScriptDir() string {
 }
 
 func (project *Project) clean() {
-	log.Println("clean build directory ......")
+	log.Printf("clean directory %s \n", project.targetDir)
 	if err := os.RemoveAll(project.targetDir); err != nil {
 		log.Fatalln(color.RedString("failed to delete %s\n", project.targetDir))
 	}

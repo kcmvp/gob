@@ -42,7 +42,7 @@ type Hook struct {
 }
 
 func generateHook(ctx context.Context) error {
-	project, _ := ctx.Value(_ctxProject).(*builder.Project)
+	project, _ := ctx.Value(_ctxBuilder).(*builder.Project)
 	scriptDir := project.ScriptDir()
 	gitDir := project.GirDir()
 

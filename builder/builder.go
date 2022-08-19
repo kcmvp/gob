@@ -18,21 +18,21 @@ import (
 
 type action string
 
-var initialized action = "initialized"
+var initialized action = "initialized" //0
 
 // for pre-commit git hook
-var preCommitHook action = "pre-commit"
+var preCommitHook action = "pre-commit" // -1
 
 // for commit-msg git hook
-var commitMsgHook action = "commit-msg"
+var commitMsgHook action = "commit-msg" // -2
 
 // for pre-push git hook
-var prePushHook action = "pre-push"
+var prePushHook action = "pre-push" // -3
 
-var Clean action = "clean"
-var Lint action = "lint"
-var Test action = "test"
-var Build action = "build"
+var Clean action = "clean" // 1
+var Lint action = "lint"   // 2
+var Test action = "test"   // 3
+var Build action = "build" // 4
 
 var instance *Builder
 var once sync.Once
@@ -42,7 +42,7 @@ type Builder struct {
 	project *Project
 	repo    *git.Repository
 	hook    action
-	//Report
+	report  *Report
 	*buildOption
 }
 
@@ -65,7 +65,7 @@ func NewBuilder(dir ...string) *Builder {
 			NewProject(root),
 			repo,
 			action(hook),
-			//Report{},
+			&Report{},
 			defaultOption(),
 		}
 	})
@@ -97,11 +97,11 @@ func events() fsm.Events {
 		// builtin for git commit
 		{string(preCommitHook), []string{string(initialized)}, string(preCommitHook)},
 		{string(commitMsgHook), []string{string(initialized)}, string(commitMsgHook)},
-		{string(Clean), []string{string(initialized)}, string(Clean)},
-		{string(Lint), []string{string(initialized), string(commitMsgHook), string(Test)}, string(Lint)},
-		{string(Test), []string{string(initialized), string(Clean), string(commitMsgHook)}, string(Test)},
-		{string(prePushHook), []string{string(Test)}, string(prePushHook)},
-		{string(Build), []string{string(Test), string(prePushHook)}, string(Build)},
+		{string(prePushHook), []string{string(initialized)}, string(prePushHook)},
+		{string(Clean), []string{string(initialized), string(prePushHook)}, string(Clean)},
+		{string(Lint), []string{string(initialized), string(Clean), string(commitMsgHook), string(prePushHook), string(Test)}, string(Lint)},
+		{string(Test), []string{string(initialized), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
+		{string(Build), []string{string(Test)}, string(Build)},
 	}
 }
 
@@ -110,6 +110,9 @@ func callBacks() fsm.Callbacks {
 		// Clean
 		string(Clean): func(ctx context.Context, event *fsm.Event) {
 			instance.project.clean()
+		},
+		fmt.Sprintf("after_%s", Clean): func(ctx context.Context, event *fsm.Event) {
+			log.Println("clean success")
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
@@ -132,14 +135,14 @@ func callBacks() fsm.Callbacks {
 		},
 		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
 			// @todo validate if there is githook flag
+			instance.report.GenLinterReport()
 		},
-
 		// Test
 		string(Test): func(ctx context.Context, event *fsm.Event) {
 			instance.project.test()
 		},
 		fmt.Sprintf("after_%s", string(Test)): func(ctx context.Context, event *fsm.Event) {
-			// @todo validate if there is githook flag
+			instance.report.GenTestReport()
 		},
 		// Build
 		string(Build): func(ctx context.Context, event *fsm.Event) {
@@ -148,14 +151,17 @@ func callBacks() fsm.Callbacks {
 	}
 }
 
-func (builder *Builder) Run(actions ...action) {
+func (builder *Builder) ScriptDir() string {
+	return builder.project.ScriptDir()
+}
 
-	actions = consolidate(builder.hook, actions...)
+func (builder *Builder) Run(actions ...action) {
+	actions = resort(builder.hook, actions...)
 	if len(actions) < 1 {
-		log.Println(color.YellowString("no action provieded"))
+		log.Println(color.YellowString("no action provided"))
 		return
 	}
-	log.Printf("build actions are %+v \n", actions)
+	log.Printf("actions are: %+v \n", actions)
 	ctx := context.WithValue(context.Background(), "report", &Report{})
 	for _, evt := range actions {
 		err := builder.fsm.Event(ctx, string(evt))
@@ -165,9 +171,24 @@ func (builder *Builder) Run(actions ...action) {
 	}
 }
 
-func consolidate(builtIn action, actions ...action) []action {
-	if builtIn == preCommitHook {
-		//1: @todo remove lint from actions
+func resort(builtIn action, actions ...action) []action {
+
+	switch builtIn {
+	case preCommitHook:
+		return []action{preCommitHook}
+	case commitMsgHook:
+		return []action{commitMsgHook, Clean, Test, Lint}
+	case prePushHook:
+		return []action{prePushHook, Clean, Test, Lint}
+	default:
+		var r []action
+		for _, a := range actions {
+			if a == Build {
+				r = append(r, Test, a)
+			} else {
+				r = append(r, a)
+			}
+		}
+		return r
 	}
-	return actions
 }

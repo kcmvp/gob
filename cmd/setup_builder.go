@@ -20,9 +20,9 @@ var builderCmd = &cobra.Command{
 	Short: "Generate build script for go current project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code Scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		project := currentProject(cmd)
+		builder := getBuilder(cmd)
 		log.Println("generating `builder.go`")
-		generateFile(builderTmp, filepath.Join(project.ScriptDir(), "builder.go"), nil, false)
+		generateFile(builderTmp, filepath.Join(builder.ScriptDir(), "builder.go"), nil, false)
 		return nil
 	},
 }

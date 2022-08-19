@@ -51,6 +51,14 @@ func reporting() {
 
 }
 
+func (report *Report) GenLinterReport() {
+
+}
+
+func (report *Report) GenTestReport() {
+
+}
+
 func CoverageReport(rawTestReport, methodCoverageReport string, quality *Report) {
 	file, err := os.Open(rawTestReport)
 	if err != nil {
