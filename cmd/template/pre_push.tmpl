@@ -19,5 +19,5 @@ func main() {
 		os.Exit(0)
 	}
 	fmt.Println(refs)
-	builder.NewProject(builder.DefaultHookCfg()).Clean().Test().Scan(refs...)
+	builder.NewBuilder().Run(builder.Clean, builder.Lint, builder.Test)
 }

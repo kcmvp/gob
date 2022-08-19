@@ -17,5 +17,4 @@
 .idea
 gbt
 target
-cmd/template/*.go
 
