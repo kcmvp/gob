@@ -1,27 +1,34 @@
 package infra
 
 import (
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
+	"io"
 	"io/fs"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
-type Version func() string
+type VerFunc func(cmd string) string
 
 type Installable interface {
-	Install(ver string, currVer Version) (string, error)
+	Install(ver string) (string, error)
 	Cmd() string
-	Versions() []string
+	Installed() []string
+	Version(cmd string) string
 }
 
 type defaultIns struct {
 	module, cmd string
+	verFunc     VerFunc
+}
+
+func (i *defaultIns) Version(cmd string) string {
+	return i.verFunc(cmd)
 }
 
 func (i *defaultIns) Cmd() string {
@@ -30,44 +37,45 @@ func (i *defaultIns) Cmd() string {
 
 var _ Installable = (*defaultIns)(nil)
 
-func NewInstallable(module, cmd string) Installable {
+func NewInstallable(module, cmd string, verFunc VerFunc) Installable {
 	return &defaultIns{
-		module: module,
-		cmd:    cmd,
+		module,
+		cmd,
+		verFunc,
 	}
 }
 
-func (i *defaultIns) Versions() []string {
+func (i *defaultIns) Installed() []string {
 	// Executables are installed in the directory named by the GOBIN environment
 	//variable, which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH
 	//environment variable is not set.
 	var vs []string
 	h, _ := os.UserHomeDir()
 	goBin := filepath.Join(h, "go", "bin")
-	sep := fmt.Sprintf("%s-", i.cmd)
-	filepath.WalkDir(goBin, func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() {
-			//@todo fix windows naming issue
-			items := strings.Split(d.Name(), sep)
-			if len(items) == 1 && d.Name() != items[0] {
-				vs = append(vs, items[0])
-			}
+	filepath.Walk(goBin, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
-		return nil
+		if !info.IsDir() && strings.HasPrefix(info.Name(), i.cmd) {
+			v := i.verFunc(info.Name())
+			vs = append(vs, v)
+			i.tagVersion(path, v)
+		}
+		return err
 	})
+	if len(vs) > 0 {
+		log.Printf("installed versions of %s: %+v \n", i.cmd, vs)
+	}
 	return vs
 }
 
-func (i *defaultIns) Install(ver string, verFun Version) (string, error) {
+func (i *defaultIns) Install(ver string) (string, error) {
 	var err error
 	var out []byte
 	installed := false
-
-	vs := append(i.Versions(), verFun())
-	for _, v := range vs {
+	for _, v := range i.Installed() {
 		if installed = ver == v; installed {
-			log.Printf("found existing version of %s\n", i.cmd)
-			break
+			log.Printf("use existing version of %s %s\n", i.cmd, ver)
 		}
 	}
 	if !installed {
@@ -80,20 +88,31 @@ func (i *defaultIns) Install(ver string, verFun Version) (string, error) {
 			log.Println(color.RedString("failed to install %s", vm))
 			log.Println(color.RedString("you can manually install it by 'go install %s'", vm))
 		} else {
-			ver = verFun()
+			ver = i.Version(i.Cmd())
 			vm = fmt.Sprintf("%s@%s", i.module, ver)
 			log.Printf("%s is installed successfully\n", vm)
-			versionedCmd := fmt.Sprintf("%s-%s", i.cmd, ver)
-			if runtime.GOOS == "windows" {
-				versionedCmd = fmt.Sprintf("%s.exe", versionedCmd)
-			}
-			tagCmd(cmd.Path, filepath.Join(filepath.Dir(cmd.Path), versionedCmd))
+			i.tagVersion(cmd.Path, ver)
 		}
 	}
 	return ver, err
 }
 
-func tagCmd(src, target string) error {
-	//@todo, backup
-	return nil
+func (i *defaultIns) tagVersion(file, ver string) {
+	base := filepath.Base(file)
+	if strings.HasPrefix(base, i.Cmd()) && strings.Contains(base, ver) {
+		return
+	}
+	target := fmt.Sprintf("%s-%s", i.Cmd(), ver)
+	if strings.HasSuffix(base, ".exe") {
+		target = fmt.Sprintf("%s.exe", target)
+	}
+	if t, err := os.OpenFile(filepath.Join(filepath.Dir(file), target), os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
+		if s, err := os.Open(file); err == nil {
+			if _, err = io.Copy(t, s); err != nil {
+				log.Fatalln(color.RedString("failed to tag %s as %s", filepath.Base(file), target))
+			}
+		}
+	} else if !errors.Is(err, os.ErrExist) {
+		log.Fatalln(color.RedString("failed to tag %s as %s", filepath.Base(file), target))
+	}
 }

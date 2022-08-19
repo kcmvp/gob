@@ -1,6 +1,10 @@
 package githook
 
 import (
+	"github.com/fatih/color"
+	"log"
+	"os"
+	"regexp"
 	"strings"
 )
 
@@ -14,6 +18,22 @@ func Hooks() map[string]string {
 	return m
 }
 
-func Validate(msg string) {
+func CommitMsg(pattern string) {
+	input, _ := os.ReadFile(os.Args[1])
+	rep := regexp.MustCompile(`\r?\n`)
+	commitMsg := rep.ReplaceAllString(string(input), "")
+	reg, err := regexp.Compile(pattern)
+	if err == nil && !reg.MatchString(commitMsg) {
+		log.Fatalln(color.RedString("commit message must follow %s", pattern))
+	}
+}
 
+func PrePush(pattern string) {
+	input, _ := os.ReadFile(os.Args[1])
+	rep := regexp.MustCompile(`\r?\n`)
+	commitMsg := rep.ReplaceAllString(string(input), "")
+	reg, err := regexp.Compile(pattern)
+	if err == nil && !reg.MatchString(commitMsg) {
+		log.Fatalln(color.RedString("commit message must follow %s", pattern))
+	}
 }
