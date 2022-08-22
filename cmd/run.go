@@ -28,7 +28,7 @@ var (
 			var acts []builder.Action
 			for _, act := range args {
 				if a, ok := builder.ValueOf(act); ok {
-					if a == acts[len(acts)-1] {
+					if len(acts) > 0 && a == acts[len(acts)-1] {
 						log.Printf("ignore repeat action %s \n", a)
 					} else {
 						acts = append(acts, a)
