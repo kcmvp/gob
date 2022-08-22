@@ -9,8 +9,8 @@ import (
 
 // setupCmd represents the setup command.
 var setupCmd = &cobra.Command{
-	Use:   "setup",
-	Short: "Generate builder, git hook and other frameworks' scaffold",
+	Use:   "gen",
+	Short: "Generate builder, git hook and other framework scaffold",
 	// Run: func(cmd *cobra.Command, args []string) {
 	//	fmt.Println("gen called")
 	// },
