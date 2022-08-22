@@ -16,25 +16,36 @@ import (
 	"sync"
 )
 
-type action string
+type Action string
 
-var initialized action = "initialized" // 0
+var initialized Action = "initialized" // 0
 
 // for pre-commit git hook.
-var preCommitHook action = "pre-commit" // -1
+var preCommitHook Action = "pre-commit" // -1
 
 // for commit-msg git hook.
-var commitMsgHook action = "commit-msg" // -2
+var commitMsgHook Action = "commit-msg" // -2
 
 // for pre-push git hook.
-var prePushHook action = "pre-push" // -3
+var prePushHook Action = "pre-push" // -3
 
 var (
-	Clean action = "clean" // 1
-	Lint  action = "lint"  // 2
-	Test  action = "test"  // 3
-	Build action = "build" // 4
+	Clean Action = "clean" // 1
+	Lint  Action = "lint"  // 2
+	Test  Action = "test"  // 3
+	Build Action = "build" // 4
 )
+
+func ValueOf(v string) (Action, bool) {
+	am := map[string]Action{
+		"clean": Clean,
+		"lint":  Lint,
+		"test":  Test,
+		"build": Build,
+	}
+	a, ok := am[v]
+	return a, ok
+}
 
 var (
 	instance *Builder
@@ -45,7 +56,7 @@ type Builder struct {
 	fsm     *fsm.FSM
 	project *project
 	repo    *git.Repository
-	hook    action
+	hook    Action
 	report  *Report
 	*buildOption
 }
@@ -68,7 +79,7 @@ func NewBuilder(dir ...string) *Builder {
 			fsm.NewFSM(string(initialized), events(), callBacks()),
 			newProject(root),
 			repo,
-			action(hook),
+			Action(hook),
 			&Report{},
 			defaultOption(),
 		}
@@ -164,10 +175,10 @@ func (builder *Builder) RootDir() string {
 	return builder.project.ModuleDir()
 }
 
-func (builder *Builder) Run(actions ...action) {
+func (builder *Builder) Run(actions ...Action) {
 	actions = resort(builder.hook, actions...)
 	if len(actions) < 1 {
-		log.Println(color.YellowString("no action provided"))
+		log.Println(color.YellowString("no Action provided"))
 		return
 	}
 	log.Printf("actions are: %+v \n", actions)
@@ -180,16 +191,16 @@ func (builder *Builder) Run(actions ...action) {
 	}
 }
 
-func resort(builtIn action, actions ...action) []action {
+func resort(builtIn Action, actions ...Action) []Action {
 	switch builtIn {
 	case preCommitHook:
-		return []action{preCommitHook}
+		return []Action{preCommitHook}
 	case commitMsgHook:
-		return []action{commitMsgHook, Clean, Test, Lint}
+		return []Action{commitMsgHook, Clean, Test, Lint}
 	case prePushHook:
-		return []action{prePushHook, Clean, Test, Lint}
+		return []Action{prePushHook, Clean, Test, Lint}
 	default:
-		var r []action
+		var r []Action
 		for _, a := range actions {
 			if a == Build {
 				r = append(r, Test, a)

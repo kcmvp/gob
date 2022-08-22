@@ -28,8 +28,8 @@ type project struct {
 	moduleDir string
 	scriptDir string
 	targetDir string
-	gitCheck  action
-	gitVerify action
+	gitCheck  Action
+	gitVerify Action
 }
 
 func newProject(root string) *project {
