@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/kcmvp/gos/builder"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -19,5 +21,12 @@ func main() {
 		os.Exit(0)
 	}
 	fmt.Println(refs)
-	builder.NewBuilder().Run(builder.Clean, builder.Lint, builder.Test)
+
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("No caller information")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+
+	builder.NewBuilder(root).Run(builder.Clean, builder.Lint, builder.Test)
 }

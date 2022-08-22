@@ -9,10 +9,10 @@ import (
 	"github.com/kcmvp/gos/builder/githook"
 	"github.com/kcmvp/gos/builder/linter"
 	"github.com/looplab/fsm"
+	"golang.org/x/mod/modfile"
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sync"
 )
 
@@ -61,8 +61,17 @@ type Builder struct {
 	*buildOption
 }
 
-func NewBuilder(dir ...string) *Builder {
+func NewBuilder(root string) *Builder {
 	once.Do(func() {
+		data, err := os.ReadFile(filepath.Join(root, "go.mod"))
+		if err != nil {
+			log.Fatalln(color.RedString("can not find go.mod in %s", root))
+		} else {
+			if _, err := modfile.Parse("go.mod", data, nil); err != nil {
+				log.Fatalln(color.RedString("invalid mod file %v", err))
+			}
+		}
+
 		var hook string
 		flag.StringVar(&hook, "hook", "", "git hook trigger")
 		flag.Parse()
@@ -70,7 +79,6 @@ func NewBuilder(dir ...string) *Builder {
 		if len(hook) > 0 {
 			log.Println(color.GreenString("triggered by %s", hook))
 		}
-		root := moduleDir(dir...)
 		repo, err := git.PlainOpen(root)
 		if err != nil {
 			log.Println(color.YellowString("project is not at version control"))
@@ -87,25 +95,25 @@ func NewBuilder(dir ...string) *Builder {
 	return instance
 }
 
-func moduleDir(dir ...string) string {
-	if len(dir) > 0 {
-		if _, err := os.ReadFile(filepath.Join(dir[0], "go.mod")); err == nil {
-			return dir[0]
-		}
-	}
-	_, file, _, ok := runtime.Caller(2)
-	if ok {
-		p := filepath.Dir(file)
-		for p != string(os.PathSeparator) {
-			if _, err := os.ReadFile(filepath.Join(p, "go.mod")); err == nil {
-				return p
-			} else {
-				p = filepath.Dir(p)
-			}
-		}
-	}
-	panic(color.RedString("can't figure out project mod file"))
-}
+//func moduleDir(dir ...string) string {
+//	if len(dir) > 0 {
+//		if _, err := os.ReadFile(filepath.Join(dir[0], "go.mod")); err == nil {
+//			return dir[0]
+//		}
+//	}
+//	_, file, _, ok := runtime.Caller(2)
+//	if ok {
+//		p := filepath.Dir(file)
+//		for p != string(os.PathSeparator) {
+//			if _, err := os.ReadFile(filepath.Join(p, "go.mod")); err == nil {
+//				return p
+//			} else {
+//				p = filepath.Dir(p)
+//			}
+//		}
+//	}
+//	panic(color.RedString("can't figure out project mod file"))
+//}
 
 func events() fsm.Events {
 	return fsm.Events{
