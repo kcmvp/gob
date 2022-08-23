@@ -2,6 +2,7 @@ package builder
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -18,9 +19,9 @@ const (
 	lineCoverageReport   = "line.data"
 	methodCoverageReport = "method.data"
 	rawTestReport        = "test.data"
-	quality              = "report.json"
 	scriptDir            = "scripts"
 	targetDir            = "target"
+	coverage             = "coverage.json"
 )
 
 type project struct {
@@ -30,6 +31,19 @@ type project struct {
 	targetDir string
 	gitCheck  Action
 	gitVerify Action
+}
+
+type Report struct {
+	Tests    int
+	Packages map[string]string
+}
+
+type TestCase struct {
+	Package string
+	Test    string
+	Action  string
+	Output  string
+	Elapsed float64
 }
 
 func newProject(root string) *project {
@@ -121,16 +135,6 @@ func (project *project) build(files ...string) *project {
 	return project
 }
 
-// func (project *project) saveReport(file string) {
-//	data, err := json.Marshal(project.quality)
-//	FatalIfError(err)
-//	var prettyJSON bytes.Buffer
-//	err = json.Indent(&prettyJSON, data, "", "\t")
-//	FatalIfError(err)
-//	err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
-//	FatalIfError(err)
-//}
-
 func FatalIfError(err error) {
 	if err == nil {
 		return
@@ -148,17 +152,40 @@ func FatalIfError(err error) {
 	os.Exit(1)
 }
 
-func testCaller() bool {
-	pcs := make([]uintptr, 10)
-	n := runtime.Callers(0, pcs)
-	pcs = pcs[:n]
-	frames := runtime.CallersFrames(pcs)
-	frame, more := frames.Next()
-	for more {
-		if strings.HasSuffix(frame.File, "_test.go") {
-			return true
-		}
-		frame, more = frames.Next()
+func (project *project) coverage(keepInGit bool) {
+	cover := filepath.Join(project.targetDir, coverage)
+	if keepInGit {
+		cover = filepath.Join(project.scriptDir, coverage)
 	}
-	return false
+	log.Println("generating test coverage report")
+	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))
+	if err != nil {
+		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(project.targetDir, rawTestReport)))
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+
+	report := Report{
+		Packages: map[string]string{},
+	}
+	testSet := map[string]bool{}
+	for scanner.Scan() {
+		text := scanner.Text()
+		c := TestCase{}
+		json.Unmarshal([]byte(text), &c)
+		if len(c.Test) > 0 {
+			testSet[c.Test] = true
+		} else if len(c.Output) > 0 {
+			if strings.Contains(c.Output, "no test files") {
+				report.Packages[c.Package] = "-"
+			} else if strings.HasPrefix(c.Output, "coverage:") {
+				report.Packages[c.Package] = strings.Fields(c.Output)[1]
+			}
+		}
+	}
+	report.Tests = len(testSet)
+	data, _ := json.MarshalIndent(report, "", " ")
+	if os.WriteFile(cover, data, os.ModePerm) == nil {
+		log.Printf("coverage report is generated at %s", cover)
+	}
 }

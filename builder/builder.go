@@ -4,16 +4,21 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"sync"
+
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gos/builder/githook"
 	"github.com/kcmvp/gos/builder/linter"
 	"github.com/looplab/fsm"
 	"golang.org/x/mod/modfile"
-	"log"
-	"os"
-	"path/filepath"
-	"sync"
+)
+
+const (
+	ScanAll = "_scan_all"
 )
 
 type Action string
@@ -57,7 +62,7 @@ type Builder struct {
 	project *project
 	repo    *git.Repository
 	hook    Action
-	report  *Report
+
 	*buildOption
 }
 
@@ -88,32 +93,11 @@ func NewBuilder(root string) *Builder {
 			newProject(root),
 			repo,
 			Action(hook),
-			&Report{},
 			defaultOption(),
 		}
 	})
 	return instance
 }
-
-//func moduleDir(dir ...string) string {
-//	if len(dir) > 0 {
-//		if _, err := os.ReadFile(filepath.Join(dir[0], "go.mod")); err == nil {
-//			return dir[0]
-//		}
-//	}
-//	_, file, _, ok := runtime.Caller(2)
-//	if ok {
-//		p := filepath.Dir(file)
-//		for p != string(os.PathSeparator) {
-//			if _, err := os.ReadFile(filepath.Join(p, "go.mod")); err == nil {
-//				return p
-//			} else {
-//				p = filepath.Dir(p)
-//			}
-//		}
-//	}
-//	panic(color.RedString("can't figure out project mod file"))
-//}
 
 func events() fsm.Events {
 	return fsm.Events{
@@ -122,7 +106,8 @@ func events() fsm.Events {
 		{string(commitMsgHook), []string{string(initialized)}, string(commitMsgHook)},
 		{string(prePushHook), []string{string(initialized)}, string(prePushHook)},
 		{string(Clean), []string{string(initialized), string(prePushHook)}, string(Clean)},
-		{string(Lint), []string{string(initialized), string(Clean), string(commitMsgHook), string(prePushHook), string(Test)}, string(Lint)},
+		// commit-msg and pre-push can't trigger lint
+		{string(Lint), []string{string(initialized), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
 		{string(Test), []string{string(initialized), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
 		{string(Build), []string{string(Test)}, string(Build)},
 	}
@@ -139,34 +124,35 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			linter.Scan(instance.project.ModuleDir(), true, true)
+			//linter.Scan(instance.project.TargetDir(), true)
+			log.Println("run linter against project")
 		},
 		// commit-msg : validate message
 		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
-			githook.CommitMsg(string(instance.buildOption.MsgPattern))
+			githook.ValidateCommitMsg(string(instance.buildOption.MsgPattern))
 		},
 		// pre-push : validate repo status
 		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
-			log.Println("prePushHook")
+			log.Println("validate unit test coverage")
+			githook.ValidateCoverage("")
 		},
 		// Lint
 		string(Lint): func(ctx context.Context, event *fsm.Event) {
-			if len(instance.hook) > 0 {
-				linter.Scan(instance.project.TargetDir(), true, false)
-			} else {
-				linter.Scan(instance.project.TargetDir(), false, false)
+			v, ok := ctx.Value(ScanAll).(bool)
+			if !ok {
+				v = false
 			}
+			linter.Scan(instance.project.TargetDir(), v)
 		},
 		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-			// @todo validate if there is githook flag
-			instance.report.GenLinterReport()
+			linter.Verify(string(preCommitHook) == event.Src)
 		},
 		// Test
 		string(Test): func(ctx context.Context, event *fsm.Event) {
 			instance.project.test()
 		},
 		fmt.Sprintf("after_%s", string(Test)): func(ctx context.Context, event *fsm.Event) {
-			instance.report.GenTestReport()
+			instance.project.coverage(preCommitHook == instance.hook)
 		},
 		// Build
 		string(Build): func(ctx context.Context, event *fsm.Event) {
@@ -184,13 +170,16 @@ func (builder *Builder) RootDir() string {
 }
 
 func (builder *Builder) Run(actions ...Action) {
+	builder.RunCtx(context.Background(), actions...)
+}
+
+func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 	actions = resort(builder.hook, actions...)
 	if len(actions) < 1 {
 		log.Println(color.YellowString("no Action provided"))
 		return
 	}
 	log.Printf("actions are: %+v \n", actions)
-	ctx := context.WithValue(context.Background(), "report", &Report{})
 	for _, evt := range actions {
 		err := builder.fsm.Event(ctx, string(evt))
 		if err != nil {
@@ -202,11 +191,11 @@ func (builder *Builder) Run(actions ...Action) {
 func resort(builtIn Action, actions ...Action) []Action {
 	switch builtIn {
 	case preCommitHook:
-		return []Action{preCommitHook}
+		return []Action{preCommitHook, Lint, Test}
 	case commitMsgHook:
-		return []Action{commitMsgHook, Clean, Test, Lint}
+		return []Action{commitMsgHook}
 	case prePushHook:
-		return []Action{prePushHook, Clean, Test, Lint}
+		return []Action{Test, prePushHook}
 	default:
 		var r []Action
 		for _, a := range actions {

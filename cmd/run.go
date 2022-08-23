@@ -4,14 +4,16 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"log"
-
 	"github.com/kcmvp/gos/builder"
 	"github.com/spf13/cobra"
+	"log"
 )
 
-// runCmd represents the run command
+var scanAll = false
+
+// runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:       "run",
 	Short:     "run clean, test, lint and build against current project",
@@ -35,7 +37,8 @@ var runCmd = &cobra.Command{
 				}
 			}
 		}
-		getBuilder(cmd).Run(acts...)
+		ctx := context.WithValue(context.Background(), builder.ScanAll, scanAll)
+		getBuilder(cmd).RunCtx(ctx, acts...)
 	},
 }
 
@@ -51,4 +54,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// runCmd.Flags().StringSliceP("action", "a", []string{"build"}, "run project build action")
+	runCmd.Flags().BoolVarP(&scanAll, "scan-all", "a", false, "scan all the source code")
 }

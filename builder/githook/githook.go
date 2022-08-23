@@ -19,7 +19,7 @@ func Hooks() map[string]string {
 	return m
 }
 
-func CommitMsg(pattern string) {
+func ValidateCommitMsg(pattern string) {
 	input, _ := os.ReadFile(os.Args[1])
 	rep := regexp.MustCompile(`\r?\n`)
 	commitMsg := rep.ReplaceAllString(string(input), "")
@@ -29,7 +29,7 @@ func CommitMsg(pattern string) {
 	}
 }
 
-func PrePush(pattern string) {
+func ValidateCoverage(pattern string) {
 	input, _ := os.ReadFile(os.Args[1])
 	rep := regexp.MustCompile(`\r?\n`)
 	commitMsg := rep.ReplaceAllString(string(input), "")
@@ -37,4 +37,8 @@ func PrePush(pattern string) {
 	if err == nil && !reg.MatchString(commitMsg) {
 		log.Fatalln(color.RedString("commit message must follow %s", pattern))
 	}
+	//@todo
+	// 1: verify the json is the same scripts/coverage.json & target/coverage.json
+	// 2: verify the coverage does not degress
+
 }
