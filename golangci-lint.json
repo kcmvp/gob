@@ -1,0 +1,1097 @@
+{
+	"Issues": [
+		{
+			"FromLinter": "govet",
+			"Text": "composites: github.com/looplab/fsm.EventDesc struct literal uses unkeyed fields",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t{string(preCommitHook), []string{string(initialized)}, string(preCommitHook)},"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/builder.go",
+				"Offset": 2215,
+				"Line": 118,
+				"Column": 3
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "govet",
+			"Text": "composites: github.com/looplab/fsm.EventDesc struct literal uses unkeyed fields",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t{string(commitMsgHook), []string{string(initialized)}, string(commitMsgHook)},"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/builder.go",
+				"Offset": 2296,
+				"Line": 119,
+				"Column": 3
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "govet",
+			"Text": "composites: github.com/looplab/fsm.EventDesc struct literal uses unkeyed fields",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t{string(prePushHook), []string{string(initialized)}, string(prePushHook)},"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/builder.go",
+				"Offset": 2377,
+				"Line": 120,
+				"Column": 3
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "unused",
+			"Text": "field `versioned` is unused",
+			"Severity": "",
+			"SourceLines": [
+				"\tversioned bool"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 442,
+				"Line": 29,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "unused",
+			"Text": "field `gitCheck` is unused",
+			"Severity": "",
+			"SourceLines": [
+				"\tgitCheck  Action"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 512,
+				"Line": 33,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "unused",
+			"Text": "field `gitVerify` is unused",
+			"Severity": "",
+			"SourceLines": [
+				"\tgitVerify Action"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 530,
+				"Line": 34,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `os.Chdir` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tos.Chdir(project.moduleDir)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 1665,
+				"Line": 84,
+				"Column": 10
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `os.MkdirAll` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tos.MkdirAll(project.targetDir, os.ModePerm)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 1697,
+				"Line": 85,
+				"Column": 13
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `os.WriteFile` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tos.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 2209,
+				"Line": 102,
+				"Column": 14
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `os.WriteFile` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tos.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 2497,
+				"Line": 106,
+				"Column": 14
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `os.MkdirAll` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tos.MkdirAll(project.targetDir, os.ModePerm)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 2956,
+				"Line": 117,
+				"Column": 13
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `filepath.Walk` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tfilepath.Walk(project.moduleDir, func(path string, info fs.FileInfo, err error) error {"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 3003,
+				"Line": 118,
+				"Column": 15
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "gosec",
+			"Text": "G204: Subprocess launched with a potential tainted input or cmd arguments",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\t\tif output, err := exec.Command(\"go\", \"build\", \"-o\", project.targetDir, path).CombinedOutput(); err != nil {"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 0,
+				"Line": 124,
+				"Column": 23
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `json.Unmarshal` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\t\tjson.Unmarshal([]byte(text), \u0026c)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 4427,
+				"Line": 171,
+				"Column": 17
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errchkjson",
+			"Text": "Error return value of `encoding/json.MarshalIndent` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tdata, _ := json.MarshalIndent(report, \"\", \" \")"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "builder/project.go",
+				"Offset": 4786,
+				"Line": 183,
+				"Column": 13
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nosnakecase",
+			"Text": "_ctxBuilder contains underscore. You should use mixedCap or MixedCap.",
+			"Severity": "",
+			"SourceLines": [
+				"\t\tbuilder, _ := cmd.Context().Value(_ctxBuilder).(*builder.Builder)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/gen_githook.go",
+				"Offset": 751,
+				"Line": 30,
+				"Column": 37
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "wrapcheck",
+			"Text": "error returned from external package is unwrapped: sig: func github.com/kcmvp/gos/infra.SetupHook(root string, scriptDir string, genNew bool) error",
+			"Severity": "",
+			"SourceLines": [
+				"\t\treturn infra.SetupHook(builder.ScriptDir(), builder.RootDir(), true)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/gen_githook.go",
+				"Offset": 792,
+				"Line": 31,
+				"Column": 10
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "revive",
+			"Text": "blank-imports: a blank import should be only in a main or test package, or have a comment justifying it",
+			"Severity": "",
+			"SourceLines": [
+				"\t_ \"embed\""
+			],
+			"Replacement": null,
+			"LineRange": {
+				"From": 7,
+				"To": 7
+			},
+			"Pos": {
+				"Filename": "cmd/gen_linter.go",
+				"Offset": 76,
+				"Line": 7,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `infra.Install` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\tinfra.Install(ver)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/gen_linter.go",
+				"Offset": 594,
+				"Line": 29,
+				"Column": 17
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nosnakecase",
+			"Text": "_ctxModFileKey contains underscore. You should use mixedCap or MixedCap.",
+			"Severity": "",
+			"SourceLines": [
+				"\t_ctxModFileKey = \"mod\""
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 278,
+				"Line": 22,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nosnakecase",
+			"Text": "_ctxBuilder contains underscore. You should use mixedCap or MixedCap.",
+			"Severity": "",
+			"SourceLines": [
+				"\t_ctxBuilder    = \"builder\""
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 302,
+				"Line": 23,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "deadcode",
+			"Text": "`modules` is unused",
+			"Severity": "",
+			"SourceLines": [
+				"var modules = []string{\"github.com/kcmvp/gbt\"}"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 336,
+				"Line": 26,
+				"Column": 5
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "deadcode",
+			"Text": "`importModule` is unused",
+			"Severity": "",
+			"SourceLines": [
+				"func importModule(ctx context.Context, module string, update bool) {"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 385,
+				"Line": 28,
+				"Column": 6
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nosnakecase",
+			"Text": "_ctxModFileKey contains underscore. You should use mixedCap or MixedCap.",
+			"Severity": "",
+			"SourceLines": [
+				"\tf := ctx.Value(_ctxModFileKey).(*modfile.File)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 465,
+				"Line": 29,
+				"Column": 17
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "goerr113",
+			"Text": "err113: do not define dynamic errors, use wrapped static errors instead: \"errors.New(\\\"please run the command in the module root directory\\\")\"",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\terr = errors.New(\"please run the command in the module root directory\")"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 1497,
+				"Line": 67,
+				"Column": 10
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "goerr113",
+			"Text": "err113: do not define dynamic errors, use wrapped static errors instead: \"fmt.Errorf(\\\"invalid go.mod file\\\")\"",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\t\treturn fmt.Errorf(\"invalid go.mod file\")"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 1650,
+				"Line": 70,
+				"Column": 12
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "revive",
+			"Text": "indent-error-flow: if block ends with a return statement, so drop this else and outdent its block (move short variable declaration to its own line if necessary)",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\t} else {",
+				"\t\t\t\tctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)",
+				"\t\t\t\tctx = context.WithValue(ctx, _ctxBuilder, builder.NewBuilder(pwd))",
+				"\t\t\t\tcmd.SetContext(ctx)",
+				"\t\t\t}"
+			],
+			"Replacement": null,
+			"LineRange": {
+				"From": 71,
+				"To": 75
+			},
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 1694,
+				"Line": 71,
+				"Column": 11
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nosnakecase",
+			"Text": "_ctxModFileKey contains underscore. You should use mixedCap or MixedCap.",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\t\tctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 1740,
+				"Line": 72,
+				"Column": 45
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nosnakecase",
+			"Text": "_ctxBuilder contains underscore. You should use mixedCap or MixedCap.",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\t\tctx = context.WithValue(ctx, _ctxBuilder, builder.NewBuilder(pwd))"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 1792,
+				"Line": 73,
+				"Column": 34
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "revive",
+			"Text": "indent-error-flow: if block ends with a return statement, so drop this else and outdent its block (move short variable declaration to its own line if necessary)",
+			"Severity": "",
+			"SourceLines": [
+				"\t} else {",
+				"\t\tlog.Fatalln(\"failed to get current project\")",
+				"\t}"
+			],
+			"Replacement": null,
+			"LineRange": {
+				"From": 96,
+				"To": 98
+			},
+			"Pos": {
+				"Filename": "cmd/root.go",
+				"Offset": 2360,
+				"Line": 96,
+				"Column": 9
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "wrapcheck",
+			"Text": "error returned from external package is unwrapped: sig: func github.com/spf13/cobra.OnlyValidArgs(cmd *github.com/spf13/cobra.Command, args []string) error",
+			"Severity": "",
+			"SourceLines": [
+				"\t\treturn err"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/run.go",
+				"Offset": 561,
+				"Line": 27,
+				"Column": 10
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "staticcheck",
+			"Text": "SA1029: should not use built-in type string as key for value; define your own type to avoid collisions",
+			"Severity": "",
+			"SourceLines": [
+				"\t\tctx := context.WithValue(context.Background(), builder.ScanAll, scanAll)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "cmd/run.go",
+				"Offset": 947,
+				"Line": 41,
+				"Column": 50
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value of `filepath.Walk` is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tfilepath.Walk(goBin, func(path string, info fs.FileInfo, err error) error {"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/installable.go",
+				"Offset": 1011,
+				"Line": 56,
+				"Column": 15
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "prealloc",
+			"Text": "Consider pre-allocating `vs`",
+			"Severity": "",
+			"SourceLines": [
+				"\tvar vs []string"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/installable.go",
+				"Offset": 1256,
+				"Line": 67,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "wrapcheck",
+			"Text": "error returned from external package is unwrapped: sig: func (*os/exec.Cmd).CombinedOutput() ([]byte, error)",
+			"Severity": "",
+			"SourceLines": [
+				"\treturn ver, err"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/installable.go",
+				"Offset": 2187,
+				"Line": 102,
+				"Column": 14
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nosnakecase",
+			"Text": "O_RDWR contains underscore. You should use mixedCap or MixedCap.",
+			"Severity": "",
+			"SourceLines": [
+				"\tif t, err := os.OpenFile(filepath.Join(filepath.Dir(file), target), os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/installable.go",
+				"Offset": 2557,
+				"Line": 114,
+				"Column": 73
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "staticcheck",
+			"Text": "SA5001: should check returned error before deferring f.Close()",
+			"Severity": "",
+			"SourceLines": [
+				"\tdefer f.Close()"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/linter.go",
+				"Offset": 1159,
+				"Line": 65,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "goerr113",
+			"Text": "err113: do not define dynamic errors, use wrapped static errors instead: \"fmt.Errorf(msg)\"",
+			"Severity": "",
+			"SourceLines": [
+				"\t\t\terr = fmt.Errorf(msg)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/linter.go",
+				"Offset": 1555,
+				"Line": 79,
+				"Column": 10
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "errcheck",
+			"Text": "Error return value is not checked",
+			"Severity": "",
+			"SourceLines": [
+				"\tGenerateFile(golangCiTmp, lintCfg, data, trunk)"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/linter.go",
+				"Offset": 4127,
+				"Line": 158,
+				"Column": 14
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "nestif",
+			"Text": "`if err == nil` has complex nested blocks (complexity: 5)",
+			"Severity": "",
+			"SourceLines": [
+				"\tif f, err = os.OpenFile(targetName, flag, os.ModePerm); err == nil {"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/template.go",
+				"Offset": 505,
+				"Line": 24,
+				"Column": 2
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		},
+		{
+			"FromLinter": "wrapcheck",
+			"Text": "error returned from external package is unwrapped: sig: func (*text/template.Template).Execute(wr io.Writer, data any) error",
+			"Severity": "",
+			"SourceLines": [
+				"\treturn err"
+			],
+			"Replacement": null,
+			"Pos": {
+				"Filename": "infra/template.go",
+				"Offset": 1047,
+				"Line": 36,
+				"Column": 9
+			},
+			"ExpectNoLint": false,
+			"ExpectedNoLintLinter": ""
+		}
+	],
+	"Report": {
+		"Warnings": [
+			{
+				"Tag": "runner",
+				"Text": "The linter 'scopelint' is deprecated (since v1.39.0) due to: The repository of the linter has been deprecated by the owner.  Replaced by exportloopref."
+			},
+			{
+				"Tag": "runner",
+				"Text": "The linter 'maligned' is deprecated (since v1.38.0) due to: The repository of the linter has been archived by the owner.  Replaced by govet 'fieldalignment'."
+			},
+			{
+				"Tag": "linters context",
+				"Text": "contextcheck is disabled because of generics. You can track the evolution of the generics support by following the https://github.com/golangci/golangci-lint/issues/2649."
+			},
+			{
+				"Tag": "linters context",
+				"Text": "rowserrcheck is disabled because of generics. You can track the evolution of the generics support by following the https://github.com/golangci/golangci-lint/issues/2649."
+			},
+			{
+				"Tag": "linters context",
+				"Text": "sqlclosecheck is disabled because of generics. You can track the evolution of the generics support by following the https://github.com/golangci/golangci-lint/issues/2649."
+			},
+			{
+				"Tag": "linters context",
+				"Text": "structcheck is disabled because of generics. You can track the evolution of the generics support by following the https://github.com/golangci/golangci-lint/issues/2649."
+			}
+		],
+		"Linters": [
+			{
+				"Name": "asasalint",
+				"Enabled": true
+			},
+			{
+				"Name": "asciicheck",
+				"Enabled": true
+			},
+			{
+				"Name": "bidichk",
+				"Enabled": true
+			},
+			{
+				"Name": "bodyclose",
+				"Enabled": true
+			},
+			{
+				"Name": "containedctx"
+			},
+			{
+				"Name": "contextcheck",
+				"Enabled": true
+			},
+			{
+				"Name": "cyclop",
+				"Enabled": true
+			},
+			{
+				"Name": "decorder",
+				"Enabled": true
+			},
+			{
+				"Name": "deadcode",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "depguard",
+				"Enabled": true
+			},
+			{
+				"Name": "dogsled"
+			},
+			{
+				"Name": "dupl"
+			},
+			{
+				"Name": "durationcheck",
+				"Enabled": true
+			},
+			{
+				"Name": "errcheck",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "errchkjson",
+				"Enabled": true
+			},
+			{
+				"Name": "errname"
+			},
+			{
+				"Name": "errorlint",
+				"Enabled": true
+			},
+			{
+				"Name": "execinquery",
+				"Enabled": true
+			},
+			{
+				"Name": "exhaustive",
+				"Enabled": true
+			},
+			{
+				"Name": "exhaustivestruct"
+			},
+			{
+				"Name": "exhaustruct"
+			},
+			{
+				"Name": "exportloopref",
+				"Enabled": true
+			},
+			{
+				"Name": "forbidigo"
+			},
+			{
+				"Name": "forcetypeassert"
+			},
+			{
+				"Name": "funlen",
+				"Enabled": true
+			},
+			{
+				"Name": "gci",
+				"Enabled": true
+			},
+			{
+				"Name": "gochecknoglobals"
+			},
+			{
+				"Name": "gochecknoinits"
+			},
+			{
+				"Name": "gocognit",
+				"Enabled": true
+			},
+			{
+				"Name": "goconst",
+				"Enabled": true
+			},
+			{
+				"Name": "gocritic",
+				"Enabled": true
+			},
+			{
+				"Name": "gocyclo",
+				"Enabled": true
+			},
+			{
+				"Name": "godot",
+				"Enabled": true
+			},
+			{
+				"Name": "godox",
+				"Enabled": true
+			},
+			{
+				"Name": "goerr113",
+				"Enabled": true
+			},
+			{
+				"Name": "gofmt",
+				"Enabled": true
+			},
+			{
+				"Name": "gofumpt",
+				"Enabled": true
+			},
+			{
+				"Name": "goheader"
+			},
+			{
+				"Name": "goimports",
+				"Enabled": true
+			},
+			{
+				"Name": "golint"
+			},
+			{
+				"Name": "gomnd"
+			},
+			{
+				"Name": "gomoddirectives",
+				"Enabled": true
+			},
+			{
+				"Name": "gomodguard",
+				"Enabled": true
+			},
+			{
+				"Name": "goprintffuncname"
+			},
+			{
+				"Name": "gosec",
+				"Enabled": true
+			},
+			{
+				"Name": "gosimple",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "govet",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "grouper"
+			},
+			{
+				"Name": "ifshort"
+			},
+			{
+				"Name": "importas"
+			},
+			{
+				"Name": "ineffassign",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "interfacer"
+			},
+			{
+				"Name": "ireturn"
+			},
+			{
+				"Name": "lll"
+			},
+			{
+				"Name": "maintidx",
+				"Enabled": true
+			},
+			{
+				"Name": "makezero",
+				"Enabled": true
+			},
+			{
+				"Name": "maligned",
+				"Enabled": true
+			},
+			{
+				"Name": "misspell",
+				"Enabled": true
+			},
+			{
+				"Name": "nakedret"
+			},
+			{
+				"Name": "nestif",
+				"Enabled": true
+			},
+			{
+				"Name": "nilerr",
+				"Enabled": true
+			},
+			{
+				"Name": "nilnil"
+			},
+			{
+				"Name": "nlreturn"
+			},
+			{
+				"Name": "noctx",
+				"Enabled": true
+			},
+			{
+				"Name": "nonamedreturns"
+			},
+			{
+				"Name": "nosnakecase",
+				"Enabled": true
+			},
+			{
+				"Name": "nosprintfhostport"
+			},
+			{
+				"Name": "paralleltest"
+			},
+			{
+				"Name": "prealloc",
+				"Enabled": true
+			},
+			{
+				"Name": "predeclared"
+			},
+			{
+				"Name": "promlinter"
+			},
+			{
+				"Name": "revive",
+				"Enabled": true
+			},
+			{
+				"Name": "rowserrcheck",
+				"Enabled": true
+			},
+			{
+				"Name": "scopelint",
+				"Enabled": true
+			},
+			{
+				"Name": "sqlclosecheck",
+				"Enabled": true
+			},
+			{
+				"Name": "staticcheck",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "structcheck",
+				"Enabled": true
+			},
+			{
+				"Name": "stylecheck"
+			},
+			{
+				"Name": "tagliatelle"
+			},
+			{
+				"Name": "tenv"
+			},
+			{
+				"Name": "testpackage"
+			},
+			{
+				"Name": "thelper"
+			},
+			{
+				"Name": "tparallel"
+			},
+			{
+				"Name": "typecheck",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "unconvert"
+			},
+			{
+				"Name": "unparam",
+				"Enabled": true
+			},
+			{
+				"Name": "unused",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "usestdlibvars"
+			},
+			{
+				"Name": "varcheck",
+				"Enabled": true,
+				"EnabledByDefault": true
+			},
+			{
+				"Name": "varnamelen"
+			},
+			{
+				"Name": "wastedassign"
+			},
+			{
+				"Name": "whitespace"
+			},
+			{
+				"Name": "wrapcheck",
+				"Enabled": true
+			},
+			{
+				"Name": "wsl"
+			},
+			{
+				"Name": "nolintlint"
+			}
+		]
+	}
+}

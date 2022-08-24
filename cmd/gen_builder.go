@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/kcmvp/gos/infra"
-
 	"github.com/spf13/cobra"
 )
 
@@ -24,8 +23,7 @@ var builderCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		builder := getBuilder(cmd)
 		log.Println("generating `builder.go`")
-		infra.GenerateFile(builderTmp, filepath.Join(builder.ScriptDir(), "builder.go"), nil, false)
-		return nil
+		return infra.GenerateFile(builderTmp, filepath.Join(builder.ScriptDir(), "builder.go"), nil, false) //nolint:wrapcheck
 	},
 }
 

@@ -1,0 +1,9 @@
+{
+ "Tests": 4,
+ "Packages": {
+  "github.com/kcmvp/gos": "-",
+  "github.com/kcmvp/gos/builder": "-",
+  "github.com/kcmvp/gos/cmd": "12.3%",
+  "github.com/kcmvp/gos/infra": "-"
+ }
+}

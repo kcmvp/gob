@@ -82,48 +82,61 @@ func ConfiguredLinterVer() (string, error) {
 	return ver, err
 }
 
-func LintScan(targetDir string, all bool) {
-	if ver, err := ConfiguredLinterVer(); err == nil {
-		if ver, err = linter.Install(ver); err == nil {
-			msg := "lint all source code"
-			args := []string{"run", "-v", "./...", "--out-format=json"}
-			if !all {
-				args = append(args, "--new-from-rev=HEAD")
-				msg = "lint source for changes"
-			}
-			log.Println(msg)
-			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
-			output, _ := exec.Command(vCmd, args...).CombinedOutput()
-			// save the report
-			file := filepath.Join(targetDir, linter.output)
-			sc := bufio.NewScanner(strings.NewReader(string(output)))
-			r, _ := regexp.Compile(`".*"`)
-			n, _ := regexp.Compile(`config_reader|lintersdb|before processing:.*after processing:`)
-			var line string
-			for sc.Scan() {
-				line = sc.Text()
-				if strings.HasPrefix(line, "{\"Issues\"") {
-					break
-				} else {
-					if strings.HasPrefix(line, "level=warning") || n.MatchString(line) {
-						msg = strings.ReplaceAll(r.FindString(line), "\"", "")
-						if strings.HasPrefix(line, "level=warning") {
-							msg = color.YellowString(msg)
-						}
-						log.Println(msg)
-					}
+//nolint:cyclop
+func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
+	ver, err := ConfiguredLinterVer()
+	if err != nil {
+		log.Fatalln(color.RedString("lint scan: %s", err.Error()))
+	}
+	ver, err = linter.Install(ver)
+	if err != nil {
+		log.Fatalln(color.RedString("failed to install golangci-linter %s: %s", ver, err.Error()))
+	}
+	msg := "lint fullScan source code"
+	args := []string{"run", "-v", "./...", "--out-format=json"}
+	if !fullScan {
+		args = append(args, "--new-from-rev=HEAD")
+		msg = "lint source for changes"
+	}
+	log.Println(msg)
+	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
+	if output, err := exec.Command(vCmd, args...).CombinedOutput(); err != nil { //nolint:nestif
+		// save the report
+		file := filepath.Join(targetDir, linter.output)
+		sc := bufio.NewScanner(strings.NewReader(string(output)))
+		r := regexp.MustCompile(`".*"`)
+		n := regexp.MustCompile(`config_reader|lintersdb|before processing:.*after processing:`)
+		var line string
+		for sc.Scan() {
+			line = sc.Text()
+			if strings.HasPrefix(line, "{\"Issues\"") {
+				break
+			} else if fullScan && (strings.HasPrefix(line, "level=warning") || n.MatchString(line)) {
+				msg = strings.ReplaceAll(r.FindString(line), "\"", "")
+				if strings.HasPrefix(line, "level=warning") {
+					msg = color.YellowString(msg)
 				}
+				log.Println(msg)
 			}
-
-			var prettyJSON bytes.Buffer
-			if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
-				log.Fatalln(color.RedString("runs into error %s", err))
-			}
-			os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
-			log.Printf("lint report is generated at %s \n", file)
-		} else {
-			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", lintCfg))
 		}
+
+		var prettyJSON bytes.Buffer
+		if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
+			log.Fatalln(color.RedString("runs into error %s", err.Error()))
+		}
+		if err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm); err != nil {
+			log.Fatalln(color.RedString("failed to save lint report %s", err.Error()))
+		}
+		jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
+		issues := jq.Count()
+		msg = fmt.Sprintf("%d of issues are found, you can get detail report at %s", issues, file)
+		if failOnIssue {
+			log.Fatalln(color.RedString(msg))
+		} else {
+			log.Println(msg)
+		}
+	} else {
+		log.Println(color.GreenString("no linter issues are found"))
 	}
 }
 

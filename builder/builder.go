@@ -153,26 +153,18 @@ func callBacks() fsm.Callbacks {
 			}
 		},
 		// Lint : before
-		fmt.Sprintf("before_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-			log.Println(color.RedString("before_lint"))
+		string(Lint): func(ctx context.Context, event *fsm.Event) {
+			isPreCommitHooK := preCommitHook == instance.hook
 			v, _ := ctx.Value(ScanAll).(bool)
-			if v {
-				v = preCommitHook != instance.hook
-			}
-			infra.LintScan(instance.project.TargetDir(), v)
-			if preCommitHook != instance.hook {
+			v = v && !isPreCommitHooK
+			infra.LintScan(instance.project.TargetDir(), v, isPreCommitHooK)
+			if !isPreCommitHooK {
 				event.Cancel()
 			}
 		},
-		// Lint : verify only in the preCommitHook event
-		string(Lint): func(ctx context.Context, event *fsm.Event) {
-			log.Println(color.RedString("lint status"))
-			infra.VerifyLinter(instance.project.TargetDir())
-		},
 		// Lint: after
 		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-			log.Println(color.RedString("after linter"))
-			infra.LintScan(instance.project.moduleDir, true)
+			infra.LintScan(instance.project.moduleDir, true, false)
 		},
 		// Test
 		string(Test): func(ctx context.Context, event *fsm.Event) {

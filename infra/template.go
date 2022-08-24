@@ -12,10 +12,10 @@ import (
 
 func GenerateFile(content string, targetName string, data interface{}, trunk bool) error {
 	dir := filepath.Dir(targetName)
-	os.MkdirAll(dir, os.ModePerm)
-	flag := os.O_RDWR | os.O_CREATE | os.O_EXCL
+	os.MkdirAll(dir, os.ModePerm)               //nolint:errcheck
+	flag := os.O_RDWR | os.O_CREATE | os.O_EXCL //nolint:nosnakecase
 	if trunk {
-		flag = os.O_RDWR | os.O_CREATE | os.O_TRUNC
+		flag = os.O_RDWR | os.O_CREATE | os.O_TRUNC //nolint:nosnakecase
 	}
 	var err error
 	var f *os.File
@@ -30,10 +30,8 @@ func GenerateFile(content string, targetName string, data interface{}, trunk boo
 				log.Println(color.RedString("Failed to create file %v, %+v\n", filepath.Base(targetName), err))
 			}
 		}
-	} else {
-		if !errors.Is(err, os.ErrExist) {
-			log.Println(color.RedString("failed to generate file %s, %v\n", filepath.Base(targetName), err))
-		}
+	} else if !errors.Is(err, os.ErrExist) {
+		log.Println(color.RedString("failed to generate file %s, %v\n", filepath.Base(targetName), err))
 	}
 	return err
 }
