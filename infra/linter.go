@@ -1,4 +1,4 @@
-package linter
+package infra
 
 import (
 	"bufio"
@@ -14,53 +14,59 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gos/infra"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
 const (
-	IssueNode = "Issues"
-	Cfg       = ".golangci.yml"
-	cmd       = "golangci-lint"
-	module    = "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	IssueNode  = "Issues"
+	lintCfg    = ".golangci.yml"
+	lintCmd    = "golangci-lint"
+	lintModule = "github.com/golangci/golangci-lint/cmd/golangci-lint"
 )
 
-var _ infra.Installable = (*golangCiLinter)(nil)
+var _ Installable = (*golangCiLinter)(nil)
 
+//go:embed template/.golangci.yml
+var golangCiTmp string
+
+//var GolangLint golangCiLinter
 var linter golangCiLinter
 
 type golangCiLinter struct {
-	infra.Installable
+	Installable
 	targetDir string
 	output    string
 }
 
+var linterVersion = func(cmd string) string {
+	ver := ""
+	output, err := exec.Command(cmd, "version").CombinedOutput()
+	if err == nil {
+		ver = strings.Fields(string(output))[3]
+	} else {
+		log.Fatalln(color.RedString("%s, %s", string(output), err.Error()))
+	}
+	return ver
+}
+
 func init() {
-	ins := infra.NewInstallable(module, cmd, func(cmd string) string {
-		ver := ""
-		output, err := exec.Command(cmd, "version").CombinedOutput()
-		if err == nil {
-			ver = strings.Fields(string(output))[3]
-		} else {
-			log.Fatalln(color.RedString("%s, %+v", string(output), err))
-		}
-		return ver
-	})
+	ins := NewInstallable(lintModule, lintCmd, linterVersion)
 	linter = golangCiLinter{
 		ins,
 		"",
-		fmt.Sprintf("%s.json", cmd),
+		fmt.Sprintf("%s.json", lintCmd),
 	}
+
 }
 
 func Install(ver string) (string, error) {
 	return linter.Install(ver)
 }
 
-func ConfiguredVer() (string, error) {
+func ConfiguredLinterVer() (string, error) {
 	var ver string
 	var err error
-	f, err := os.Open(Cfg)
+	f, err := os.Open(lintCfg)
 	defer f.Close()
 	if err == nil {
 		scanner := bufio.NewScanner(f)
@@ -73,7 +79,7 @@ func ConfiguredVer() (string, error) {
 			}
 		}
 		if ver == "" {
-			msg := color.RedString("missed version in %s", Cfg)
+			msg := color.RedString("missed version in %s", lintCfg)
 			log.Println(msg)
 			err = fmt.Errorf(msg)
 		}
@@ -81,9 +87,9 @@ func ConfiguredVer() (string, error) {
 	return ver, err
 }
 
-func Scan(target string, scanChanged bool) {
+func LintScan(target string, scanChanged bool) {
 	linter.targetDir = target
-	if ver, err := ConfiguredVer(); err == nil {
+	if ver, err := ConfiguredLinterVer(); err == nil {
 		if ver, err = linter.Install(ver); err == nil {
 			msg := "lint all source code"
 			// args := []string{"run", "-v", "./...", dir, "--out-format=json"}
@@ -123,12 +129,12 @@ func Scan(target string, scanChanged bool) {
 			os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 			log.Printf("lint report is generated at %s \n", file)
 		} else {
-			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", Cfg))
+			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", lintCfg))
 		}
 	}
 }
 
-func Verify(halt bool) {
+func VerifyLinter(halt bool) {
 	f := filepath.Join(linter.targetDir, linter.output)
 	jq := gojsonq.New().File(f).From(IssueNode)
 	issues := jq.Count()
@@ -145,4 +151,8 @@ func Verify(halt bool) {
 	} else {
 		log.Println(color.GreenString("no issues are found"))
 	}
+}
+
+func GenerateLintCfg(data interface{}, trunk bool) {
+	GenerateFile(golangCiTmp, lintCfg, data, trunk)
 }

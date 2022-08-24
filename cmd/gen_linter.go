@@ -5,13 +5,13 @@ package cmd
 
 import (
 	_ "embed"
-
-	"github.com/kcmvp/gos/builder/linter"
+	"github.com/kcmvp/gos/infra"
 	"github.com/spf13/cobra"
 )
 
-//go:embed template/.golangci.yml
-var golangCiTmp string
+//
+////go:embed template/.golangci.yml
+//var golangCiTmp string
 
 var version string
 
@@ -20,12 +20,12 @@ var linterCmd = &cobra.Command{
 	Use:   "linter",
 	Short: "setup linter for the project",
 	Run: func(cmd *cobra.Command, args []string) {
-		if ver, err := linter.ConfiguredVer(); err != nil {
-			if v, err := linter.Install(version); err == nil {
-				generateFile(golangCiTmp, linter.Cfg, v, false)
+		if ver, err := infra.ConfiguredLinterVer(); err != nil {
+			if v, err := infra.Install(version); err == nil {
+				infra.GenerateLintCfg(v, false)
 			}
 		} else {
-			linter.Install(ver)
+			infra.Install(ver)
 		}
 	},
 }

@@ -5,6 +5,7 @@ package cmd
 
 import (
 	_ "embed"
+	"github.com/kcmvp/gos/infra"
 	"log"
 	"path/filepath"
 
@@ -22,7 +23,7 @@ var builderCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		builder := getBuilder(cmd)
 		log.Println("generating `builder.go`")
-		generateFile(builderTmp, filepath.Join(builder.ScriptDir(), "builder.go"), nil, false)
+		infra.GenerateFile(builderTmp, filepath.Join(builder.ScriptDir(), "builder.go"), nil, false)
 		return nil
 	},
 }

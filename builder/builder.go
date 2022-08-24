@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/kcmvp/gos/infra"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,8 +12,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gos/builder/githook"
-	"github.com/kcmvp/gos/builder/linter"
 	"github.com/looplab/fsm"
 	"golang.org/x/mod/modfile"
 )
@@ -64,6 +63,7 @@ type Builder struct {
 	hook    Action
 
 	*buildOption
+	root string
 }
 
 func NewBuilder(root string) *Builder {
@@ -94,6 +94,7 @@ func NewBuilder(root string) *Builder {
 			repo,
 			Action(hook),
 			defaultOption(),
+			root,
 		}
 	})
 	return instance
@@ -124,17 +125,20 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			//linter.Scan(instance.project.TargetDir(), true)
+			//linter.LintScan(instance.project.TargetDir(), true)
 			log.Println("run linter against project")
 		},
 		// commit-msg : validate message
 		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
-			githook.ValidateCommitMsg(string(instance.buildOption.MsgPattern))
+			infra.CommitMsg(string(instance.buildOption.MsgPattern))
 		},
 		// pre-push : validate repo status
 		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
 			log.Println("validate unit test coverage")
-			githook.ValidateCoverage("")
+			if instance.repo != nil {
+				infra.PrePush(filepath.Join(instance.root, scriptDir, "coverage.json"),
+					filepath.Join(instance.root, targetDir, "coverage.json"), instance.repo)
+			}
 		},
 		// Lint
 		string(Lint): func(ctx context.Context, event *fsm.Event) {
@@ -142,10 +146,10 @@ func callBacks() fsm.Callbacks {
 			if !ok {
 				v = false
 			}
-			linter.Scan(instance.project.TargetDir(), v)
+			infra.LintScan(instance.project.TargetDir(), v)
 		},
 		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-			linter.Verify(string(preCommitHook) == event.Src)
+			infra.VerifyLinter(string(preCommitHook) == event.Src)
 		},
 		// Test
 		string(Test): func(ctx context.Context, event *fsm.Event) {
@@ -174,7 +178,8 @@ func (builder *Builder) Run(actions ...Action) {
 }
 
 func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
-	actions = resort(builder.hook, actions...)
+	builder.beforeRun()
+	actions = sort(builder.hook, actions...)
 	if len(actions) < 1 {
 		log.Println(color.YellowString("no Action provided"))
 		return
@@ -188,7 +193,7 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 	}
 }
 
-func resort(builtIn Action, actions ...Action) []Action {
+func sort(builtIn Action, actions ...Action) []Action {
 	switch builtIn {
 	case preCommitHook:
 		return []Action{preCommitHook, Lint, Test}
@@ -207,4 +212,13 @@ func resort(builtIn Action, actions ...Action) []Action {
 		}
 		return r
 	}
+}
+
+func (builder *Builder) beforeRun() {
+	//@todo
+	// 1: if files commit_msg.go or pre_commit.go or pre_push.go exists then must setup hook
+	if builder.repo != nil {
+		infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false)
+	}
+	// 2: repo is not nill
 }
