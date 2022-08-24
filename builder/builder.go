@@ -2,7 +2,6 @@ package builder
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"github.com/kcmvp/gos/infra"
 	"log"
@@ -61,15 +60,23 @@ type Builder struct {
 	fsm     *fsm.FSM
 	project *project
 	repo    *git.Repository
-	hook    Action
-
 	*buildOption
+
 	root string
+	hook Action
+}
+
+func trigger(name string) Action {
+	for _, action := range []Action{preCommitHook, commitMsgHook, prePushHook} {
+		if fmt.Sprintf("%s.go", action) == name {
+			return action
+		}
+	}
+	return ""
 }
 
 func NewBuilder(root string) *Builder {
 	once.Do(func() {
-		log.Println("initializing builder")
 		data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 		if err != nil {
 			log.Fatalln(color.RedString("can not find go.mod in %s", root))
@@ -78,20 +85,6 @@ func NewBuilder(root string) *Builder {
 				log.Fatalln(color.RedString("invalid mod file %v", err))
 			}
 		}
-
-		var hook string
-		flag.StringVar(&hook, "hook", "", "git hook trigger")
-		flag.Parse()
-		// corner case: no hook parameter
-		if len(hook) > 0 {
-			log.Println(color.GreenString("triggered by %s", hook))
-		}
-
-		_, filename, _, ok := runtime.Caller(2)
-		if ok {
-			log.Println(color.RedString("caller is %s\n", filename))
-		}
-
 		repo, err := git.PlainOpen(root)
 		if err != nil {
 			log.Println(color.YellowString("project is not at version control"))
@@ -100,10 +93,21 @@ func NewBuilder(root string) *Builder {
 			fsm.NewFSM(string(initialized), events(), callBacks()),
 			newProject(root),
 			repo,
-			Action(hook),
 			defaultOption(),
 			root,
+			"",
 		}
+
+		var hook Action
+		_, filename, _, ok := runtime.Caller(4)
+		if ok {
+			hook = trigger(filepath.Base(filename))
+			if len(hook) > 0 {
+				instance.hook = hook
+				log.Println(color.RedString("%s", hook))
+			}
+		}
+		instance.setup()
 	})
 	return instance
 }
@@ -186,7 +190,6 @@ func (builder *Builder) Run(actions ...Action) {
 }
 
 func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
-	builder.beforeRun()
 	actions = sort(builder.hook, actions...)
 	if len(actions) < 1 {
 		log.Println(color.YellowString("no Action provided"))
@@ -222,14 +225,10 @@ func sort(builtIn Action, actions ...Action) []Action {
 	}
 }
 
-func (builder *Builder) beforeRun() {
-	//@todo
-	// 1: if files commit_msg.go or pre_commit.go or pre_push.go exists then must setup hook
-	//infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false)
+func (builder *Builder) setup() {
 	if builder.repo != nil {
 		if infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false) != nil {
 			log.Println(color.RedString("failed to setup hook"))
 		}
 	}
-	// 2: repo is not nill
 }
