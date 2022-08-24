@@ -146,10 +146,10 @@ func callBacks() fsm.Callbacks {
 		// pre-push : validate repo status
 		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
 			log.Println("validate unit test coverage")
-			if instance.repo != nil {
-				infra.PrePush(filepath.Join(instance.root, scriptDir, "coverage.json"),
-					filepath.Join(instance.root, targetDir, "coverage.json"), instance.repo)
-			}
+			//if instance.repo != nil {
+			//	infra.PrePush(filepath.Join(instance.root, scriptDir, "coverage.json"),
+			//		filepath.Join(instance.root, targetDir, "coverage.json"), instance.repo)
+			//}
 		},
 		// Lint
 		string(Lint): func(ctx context.Context, event *fsm.Event) {
