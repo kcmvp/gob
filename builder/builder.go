@@ -191,6 +191,7 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 			log.Fatalln(color.RedString("%v", err))
 		}
 	}
+	os.Exit(0)
 }
 
 func sort(builtIn Action, actions ...Action) []Action {
