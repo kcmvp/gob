@@ -87,19 +87,19 @@ func ConfiguredLinterVer() (string, error) {
 	return ver, err
 }
 
-func LintScan(target string, scanChanged bool) {
+func LintScan(target string, all bool) {
 	linter.targetDir = target
 	if ver, err := ConfiguredLinterVer(); err == nil {
 		if ver, err = linter.Install(ver); err == nil {
 			msg := "lint all source code"
-			// args := []string{"run", "-v", "./...", dir, "--out-format=json"}
 			args := []string{"run", "-v", "./...", "--out-format=json"}
-			if scanChanged {
+			if !all {
 				args = append(args, "--new-from-rev=HEAD")
-				msg = "lint source from commit HEAD"
+				msg = "lint source for changes"
 			}
 			log.Println(msg)
 			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
+			fmt.Println(vCmd)
 			output, _ := exec.Command(vCmd, args...).CombinedOutput()
 			// save the report
 			file := filepath.Join(linter.targetDir, linter.output)
