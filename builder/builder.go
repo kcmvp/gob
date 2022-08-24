@@ -69,7 +69,7 @@ type Builder struct {
 func trigger(name string) Action {
 	for _, action := range []Action{preCommitHook, commitMsgHook, prePushHook} {
 		ago := fmt.Sprintf("%s.go", action)
-		fmt.Printf("%s, %s", ago, name)
+		fmt.Printf("%s, %s\n", ago, name)
 		if fmt.Sprintf("%s.go", action) == name {
 			return action
 		}
