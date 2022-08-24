@@ -122,7 +122,7 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 
 		var prettyJSON bytes.Buffer
 		if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
-			log.Fatalln(color.RedString("runs into error %s", err.Error()))
+			log.Fatalln(color.RedString("runs into error: %s", err.Error()))
 		}
 		if err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm); err != nil {
 			log.Fatalln(color.RedString("failed to save lint report %s", err.Error()))

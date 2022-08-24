@@ -10,7 +10,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/builder.go",
-				"Offset": 2215,
+				"Offset": 2198,
 				"Line": 118,
 				"Column": 3
 			},
@@ -27,7 +27,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/builder.go",
-				"Offset": 2296,
+				"Offset": 2279,
 				"Line": 119,
 				"Column": 3
 			},
@@ -44,7 +44,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/builder.go",
-				"Offset": 2377,
+				"Offset": 2360,
 				"Line": 120,
 				"Column": 3
 			},
@@ -674,7 +674,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "infra/linter.go",
-				"Offset": 4127,
+				"Offset": 4104,
 				"Line": 158,
 				"Column": 14
 			},
