@@ -220,7 +220,7 @@ func (builder *Builder) beforeRun() {
 	//@todo
 	// 1: if files commit_msg.go or pre_commit.go or pre_push.go exists then must setup hook
 	if builder.repo != nil {
-		infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false)
+		//infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false)
 	}
 	// 2: repo is not nill
 }
