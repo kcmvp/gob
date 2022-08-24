@@ -11,7 +11,6 @@ import (
 
 func main() {
 	//input, _ := os.ReadFile(os.Args[1])
-
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		panic("No caller information")
