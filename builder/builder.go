@@ -76,14 +76,6 @@ func NewBuilder(root string) *Builder {
 				log.Fatalln(color.RedString("invalid mod file %v", err))
 			}
 		}
-
-		var hook string
-		flag.StringVar(&hook, "hook", "", "git hook trigger")
-		flag.Parse()
-		// corner case: no hook parameter
-		if len(hook) > 0 {
-			log.Println(color.GreenString("triggered by %s", hook))
-		}
 		repo, err := git.PlainOpen(root)
 		if err != nil {
 			log.Println(color.YellowString("project is not at version control"))
@@ -92,11 +84,18 @@ func NewBuilder(root string) *Builder {
 			fsm.NewFSM(string(initialized), events(), callBacks()),
 			newProject(root),
 			repo,
-			Action(hook),
+			"",
 			defaultOption(),
 			root,
 		}
 	})
+	var hook string
+	flag.StringVar(&hook, "hook", "", "git hook trigger")
+	flag.Parse()
+	// corner case: no hook parameter
+	if len(hook) > 0 {
+		log.Println(color.GreenString("triggered by %s", hook))
+	}
 	return instance
 }
 
