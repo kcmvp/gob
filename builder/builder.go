@@ -68,6 +68,8 @@ type Builder struct {
 
 func trigger(name string) Action {
 	for _, action := range []Action{preCommitHook, commitMsgHook, prePushHook} {
+		ago := fmt.Sprintf("%s.go", action)
+		fmt.Printf("%s, %s", ago, name)
 		if fmt.Sprintf("%s.go", action) == name {
 			return action
 		}
@@ -89,15 +91,6 @@ func NewBuilder(root string) *Builder {
 		if err != nil {
 			log.Println(color.YellowString("project is not at version control"))
 		}
-		instance = &Builder{
-			fsm.NewFSM(string(initialized), events(), callBacks()),
-			newProject(root),
-			repo,
-			defaultOption(),
-			root,
-			"",
-		}
-
 		var hook Action
 		_, filename, _, ok := runtime.Caller(4)
 		if ok {
@@ -106,6 +99,14 @@ func NewBuilder(root string) *Builder {
 				instance.hook = hook
 				log.Println(color.RedString("%s", hook))
 			}
+		}
+		instance = &Builder{
+			fsm.NewFSM(string(initialized), events(), callBacks()),
+			newProject(root),
+			repo,
+			defaultOption(),
+			root,
+			hook,
 		}
 		instance.setup()
 	})
