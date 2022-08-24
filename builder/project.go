@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/kcmvp/gos/infra"
 	"io/fs"
 	"log"
 	"os"
@@ -31,11 +32,6 @@ type project struct {
 	targetDir string
 	gitCheck  Action
 	gitVerify Action
-}
-
-type Report struct {
-	Tests    int
-	Packages map[string]string
 }
 
 type TestCase struct {
@@ -165,7 +161,7 @@ func (project *project) coverage(keepInGit bool) {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 
-	report := Report{
+	report := infra.Report{
 		Packages: map[string]string{},
 	}
 	testSet := map[string]bool{}

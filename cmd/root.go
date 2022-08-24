@@ -7,17 +7,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"text/template"
-
-	"github.com/fatih/color"
 	"github.com/kcmvp/gos/builder"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 const (
@@ -91,33 +87,6 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-func generateFile(content string, targetName string, data interface{}, trunk bool) {
-	dir := filepath.Dir(targetName)
-	os.MkdirAll(dir, os.ModePerm)
-	flag := os.O_RDWR | os.O_CREATE | os.O_EXCL
-	if trunk {
-		flag = os.O_RDWR | os.O_CREATE | os.O_TRUNC
-	}
-	if f, err := os.OpenFile(targetName, flag, os.ModePerm); err == nil {
-		defer f.Close()
-		if t, err := template.New(targetName).Parse(content); err != nil {
-			log.Println(color.RedString("Failed to parse template, %+v", err))
-		} else {
-			if err = t.Execute(f, data); err != nil {
-				log.Println(color.RedString("Failed to create file %v, %+v\n", targetName, err))
-			} else {
-				log.Printf("generate file %v successfully\n", f.Name())
-			}
-		}
-	} else {
-		if errors.Is(err, os.ErrExist) {
-			log.Printf("%s exists\n", targetName)
-		} else {
-			log.Println(color.RedString("failed to generate file %s, %v\n", targetName, err))
-		}
-	}
 }
 
 func getBuilder(cmd *cobra.Command) *builder.Builder {
