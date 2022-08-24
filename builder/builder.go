@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 
 	"github.com/fatih/color"
@@ -85,6 +86,12 @@ func NewBuilder(root string) *Builder {
 		if len(hook) > 0 {
 			log.Println(color.GreenString("triggered by %s", hook))
 		}
+
+		_, filename, _, ok := runtime.Caller(1)
+		if ok {
+			log.Println(color.RedString("caller is %s\n", filename))
+		}
+
 		repo, err := git.PlainOpen(root)
 		if err != nil {
 			log.Println(color.YellowString("project is not at version control"))
