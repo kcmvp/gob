@@ -99,7 +99,6 @@ func LintScan(target string, all bool) {
 			}
 			log.Println(msg)
 			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
-			fmt.Println(vCmd)
 			output, _ := exec.Command(vCmd, args...).CombinedOutput()
 			// save the report
 			file := filepath.Join(linter.targetDir, linter.output)
