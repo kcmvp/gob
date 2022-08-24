@@ -87,7 +87,7 @@ func NewBuilder(root string) *Builder {
 			log.Println(color.GreenString("triggered by %s", hook))
 		}
 
-		_, filename, _, ok := runtime.Caller(1)
+		_, filename, _, ok := runtime.Caller(2)
 		if ok {
 			log.Println(color.RedString("caller is %s\n", filename))
 		}
