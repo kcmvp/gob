@@ -2,11 +2,12 @@ package infra
 
 import (
 	"errors"
-	"github.com/fatih/color"
 	"log"
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/fatih/color"
 )
 
 func GenerateFile(content string, targetName string, data interface{}, trunk bool) error {

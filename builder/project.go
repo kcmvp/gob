@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/kcmvp/gos/infra"
 	"io/fs"
 	"log"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/kcmvp/gos/infra"
 )
 
 const (
@@ -151,7 +151,7 @@ func FatalIfError(err error) {
 func (project *project) coverage(keepInGit bool) {
 	cover := filepath.Join(project.targetDir, coverage)
 	if keepInGit {
-		cover = filepath.Join(project.scriptDir, coverage)
+		cover = filepath.Join(project.moduleDir, coverage)
 	}
 	log.Println("generating test coverage report")
 	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))

@@ -28,14 +28,11 @@ var _ Installable = (*golangCiLinter)(nil)
 
 //go:embed template/.golangci.yml
 var golangCiTmp string
-
-//var GolangLint golangCiLinter
 var linter golangCiLinter
 
 type golangCiLinter struct {
 	Installable
-	targetDir string
-	output    string
+	output string
 }
 
 var linterVersion = func(cmd string) string {
@@ -53,10 +50,8 @@ func init() {
 	ins := NewInstallable(lintModule, lintCmd, linterVersion)
 	linter = golangCiLinter{
 		ins,
-		"",
 		fmt.Sprintf("%s.json", lintCmd),
 	}
-
 }
 
 func Install(ver string) (string, error) {
@@ -87,8 +82,7 @@ func ConfiguredLinterVer() (string, error) {
 	return ver, err
 }
 
-func LintScan(target string, all bool) {
-	linter.targetDir = target
+func LintScan(targetDir string, all bool) {
 	if ver, err := ConfiguredLinterVer(); err == nil {
 		if ver, err = linter.Install(ver); err == nil {
 			msg := "lint all source code"
@@ -101,7 +95,7 @@ func LintScan(target string, all bool) {
 			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
 			output, _ := exec.Command(vCmd, args...).CombinedOutput()
 			// save the report
-			file := filepath.Join(linter.targetDir, linter.output)
+			file := filepath.Join(targetDir, linter.output)
 			sc := bufio.NewScanner(strings.NewReader(string(output)))
 			r, _ := regexp.Compile(`".*"`)
 			n, _ := regexp.Compile(`config_reader|lintersdb|before processing:.*after processing:`)
@@ -133,20 +127,15 @@ func LintScan(target string, all bool) {
 	}
 }
 
-func VerifyLinter(halt bool) {
-	f := filepath.Join(linter.targetDir, linter.output)
+func VerifyLinter(dir string) {
+	f := filepath.Join(dir, linter.output)
 	jq := gojsonq.New().File(f).From(IssueNode)
 	issues := jq.Count()
 
 	jq = gojsonq.New().File(f).From(IssueNode)
 	files := jq.Distinct("Pos.Filename").Count()
 	if issues > 0 {
-		msg := fmt.Sprintf("%d of new issues are found in %d files, please refer to %s", issues, files, f)
-		if halt {
-			log.Fatalln(color.RedString(msg))
-		} else {
-			log.Println(color.YellowString(msg))
-		}
+		log.Fatalln(color.RedString("%d of new issues are found in %d files, please refer to %s", issues, files, f))
 	} else {
 		log.Println(color.GreenString("no issues are found"))
 	}

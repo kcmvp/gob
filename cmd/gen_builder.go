@@ -5,9 +5,10 @@ package cmd
 
 import (
 	_ "embed"
-	"github.com/kcmvp/gos/infra"
 	"log"
 	"path/filepath"
+
+	"github.com/kcmvp/gos/infra"
 
 	"github.com/spf13/cobra"
 )

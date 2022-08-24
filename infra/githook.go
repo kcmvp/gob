@@ -4,7 +4,6 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"github.com/go-git/go-git/v5"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/go-git/go-git/v5"
 )
 
 var hooks = []string{"pre-commit", "commit-msg", "pre-push"}
@@ -102,5 +102,4 @@ func PrePush(version, target string, repo *git.Repository) {
 		log.Fatalln(color.RedString("number of the test is not the same between %s and %s", s, t))
 	}
 	// check the degrade
-
 }

@@ -5,13 +5,14 @@ package cmd
 
 import (
 	_ "embed"
+
 	"github.com/kcmvp/gos/infra"
 	"github.com/spf13/cobra"
 )
 
 //
 ////go:embed template/.golangci.yml
-//var golangCiTmp string
+// var golangCiTmp string
 
 var version string
 

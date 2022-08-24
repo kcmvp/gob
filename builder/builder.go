@@ -2,8 +2,8 @@ package builder
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/kcmvp/gos/infra"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
+	"github.com/kcmvp/gos/infra"
 	"github.com/looplab/fsm"
 	"golang.org/x/mod/modfile"
 )
@@ -136,7 +137,7 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			//linter.LintScan(instance.project.TargetDir(), true)
+			// linter.LintScan(instance.project.TargetDir(), true)
 			log.Println("run linter against project")
 		},
 		// commit-msg : validate message
@@ -145,22 +146,33 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-push : validate repo status
 		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
-			log.Println("validate unit test coverage")
-			//if instance.repo != nil {
-			//	infra.PrePush(filepath.Join(instance.root, scriptDir, "coverage.json"),
-			//		filepath.Join(instance.root, targetDir, "coverage.json"), instance.repo)
-			//}
+			log.Println("validate code quality for push")
+			if instance.repo != nil {
+				infra.PrePush(filepath.Join(instance.root, scriptDir, "coverage.json"),
+					filepath.Join(instance.root, targetDir, "coverage.json"), instance.repo)
+			}
 		},
-		// Lint
-		string(Lint): func(ctx context.Context, event *fsm.Event) {
-			v, ok := ctx.Value(ScanAll).(bool)
-			if !ok {
-				v = false
+		// Lint : before
+		fmt.Sprintf("before_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
+			log.Println(color.RedString("before_lint"))
+			v, _ := ctx.Value(ScanAll).(bool)
+			if v {
+				v = preCommitHook != instance.hook
 			}
 			infra.LintScan(instance.project.TargetDir(), v)
+			if preCommitHook != instance.hook {
+				event.Cancel()
+			}
 		},
+		// Lint : verify only in the preCommitHook event
+		string(Lint): func(ctx context.Context, event *fsm.Event) {
+			log.Println(color.RedString("lint status"))
+			infra.VerifyLinter(instance.project.TargetDir())
+		},
+		// Lint: after
 		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-			infra.VerifyLinter(string(preCommitHook) == event.Src)
+			log.Println(color.RedString("after linter"))
+			infra.LintScan(instance.project.moduleDir, true)
 		},
 		// Test
 		string(Test): func(ctx context.Context, event *fsm.Event) {
@@ -197,7 +209,8 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 	log.Printf("actions are: %+v \n", actions)
 	for _, evt := range actions {
 		err := builder.fsm.Event(ctx, string(evt))
-		if err != nil {
+		var t1 fsm.CanceledError
+		if err != nil && !errors.Is(err, t1) {
 			log.Fatalln(color.RedString("%v", err))
 		}
 	}

@@ -69,7 +69,7 @@ func (i *defaultIns) Installed() []string {
 		vs = append(vs, s)
 	}
 	if len(vs) > 0 {
-		log.Printf("installed versions of %s: %+v \n", i.cmd, vs)
+		log.Printf("installed versions of %s: %+v \n", i.cmd, strings.Join(vs, ","))
 	}
 	return vs
 }

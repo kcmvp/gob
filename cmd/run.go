@@ -6,9 +6,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/kcmvp/gos/builder"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 var scanAll = false
