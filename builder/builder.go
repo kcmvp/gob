@@ -194,6 +194,7 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 }
 
 func sort(builtIn Action, actions ...Action) []Action {
+	log.Printf("builtin is %s \n", builtIn)
 	switch builtIn {
 	case preCommitHook:
 		return []Action{preCommitHook, Lint, Test}
