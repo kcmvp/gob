@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/fatih/color"
@@ -68,9 +69,7 @@ type Builder struct {
 
 func trigger(name string) Action {
 	for _, action := range []Action{preCommitHook, commitMsgHook, prePushHook} {
-		ago := fmt.Sprintf("%s.go", action)
-		fmt.Printf("%s, %s\n", ago, name)
-		if fmt.Sprintf("%s.go", action) == name {
+		if fmt.Sprintf("%s.go", action) == strings.ReplaceAll(name, "_", "-") {
 			return action
 		}
 	}
@@ -96,7 +95,6 @@ func NewBuilder(root string) *Builder {
 		if ok {
 			hook = trigger(filepath.Base(filename))
 			if len(hook) > 0 {
-				instance.hook = hook
 				log.Println(color.RedString("%s", hook))
 			}
 		}
