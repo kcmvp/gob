@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/kcmvp/gos/builder"
+	"os"
 	"path/filepath"
 	"runtime"
 )
@@ -17,4 +18,5 @@ func main() {
 	}
 	root := filepath.Dir(filepath.Dir(filename))
 	builder.NewBuilder(root).Run()
+	os.Exit(0)
 }
