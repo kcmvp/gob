@@ -9,7 +9,7 @@ import (
 	"text/template"
 )
 
-func GenerateFile(content string, targetName string, data interface{}, trunk bool) {
+func GenerateFile(content string, targetName string, data interface{}, trunk bool) error {
 	dir := filepath.Dir(targetName)
 	os.MkdirAll(dir, os.ModePerm)
 	flag := os.O_RDWR | os.O_CREATE | os.O_EXCL
@@ -27,15 +27,12 @@ func GenerateFile(content string, targetName string, data interface{}, trunk boo
 		} else {
 			if err = t.Execute(f, data); err != nil {
 				log.Println(color.RedString("Failed to create file %v, %+v\n", filepath.Base(targetName), err))
-			} else {
-				log.Printf("generate file %s successfully\n", filepath.Base(targetName))
 			}
 		}
 	} else {
-		if errors.Is(err, os.ErrExist) {
-			log.Printf("%s exists\n", filepath.Base(targetName))
-		} else {
+		if !errors.Is(err, os.ErrExist) {
 			log.Println(color.RedString("failed to generate file %s, %v\n", filepath.Base(targetName), err))
 		}
 	}
+	return err
 }

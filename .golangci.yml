@@ -1,4 +1,4 @@
-# Don't remove below `# version:` line, it controls the version of golangci-linter at runtime.
+# Don't remove below line, it controls the version of golangci-linter at runtime.
 # version: v1.48.0
 run:
   tests: false

@@ -16,8 +16,8 @@ import (
 // githookCmd represents the githook command.
 var githookCmd = &cobra.Command{
 	Use:   "githook",
-	Short: "Generate git hook for currentProject",
-	Long:  `Generate git hooks for currentProject, includes: commit_message, pre_push`,
+	Short: "Generate git hook for project",
+	Long:  `Generate git hooks for project, which include: commit_message, pre_push`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := os.Stat(git.GitDirName)
 		if errors.Is(err, os.ErrNotExist) {

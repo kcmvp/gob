@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	IssueNode = "Issues"
-	cfg       = ".golangci.yml"
-	cmd       = "golangci-lint"
-	module    = "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	IssueNode  = "Issues"
+	lintCfg    = ".golangci.yml"
+	lintCmd    = "golangci-lint"
+	lintModule = "github.com/golangci/golangci-lint/cmd/golangci-lint"
 )
 
 var _ Installable = (*golangCiLinter)(nil)
@@ -44,17 +44,17 @@ var linterVersion = func(cmd string) string {
 	if err == nil {
 		ver = strings.Fields(string(output))[3]
 	} else {
-		log.Fatalln(color.RedString("%s, %+v", string(output), err))
+		log.Fatalln(color.RedString("%s, %s", string(output), err.Error()))
 	}
 	return ver
 }
 
 func init() {
-	ins := NewInstallable(module, cmd, linterVersion)
+	ins := NewInstallable(lintModule, lintCmd, linterVersion)
 	linter = golangCiLinter{
 		ins,
 		"",
-		fmt.Sprintf("%s.json", cmd),
+		fmt.Sprintf("%s.json", lintCmd),
 	}
 
 }
@@ -66,7 +66,7 @@ func Install(ver string) (string, error) {
 func ConfiguredLinterVer() (string, error) {
 	var ver string
 	var err error
-	f, err := os.Open(cfg)
+	f, err := os.Open(lintCfg)
 	defer f.Close()
 	if err == nil {
 		scanner := bufio.NewScanner(f)
@@ -79,7 +79,7 @@ func ConfiguredLinterVer() (string, error) {
 			}
 		}
 		if ver == "" {
-			msg := color.RedString("missed version in %s", cfg)
+			msg := color.RedString("missed version in %s", lintCfg)
 			log.Println(msg)
 			err = fmt.Errorf(msg)
 		}
@@ -129,7 +129,7 @@ func LintScan(target string, scanChanged bool) {
 			os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
 			log.Printf("lint report is generated at %s \n", file)
 		} else {
-			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", cfg))
+			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", lintCfg))
 		}
 	}
 }
@@ -154,5 +154,5 @@ func VerifyLinter(halt bool) {
 }
 
 func GenerateLintCfg(data interface{}, trunk bool) {
-	GenerateFile(golangCiTmp, cfg, data, trunk)
+	GenerateFile(golangCiTmp, lintCfg, data, trunk)
 }

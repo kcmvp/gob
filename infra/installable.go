@@ -58,7 +58,7 @@ func (i *defaultIns) Installed() []string {
 			return err
 		}
 		if !info.IsDir() && strings.HasPrefix(info.Name(), i.cmd) {
-			v := i.verFunc(info.Name())
+			v := i.verFunc(path)
 			vm[v] = 1
 			i.tagVersion(path, v)
 		}

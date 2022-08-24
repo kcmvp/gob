@@ -44,10 +44,10 @@ func SetupHook(root, scriptDir string, genNew bool) error {
 				continue
 			}
 			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", g))); err == nil {
-				GenerateFile(string(tf), abs, nil, false)
+				err = GenerateFile(string(tf), abs, nil, false)
 			}
 		} else if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
-			GenerateFile(string(tf), filepath.Join(gitDir, "hooks", s), Hook{abs, s}, true)
+			err = GenerateFile(string(tf), filepath.Join(gitDir, "hooks", s), Hook{abs, s}, true)
 		}
 	}
 	return err
