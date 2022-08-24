@@ -92,11 +92,11 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 	if err != nil {
 		log.Fatalln(color.RedString("failed to install golangci-linter %s: %s", ver, err.Error()))
 	}
-	msg := "lint fullScan source code"
+	msg := "lint all source code"
 	args := []string{"run", "-v", "./...", "--out-format=json"}
 	if !fullScan {
 		args = append(args, "--new-from-rev=HEAD")
-		msg = "lint source for changes"
+		msg = "lint changed source code"
 	}
 	log.Println(msg)
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
@@ -136,7 +136,7 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 			log.Println(msg)
 		}
 	} else {
-		log.Println(color.GreenString("no linter issues are found"))
+		log.Println("no linter issues are found")
 	}
 }
 

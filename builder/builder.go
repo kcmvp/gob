@@ -96,7 +96,7 @@ func NewBuilder(root string) *Builder {
 		if ok {
 			hook = trigger(filepath.Base(filename))
 			if len(hook) > 0 {
-				log.Println(color.GreenString("%s", hook))
+				log.Printf("%s \n", hook)
 			}
 		}
 		instance = &Builder{
