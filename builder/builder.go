@@ -195,7 +195,6 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 }
 
 func sort(builtIn Action, actions ...Action) []Action {
-	log.Printf("builtin is %s \n", builtIn)
 	switch builtIn {
 	case preCommitHook:
 		return []Action{preCommitHook, Lint, Test}
@@ -219,8 +218,11 @@ func sort(builtIn Action, actions ...Action) []Action {
 func (builder *Builder) beforeRun() {
 	//@todo
 	// 1: if files commit_msg.go or pre_commit.go or pre_push.go exists then must setup hook
+	//infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false)
 	if builder.repo != nil {
-		//infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false)
+		if infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false) != nil {
+			log.Println(color.RedString("failed to setup hook"))
+		}
 	}
 	// 2: repo is not nill
 }
