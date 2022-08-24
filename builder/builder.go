@@ -68,6 +68,7 @@ type Builder struct {
 
 func NewBuilder(root string) *Builder {
 	once.Do(func() {
+		log.Println("initializing builder")
 		data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 		if err != nil {
 			log.Fatalln(color.RedString("can not find go.mod in %s", root))
