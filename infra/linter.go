@@ -135,7 +135,6 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
 	}
 	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
-	issues := jq.Count()
 	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
 	data := jq.Get()
 	funcMap := template.FuncMap{
@@ -156,7 +155,7 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 	checkError(err)
 	err = t.Execute(f, data)
 	checkError(err)
-	msg = fmt.Sprintf("total %d issues are found, you can get detail report at %s", issues, file)
+	msg = fmt.Sprintf("lint report is generated at %s", file)
 	if failOnIssue {
 		log.Fatalln(color.RedString(msg))
 	} else {

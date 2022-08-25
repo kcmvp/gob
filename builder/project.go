@@ -72,39 +72,32 @@ func (project *project) clean() {
 	log.Printf("clean directory %s \n", project.targetDir)
 	if err := os.RemoveAll(project.targetDir); err != nil {
 		log.Fatalln(color.RedString("failed to delete %s\n", project.targetDir))
+	} else {
+		if err := os.MkdirAll(project.targetDir, os.ModePerm); err != nil {
+			log.Fatalln(color.RedString("failed to create directory %s, err : %s", project.targetDir, err.Error()))
+		}
 	}
 }
 
 // Test run the test with -race, -cover, -fuzz and -bench.
 func (project *project) test(args ...string) {
-	log.Println("run unit test ......")
 	os.Chdir(project.moduleDir)
 	os.MkdirAll(project.targetDir, os.ModePerm)
 	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(project.targetDir, lineCoverageReport), "./..."}
 	if len(args) > 0 {
 		params = append(params, args...)
 	}
-	out, err := exec.Command("go", params...).CombinedOutput()
-	if err != nil {
-		sc := bufio.NewScanner(strings.NewReader(string(out)))
-		for sc.Scan() {
-			line := sc.Text()
-			if !strings.HasPrefix(line, "{\"Time\":") {
-				log.Println(color.RedString(line))
-			}
-		}
-		os.Exit(1)
-	}
+	out, _ := exec.Command("go", params...).CombinedOutput()
 
 	if err := os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm); err != nil {
 		log.Fatalln(color.RedString("failed to generate coverage report:%s", err.Error()))
 	}
 	//  go tool cover -func ./targetDir/coverage.data
-	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
-	out, _ = exec.Command("go", params...).CombinedOutput()
-	if err := os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm); err != nil {
-		log.Fatalln(color.RedString("failed to generate coverage detail report:%s", err.Error()))
-	}
+	fileCover := filepath.Join(project.targetDir, "cover_file.html")
+	params = []string{"tool", "cover", "-html", filepath.Join(project.targetDir, lineCoverageReport), "-o", fileCover}
+	_, err := exec.Command("go", params...).CombinedOutput()
+	checkError(err)
+	log.Printf("coverage report is generated at %s \n", fileCover)
 }
 
 // Build walk from module directory and run build command for each executable
@@ -154,7 +147,6 @@ func (project *project) coverage(keepInGit bool) {
 	// if keepInGit {
 	//	cover = filepath.Join(project.moduleDir, coverage)
 	//}
-	log.Println("generating test coverage report")
 	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))
 	if err != nil {
 		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(project.targetDir, rawTestReport)))
@@ -184,5 +176,11 @@ func (project *project) coverage(keepInGit bool) {
 	data, _ := json.MarshalIndent(report, "", " ")
 	if os.WriteFile(cover, data, os.ModePerm) == nil {
 		log.Printf("coverage report is generated at %s", cover)
+	}
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
 	}
 }
