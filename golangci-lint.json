@@ -674,7 +674,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "infra/linter.go",
-				"Offset": 4104,
+				"Offset": 4105,
 				"Line": 158,
 				"Column": 14
 			},
