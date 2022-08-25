@@ -169,7 +169,7 @@ func (project *project) coverage(keepInGit bool) {
 	for scanner.Scan() {
 		text := scanner.Text()
 		c := TestCase{}
-		json.Unmarshal([]byte(text), &c)
+		json.Unmarshal([]byte(text), &c) //nolint:errcheck
 		if len(c.Test) > 0 {
 			testSet[c.Test] = true
 		} else if len(c.Output) > 0 {
