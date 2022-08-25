@@ -1,57 +1,6 @@
 {
 	"Issues": [
 		{
-			"FromLinter": "unused",
-			"Text": "field `versioned` is unused",
-			"Severity": "",
-			"SourceLines": [
-				"\tversioned bool"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/project.go",
-				"Offset": 442,
-				"Line": 29,
-				"Column": 2
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "unused",
-			"Text": "field `gitCheck` is unused",
-			"Severity": "",
-			"SourceLines": [
-				"\tgitCheck  Action"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/project.go",
-				"Offset": 512,
-				"Line": 33,
-				"Column": 2
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "unused",
-			"Text": "field `gitVerify` is unused",
-			"Severity": "",
-			"SourceLines": [
-				"\tgitVerify Action"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/project.go",
-				"Offset": 530,
-				"Line": 34,
-				"Column": 2
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
 			"FromLinter": "errcheck",
 			"Text": "Error return value of `os.Chdir` is not checked",
 			"Severity": "",
@@ -61,8 +10,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 1665,
-				"Line": 84,
+				"Offset": 1613,
+				"Line": 81,
 				"Column": 10
 			},
 			"ExpectNoLint": false,
@@ -78,8 +27,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 1697,
-				"Line": 85,
+				"Offset": 1645,
+				"Line": 82,
 				"Column": 13
 			},
 			"ExpectNoLint": false,
@@ -95,8 +44,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 2209,
-				"Line": 102,
+				"Offset": 2157,
+				"Line": 99,
 				"Column": 14
 			},
 			"ExpectNoLint": false,
@@ -112,8 +61,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 2497,
-				"Line": 106,
+				"Offset": 2445,
+				"Line": 103,
 				"Column": 14
 			},
 			"ExpectNoLint": false,
@@ -129,8 +78,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 2956,
-				"Line": 117,
+				"Offset": 2904,
+				"Line": 114,
 				"Column": 13
 			},
 			"ExpectNoLint": false,
@@ -146,8 +95,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 3003,
-				"Line": 118,
+				"Offset": 2951,
+				"Line": 115,
 				"Column": 15
 			},
 			"ExpectNoLint": false,
@@ -164,7 +113,7 @@
 			"Pos": {
 				"Filename": "builder/project.go",
 				"Offset": 0,
-				"Line": 124,
+				"Line": 121,
 				"Column": 23
 			},
 			"ExpectNoLint": false,
@@ -180,8 +129,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 4427,
-				"Line": 171,
+				"Offset": 4375,
+				"Line": 168,
 				"Column": 17
 			},
 			"ExpectNoLint": false,
@@ -197,8 +146,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 4786,
-				"Line": 183,
+				"Offset": 4734,
+				"Line": 180,
 				"Column": 13
 			},
 			"ExpectNoLint": false,
@@ -533,11 +482,11 @@
 		"Warnings": [
 			{
 				"Tag": "runner",
-				"Text": "The linter 'scopelint' is deprecated (since v1.39.0) due to: The repository of the linter has been deprecated by the owner.  Replaced by exportloopref."
+				"Text": "The linter 'maligned' is deprecated (since v1.38.0) due to: The repository of the linter has been archived by the owner.  Replaced by govet 'fieldalignment'."
 			},
 			{
 				"Tag": "runner",
-				"Text": "The linter 'maligned' is deprecated (since v1.38.0) due to: The repository of the linter has been archived by the owner.  Replaced by govet 'fieldalignment'."
+				"Text": "The linter 'scopelint' is deprecated (since v1.39.0) due to: The repository of the linter has been deprecated by the owner.  Replaced by exportloopref."
 			},
 			{
 				"Tag": "linters context",
