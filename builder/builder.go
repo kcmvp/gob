@@ -116,7 +116,7 @@ func events() fsm.Events {
 		{string(SetupGitHook), []string{string(initialized)}, string(SetupGitHook)},
 		{string(preCommitHook), []string{string(Test)}, string(preCommitHook)},
 		{string(commitMsgHook), []string{string(SetupGitHook)}, string(commitMsgHook)},
-		{string(prePushHook), []string{string(initialized)}, string(prePushHook)},
+		{string(prePushHook), []string{string(initialized), string(Test)}, string(prePushHook)},
 		{string(Clean), []string{string(initialized), string(prePushHook)}, string(Clean)},
 		// commit-msg and pre-push can't trigger lint
 		{string(Lint), []string{string(initialized), string(SetupGitHook), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
@@ -143,7 +143,6 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			//infra.GitAdd("golangci-lint.json", "coverage.json")
 		},
 		// commit-msg : validate message
 		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
