@@ -105,9 +105,11 @@ func GitAdd(files ...string) {
 	s, _ := w.Status()
 	for _, file := range files {
 		log.Printf("git status: %s: %s\n", file, string(s.File(file).Worktree))
-		if s.File(file).Worktree != git.Added {
-			w.Add(file) //nolint:errcheck
+
+		if _, err := w.Add(file); err != nil {
+			log.Println(color.RedString("git add error:%s", err.Error()))
 		}
+		//}
 	}
 }
 

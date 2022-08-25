@@ -36,40 +36,6 @@
 		},
 		{
 			"FromLinter": "errcheck",
-			"Text": "Error return value of `os.WriteFile` is not checked",
-			"Severity": "",
-			"SourceLines": [
-				"\tos.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/project.go",
-				"Offset": 2157,
-				"Line": 99,
-				"Column": 14
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "errcheck",
-			"Text": "Error return value of `os.WriteFile` is not checked",
-			"Severity": "",
-			"SourceLines": [
-				"\tos.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/project.go",
-				"Offset": 2445,
-				"Line": 103,
-				"Column": 14
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "errcheck",
 			"Text": "Error return value of `os.MkdirAll` is not checked",
 			"Severity": "",
 			"SourceLines": [
@@ -78,8 +44,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 2904,
-				"Line": 114,
+				"Offset": 3135,
+				"Line": 118,
 				"Column": 13
 			},
 			"ExpectNoLint": false,
@@ -95,8 +61,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 2951,
-				"Line": 115,
+				"Offset": 3182,
+				"Line": 119,
 				"Column": 15
 			},
 			"ExpectNoLint": false,
@@ -113,7 +79,7 @@
 			"Pos": {
 				"Filename": "builder/project.go",
 				"Offset": 0,
-				"Line": 121,
+				"Line": 125,
 				"Column": 23
 			},
 			"ExpectNoLint": false,
@@ -129,8 +95,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 4375,
-				"Line": 168,
+				"Offset": 4606,
+				"Line": 172,
 				"Column": 17
 			},
 			"ExpectNoLint": false,
@@ -146,8 +112,8 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 4734,
-				"Line": 180,
+				"Offset": 4965,
+				"Line": 184,
 				"Column": 13
 			},
 			"ExpectNoLint": false,
