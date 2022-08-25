@@ -36,23 +36,6 @@
 		},
 		{
 			"FromLinter": "errcheck",
-			"Text": "Error return value of `os.MkdirAll` is not checked",
-			"Severity": "",
-			"SourceLines": [
-				"\tos.MkdirAll(project.targetDir, os.ModePerm)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/project.go",
-				"Offset": 3135,
-				"Line": 118,
-				"Column": 13
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "errcheck",
 			"Text": "Error return value of `filepath.Walk` is not checked",
 			"Severity": "",
 			"SourceLines": [
@@ -61,7 +44,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 3182,
+				"Offset": 3200,
 				"Line": 119,
 				"Column": 15
 			},
@@ -95,7 +78,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 4606,
+				"Offset": 4624,
 				"Line": 172,
 				"Column": 17
 			},
@@ -112,7 +95,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "builder/project.go",
-				"Offset": 4965,
+				"Offset": 4983,
 				"Line": 184,
 				"Column": 13
 			},

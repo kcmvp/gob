@@ -106,9 +106,12 @@ func GitAdd(files ...string) {
 	for _, file := range files {
 		log.Printf("git status: %s: %s\n", file, string(s.File(file).Worktree))
 
-		if _, err := w.Add(file); err != nil {
+		if err := w.AddWithOptions(&git.AddOptions{Path: file}); err != nil {
 			log.Println(color.RedString("git add error:%s", err.Error()))
 		}
+		// if _, err := w.Add(file); err != nil {
+		//	log.Println(color.RedString("git add error:%s", err.Error()))
+		//}
 	}
 }
 
