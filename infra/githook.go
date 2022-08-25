@@ -99,6 +99,7 @@ func CommitMsg(pattern string) {
 		log.Fatalln(color.RedString("commit message must follow %s", pattern))
 	}
 }
+
 func GitCheckout(files ...string) {
 	w, _ := gitHook.repo.Worktree()
 	s, _ := w.Status()
