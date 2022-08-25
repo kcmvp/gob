@@ -99,6 +99,17 @@ func CommitMsg(pattern string) {
 		log.Fatalln(color.RedString("commit message must follow %s", pattern))
 	}
 }
+func GitCheckout(files ...string) {
+	w, _ := gitHook.repo.Worktree()
+	s, _ := w.Status()
+	for _, file := range files {
+		log.Printf("git status: %s: %s\n", file, string(s.File(file).Worktree))
+
+		if err := w.AddWithOptions(&git.AddOptions{Path: file}); err != nil {
+			log.Println(color.RedString("git add error:%s", err.Error()))
+		}
+	}
+}
 
 func GitAdd(files ...string) {
 	w, _ := gitHook.repo.Worktree()
@@ -109,9 +120,6 @@ func GitAdd(files ...string) {
 		if err := w.AddWithOptions(&git.AddOptions{Path: file}); err != nil {
 			log.Println(color.RedString("git add error:%s", err.Error()))
 		}
-		// if _, err := w.Add(file); err != nil {
-		//	log.Println(color.RedString("git add error:%s", err.Error()))
-		//}
 	}
 }
 

@@ -89,10 +89,6 @@ func NewBuilder(root string) *Builder {
 				log.Fatalln(color.RedString("invalid mod file %v", err))
 			}
 		}
-		// repo, err := git.PlainOpen(root)
-		// if err != nil {
-		//	log.Println(color.YellowString("project is not at version control"))
-		//}
 		var hook Action
 		_, filename, _, ok := runtime.Caller(4)
 		if ok {
@@ -156,8 +152,6 @@ func callBacks() fsm.Callbacks {
 		// pre-push : validate repo status
 		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
 			log.Println("validate code quality for push")
-
-			//	filepath.Join(instance.root, targetDir, "coverage.json"), instance.repo)
 		},
 		// Lint : before
 		string(Lint): func(ctx context.Context, event *fsm.Event) {
@@ -165,15 +159,14 @@ func callBacks() fsm.Callbacks {
 			v, _ := ctx.Value(ScanAll).(bool)
 			v = v && !isPreCommitHooK
 			infra.LintScan(instance.project.TargetDir(), v, isPreCommitHooK)
-			if !isPreCommitHooK {
-				event.Cancel()
-			}
+			// if !isPreCommitHooK {
+			//	event.Cancel()
+			//}
 		},
-		// Lint: after
-		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-			infra.LintScan(instance.project.moduleDir, true, false)
-		},
-		// Test
+
+		// fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
+		//	infra.LintScan(instance.project.moduleDir, true, false)
+		//},
 		string(Test): func(ctx context.Context, event *fsm.Event) {
 			instance.project.test()
 		},
