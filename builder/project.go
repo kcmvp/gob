@@ -96,11 +96,15 @@ func (project *project) test(args ...string) {
 		os.Exit(1)
 	}
 
-	os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm)
+	if err := os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm); err != nil {
+		log.Fatalln(color.RedString("failed to generate coverage report:%s", err.Error()))
+	}
 	//  go tool cover -func ./targetDir/coverage.data
 	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
 	out, _ = exec.Command("go", params...).CombinedOutput()
-	os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)
+	if err := os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm); err != nil {
+		log.Fatalln(color.RedString("failed to generate coverage detail report:%s", err.Error()))
+	}
 }
 
 // Build walk from module directory and run build command for each executable
