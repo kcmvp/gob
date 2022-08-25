@@ -166,7 +166,7 @@ func callBacks() fsm.Callbacks {
 
 		// fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
 		//	infra.LintScan(instance.project.moduleDir, true, false)
-		//},
+		// },
 		string(Test): func(ctx context.Context, event *fsm.Event) {
 			instance.project.test()
 		},
