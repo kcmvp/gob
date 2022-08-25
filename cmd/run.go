@@ -39,7 +39,7 @@ var runCmd = &cobra.Command{
 			}
 		}
 		ctx := context.WithValue(context.Background(), builder.ScanAll, scanAll)
-		getBuilder(cmd).RunCtx(ctx, acts...)
+		getBuilder(ctx).RunCtx(ctx, acts...)
 	},
 }
 

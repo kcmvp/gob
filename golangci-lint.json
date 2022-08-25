@@ -1,57 +1,6 @@
 {
 	"Issues": [
 		{
-			"FromLinter": "govet",
-			"Text": "composites: github.com/looplab/fsm.EventDesc struct literal uses unkeyed fields",
-			"Severity": "",
-			"SourceLines": [
-				"\t\t{string(preCommitHook), []string{string(initialized)}, string(preCommitHook)},"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/builder.go",
-				"Offset": 2198,
-				"Line": 118,
-				"Column": 3
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "govet",
-			"Text": "composites: github.com/looplab/fsm.EventDesc struct literal uses unkeyed fields",
-			"Severity": "",
-			"SourceLines": [
-				"\t\t{string(commitMsgHook), []string{string(initialized)}, string(commitMsgHook)},"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/builder.go",
-				"Offset": 2279,
-				"Line": 119,
-				"Column": 3
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "govet",
-			"Text": "composites: github.com/looplab/fsm.EventDesc struct literal uses unkeyed fields",
-			"Severity": "",
-			"SourceLines": [
-				"\t\t{string(prePushHook), []string{string(initialized)}, string(prePushHook)},"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "builder/builder.go",
-				"Offset": 2360,
-				"Line": 120,
-				"Column": 3
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
 			"FromLinter": "unused",
 			"Text": "field `versioned` is unused",
 			"Severity": "",
@@ -256,40 +205,6 @@
 			"ExpectedNoLintLinter": ""
 		},
 		{
-			"FromLinter": "nosnakecase",
-			"Text": "_ctxBuilder contains underscore. You should use mixedCap or MixedCap.",
-			"Severity": "",
-			"SourceLines": [
-				"\t\tbuilder, _ := cmd.Context().Value(_ctxBuilder).(*builder.Builder)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "cmd/gen_githook.go",
-				"Offset": 751,
-				"Line": 30,
-				"Column": 37
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "wrapcheck",
-			"Text": "error returned from external package is unwrapped: sig: func github.com/kcmvp/gos/infra.SetupHook(root string, scriptDir string, genNew bool) error",
-			"Severity": "",
-			"SourceLines": [
-				"\t\treturn infra.SetupHook(builder.ScriptDir(), builder.RootDir(), true)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "cmd/gen_githook.go",
-				"Offset": 792,
-				"Line": 31,
-				"Column": 10
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
 			"FromLinter": "revive",
 			"Text": "blank-imports: a blank import should be only in a main or test package, or have a comment justifying it",
 			"Severity": "",
@@ -328,40 +243,6 @@
 			"ExpectedNoLintLinter": ""
 		},
 		{
-			"FromLinter": "nosnakecase",
-			"Text": "_ctxModFileKey contains underscore. You should use mixedCap or MixedCap.",
-			"Severity": "",
-			"SourceLines": [
-				"\t_ctxModFileKey = \"mod\""
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "cmd/root.go",
-				"Offset": 278,
-				"Line": 22,
-				"Column": 2
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "nosnakecase",
-			"Text": "_ctxBuilder contains underscore. You should use mixedCap or MixedCap.",
-			"Severity": "",
-			"SourceLines": [
-				"\t_ctxBuilder    = \"builder\""
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "cmd/root.go",
-				"Offset": 302,
-				"Line": 23,
-				"Column": 2
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
 			"FromLinter": "deadcode",
 			"Text": "`modules` is unused",
 			"Severity": "",
@@ -371,7 +252,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "cmd/root.go",
-				"Offset": 336,
+				"Offset": 333,
 				"Line": 26,
 				"Column": 5
 			},
@@ -388,26 +269,9 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "cmd/root.go",
-				"Offset": 385,
+				"Offset": 382,
 				"Line": 28,
 				"Column": 6
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "nosnakecase",
-			"Text": "_ctxModFileKey contains underscore. You should use mixedCap or MixedCap.",
-			"Severity": "",
-			"SourceLines": [
-				"\tf := ctx.Value(_ctxModFileKey).(*modfile.File)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "cmd/root.go",
-				"Offset": 465,
-				"Line": 29,
-				"Column": 17
 			},
 			"ExpectNoLint": false,
 			"ExpectedNoLintLinter": ""
@@ -422,7 +286,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "cmd/root.go",
-				"Offset": 1497,
+				"Offset": 1493,
 				"Line": 67,
 				"Column": 10
 			},
@@ -439,7 +303,7 @@
 			"Replacement": null,
 			"Pos": {
 				"Filename": "cmd/root.go",
-				"Offset": 1650,
+				"Offset": 1646,
 				"Line": 70,
 				"Column": 12
 			},
@@ -452,8 +316,8 @@
 			"Severity": "",
 			"SourceLines": [
 				"\t\t\t} else {",
-				"\t\t\t\tctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)",
-				"\t\t\t\tctx = context.WithValue(ctx, _ctxBuilder, builder.NewBuilder(pwd))",
+				"\t\t\t\tctx := context.WithValue(cmd.Context(), ctxModFileKey, f)         //nolint",
+				"\t\t\t\tctx = context.WithValue(ctx, ctxBuilder, builder.NewBuilder(pwd)) //nolint",
 				"\t\t\t\tcmd.SetContext(ctx)",
 				"\t\t\t}"
 			],
@@ -464,43 +328,9 @@
 			},
 			"Pos": {
 				"Filename": "cmd/root.go",
-				"Offset": 1694,
+				"Offset": 1690,
 				"Line": 71,
 				"Column": 11
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "nosnakecase",
-			"Text": "_ctxModFileKey contains underscore. You should use mixedCap or MixedCap.",
-			"Severity": "",
-			"SourceLines": [
-				"\t\t\t\tctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "cmd/root.go",
-				"Offset": 1740,
-				"Line": 72,
-				"Column": 45
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "nosnakecase",
-			"Text": "_ctxBuilder contains underscore. You should use mixedCap or MixedCap.",
-			"Severity": "",
-			"SourceLines": [
-				"\t\t\t\tctx = context.WithValue(ctx, _ctxBuilder, builder.NewBuilder(pwd))"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "cmd/root.go",
-				"Offset": 1792,
-				"Line": 73,
-				"Column": 34
 			},
 			"ExpectNoLint": false,
 			"ExpectedNoLintLinter": ""
@@ -521,7 +351,7 @@
 			},
 			"Pos": {
 				"Filename": "cmd/root.go",
-				"Offset": 2360,
+				"Offset": 2370,
 				"Line": 96,
 				"Column": 9
 			},
@@ -660,23 +490,6 @@
 				"Offset": 1555,
 				"Line": 79,
 				"Column": 10
-			},
-			"ExpectNoLint": false,
-			"ExpectedNoLintLinter": ""
-		},
-		{
-			"FromLinter": "errcheck",
-			"Text": "Error return value is not checked",
-			"Severity": "",
-			"SourceLines": [
-				"\tGenerateFile(golangCiTmp, lintCfg, data, trunk)"
-			],
-			"Replacement": null,
-			"Pos": {
-				"Filename": "infra/linter.go",
-				"Offset": 4105,
-				"Line": 158,
-				"Column": 14
 			},
 			"ExpectNoLint": false,
 			"ExpectedNoLintLinter": ""

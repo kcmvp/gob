@@ -3,42 +3,76 @@ package infra
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 )
 
-var hooks = []string{"pre-commit", "commit-msg", "pre-push"}
+var (
+	gitHook *gitHookService
+	once    sync.Once
+	//go:embed template/*.tmpl
+	templateDir embed.FS
+)
 
-//go:embed template/*.tmpl
-var templateDir embed.FS
+const HookScriptDir = "scripts"
+
+type gitHookService struct {
+	root  string
+	repo  *git.Repository
+	hooks []string
+	valid bool
+}
+
+func NewGitHookService(path string) *gitHookService {
+	once.Do(func() {
+		repo, err := git.PlainOpen(path)
+		if err != nil {
+			log.Println(color.YellowString("project is not at version control"))
+		}
+		gitHook = &gitHookService{
+			root:  path,
+			hooks: []string{"pre-commit", "commit-msg", "pre-push"},
+			repo:  repo,
+			valid: err == nil,
+		}
+	})
+	return gitHook
+}
 
 func Hooks() map[string]string {
 	m := map[string]string{}
-	for _, hook := range hooks {
-		m[hook] = strings.Replace(hook, "-", "_", 1)
+	for _, h := range gitHook.hooks {
+		m[h] = strings.Replace(h, "-", "_", 1)
 	}
 	return m
 }
 
-type Hook struct {
+type hookData struct {
 	Target string
 	Type   string
 }
 
-func SetupHook(root, scriptDir string, genNew bool) error {
+func SetupHook(genNew bool) error {
 	var err error
 	var tf []byte
-	gitDir := filepath.Join(root, ".git")
+	if !gitHook.valid {
+		msg := "current project is not in git"
+		log.Println(color.RedString(msg))
+		return errors.New(msg) //nolint
+	}
+	gitDir := filepath.Join(gitHook.root, ".git")
 	for s, g := range Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
-		abs, _ := filepath.Abs(filepath.Join(scriptDir, gof))
+		abs, _ := filepath.Abs(filepath.Join(HookScriptDir, gof))
 		if _, err = os.Stat(abs); err != nil {
 			if !genNew {
 				continue
@@ -47,8 +81,11 @@ func SetupHook(root, scriptDir string, genNew bool) error {
 				err = GenerateFile(string(tf), abs, nil, false)
 			}
 		} else if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
-			err = GenerateFile(string(tf), filepath.Join(gitDir, "hooks", s), Hook{abs, s}, true)
+			err = GenerateFile(string(tf), filepath.Join(gitDir, "hooks", s), hookData{abs, s}, true)
 		}
+	}
+	if err == nil {
+		log.Println("git gitHook is setup successfully")
 	}
 	return err
 }
@@ -61,6 +98,9 @@ func CommitMsg(pattern string) {
 	if err == nil && !reg.MatchString(commitMsg) {
 		log.Fatalln(color.RedString("commit message must follow %s", pattern))
 	}
+}
+
+func GitAdd(files ...string) {
 }
 
 func PrePush(version, target string, repo *git.Repository) {
@@ -101,5 +141,4 @@ func PrePush(version, target string, repo *git.Repository) {
 	if s.Tests != t.Tests {
 		log.Fatalln(color.RedString("number of the test is not the same between %s and %s", s, t))
 	}
-	// check the degrade
 }
