@@ -26,12 +26,9 @@ const (
 )
 
 type project struct {
-	versioned bool
 	moduleDir string
 	scriptDir string
 	targetDir string
-	gitCheck  Action
-	gitVerify Action
 }
 
 type TestCase struct {

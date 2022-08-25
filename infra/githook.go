@@ -101,6 +101,14 @@ func CommitMsg(pattern string) {
 }
 
 func GitAdd(files ...string) {
+	w, _ := gitHook.repo.Worktree()
+	s, _ := w.Status()
+	for _, file := range files {
+		log.Printf("git status: %v\n", s.File(file).Worktree)
+		if s.File(file).Worktree != git.Added {
+			w.Add(file) //nolint:errcheck
+		}
+	}
 }
 
 func PrePush(version, target string, repo *git.Repository) {
