@@ -39,8 +39,9 @@ func NewGitHookService(path string) *gitHookService {
 			log.Println(color.YellowString("project is not at version control"))
 		}
 		gitHook = &gitHookService{
-			root:  path,
-			hooks: []string{"pre-commit", "commit-msg", "pre-push"},
+			root: path,
+			// hooks: []string{"pre-commit", "commit-msg", "pre-push"},
+			hooks: []string{"pre-commit", "commit-msg"},
 			repo:  repo,
 			valid: err == nil,
 		}
