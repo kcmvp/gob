@@ -109,7 +109,6 @@ func GitAdd(files ...string) {
 		if _, err := w.Add(file); err != nil {
 			log.Println(color.RedString("git add error:%s", err.Error()))
 		}
-		//}
 	}
 }
 

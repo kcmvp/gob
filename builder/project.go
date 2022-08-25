@@ -115,7 +115,7 @@ func (project *project) build(files ...string) *project {
 		targetFiles = append(targetFiles, "main.go")
 	}
 	log.Println("build project ......")
-	os.MkdirAll(project.targetDir, os.ModePerm)
+	os.MkdirAll(project.targetDir, os.ModePerm) //nolint:errcheck
 	filepath.Walk(project.moduleDir, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
