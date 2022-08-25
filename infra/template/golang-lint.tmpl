@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>golangci-lint report</title>
+	</head>
+	<body>
+	    <table border="1">
+	    <th>#</th>
+	    <th>File</th>
+	    <th>Line</th>
+	    <th>Linter</th>
+	    <th>Code</th>
+	    <th>Message</th>
+		{{range $i, $a := .}}
+		<tr>
+		<td>{{ add $i }}</td>
+		<td>{{ $a.File }}</td>
+		<td>{{ $a.Line }}:{{ $a.Column }}</td>
+		<td>{{ $a.Linter }}</td>
+		<td>{{ concat $a.Code }}</td>
+		<td>{{ $a.Message }}</td>
+		</tr>
+		{{end}}
+	    </table>
+	</body>
+</html>

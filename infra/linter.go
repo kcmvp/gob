@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"os"
 	"os/exec"
@@ -28,6 +29,10 @@ var _ Installable = (*golangCiLinter)(nil)
 
 //go:embed template/.golangci.yml
 var golangCiTmp string
+
+//go:embed template/golang-lint.tmpl
+var reportTpl string
+
 var linter golangCiLinter
 
 type golangCiLinter struct {
@@ -50,7 +55,7 @@ func init() {
 	ins := NewInstallable(lintModule, lintCmd, linterVersion)
 	linter = golangCiLinter{
 		ins,
-		fmt.Sprintf("%s.json", lintCmd),
+		fmt.Sprintf("%s.html", lintCmd),
 	}
 }
 
@@ -105,7 +110,8 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 		log.Println("no linter issues are found")
 		return
 	}
-	// save the report
+	// save the LintReport
+
 	file := filepath.Join(targetDir, linter.output)
 	sc := bufio.NewScanner(strings.NewReader(string(output)))
 	r := regexp.MustCompile(`".*"`)
@@ -128,12 +134,29 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 	if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
 		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
 	}
-	if err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm); err != nil {
-		log.Fatalln(color.RedString("failed to save lint report: %s", err.Error()))
-	}
 	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issues := jq.Count()
-	msg = fmt.Sprintf("%d of issues are found, you can get detail report at %s", issues, file)
+	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
+	data := jq.Get()
+	funcMap := template.FuncMap{
+		"add": func(i int) int {
+			return i + 1
+		},
+		"concat": func(s []interface{}) string {
+			var s1 []string
+			for _, i := range s {
+				s1 = append(s1, fmt.Sprintf("%v", i))
+			}
+			return strings.TrimSpace(strings.Join(s1, "\n"))
+		},
+	}
+	t, err := template.New("report").Funcs(funcMap).Parse(reportTpl)
+	checkError(err)
+	f, err := os.Create(file)
+	checkError(err)
+	err = t.Execute(f, data)
+	checkError(err)
+	msg = fmt.Sprintf("total %d issues are found, you can get detail report at %s", issues, file)
 	if failOnIssue {
 		log.Fatalln(color.RedString(msg))
 	} else {
@@ -144,5 +167,11 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 func GenerateLintCfg(data interface{}, trunk bool) {
 	if err := GenerateFile(golangCiTmp, lintCfg, data, trunk); err != nil {
 		log.Fatalln(color.RedString("failed to generate lint config:%s", err.Error()))
+	}
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
 	}
 }
