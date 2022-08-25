@@ -143,7 +143,7 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			infra.GitAdd("golangci-lint.json", "coverage.json")
+			//infra.GitAdd("golangci-lint.json", "coverage.json")
 		},
 		// commit-msg : validate message
 		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
