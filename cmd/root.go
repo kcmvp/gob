@@ -7,25 +7,26 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gos/builder"
-	"github.com/spf13/cobra"
-	"golang.org/x/mod/modfile"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/kcmvp/gos/builder"
+	"github.com/spf13/cobra"
+	"golang.org/x/mod/modfile"
 )
 
 const (
-	gbt            = "github.com/kcmvp/gbt"
-	_ctxModFileKey = "mod"
-	_ctxBuilder    = "builder"
+	gbt           = "github.com/kcmvp/gbt"
+	ctxModFileKey = "mod"
+	ctxBuilder    = "builder"
 )
 
 var modules = []string{"github.com/kcmvp/gbt"}
 
 func importModule(ctx context.Context, module string, update bool) {
-	f := ctx.Value(_ctxModFileKey).(*modfile.File)
+	f := ctx.Value(ctxModFileKey).(*modfile.File)
 	if strings.EqualFold(gbt, f.Module.Mod.Path) {
 		return
 	}
@@ -68,8 +69,8 @@ var rootCmd = &cobra.Command{
 			if f, err := modfile.Parse("go.mod", data, nil); err != nil {
 				return fmt.Errorf("invalid go.mod file")
 			} else {
-				ctx := context.WithValue(cmd.Context(), _ctxModFileKey, f)
-				ctx = context.WithValue(ctx, _ctxBuilder, builder.NewBuilder(pwd))
+				ctx := context.WithValue(cmd.Context(), ctxModFileKey, f)         //nolint
+				ctx = context.WithValue(ctx, ctxBuilder, builder.NewBuilder(pwd)) //nolint
 				cmd.SetContext(ctx)
 			}
 		}
@@ -89,8 +90,8 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func getBuilder(cmd *cobra.Command) *builder.Builder {
-	if b, ok := cmd.Context().Value(_ctxBuilder).(*builder.Builder); ok {
+func getBuilder(ctx context.Context) *builder.Builder {
+	if b, ok := ctx.Value(ctxBuilder).(*builder.Builder); ok {
 		return b
 	} else {
 		log.Fatalln("failed to get current project")

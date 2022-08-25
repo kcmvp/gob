@@ -28,14 +28,11 @@ var _ Installable = (*golangCiLinter)(nil)
 
 //go:embed template/.golangci.yml
 var golangCiTmp string
-
-//var GolangLint golangCiLinter
 var linter golangCiLinter
 
 type golangCiLinter struct {
 	Installable
-	targetDir string
-	output    string
+	output string
 }
 
 var linterVersion = func(cmd string) string {
@@ -53,10 +50,8 @@ func init() {
 	ins := NewInstallable(lintModule, lintCmd, linterVersion)
 	linter = golangCiLinter{
 		ins,
-		"",
 		fmt.Sprintf("%s.json", lintCmd),
 	}
-
 }
 
 func Install(ver string) (string, error) {
@@ -87,71 +82,67 @@ func ConfiguredLinterVer() (string, error) {
 	return ver, err
 }
 
-func LintScan(target string, all bool) {
-	linter.targetDir = target
-	if ver, err := ConfiguredLinterVer(); err == nil {
-		if ver, err = linter.Install(ver); err == nil {
-			msg := "lint all source code"
-			args := []string{"run", "-v", "./...", "--out-format=json"}
-			if !all {
-				args = append(args, "--new-from-rev=HEAD")
-				msg = "lint source for changes"
+//nolint:cyclop
+func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
+	ver, err := ConfiguredLinterVer()
+	if err != nil {
+		log.Fatalln(color.RedString("lint scan: %s", err.Error()))
+	}
+	ver, err = linter.Install(ver)
+	if err != nil {
+		log.Fatalln(color.RedString("failed to install golangci-linter %s: %s", ver, err.Error()))
+	}
+	msg := "lint all source code"
+	args := []string{"run", "-v", "./...", "--out-format=json"}
+	if !fullScan {
+		args = append(args, "--new-from-rev=HEAD")
+		msg = "lint changed source code"
+	}
+	log.Println(msg)
+	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
+	output, err := exec.Command(vCmd, args...).CombinedOutput()
+	if err == nil {
+		log.Println("no linter issues are found")
+		return
+	}
+	// save the report
+	file := filepath.Join(targetDir, linter.output)
+	sc := bufio.NewScanner(strings.NewReader(string(output)))
+	r := regexp.MustCompile(`".*"`)
+	n := regexp.MustCompile(`config_reader|lintersdb|before processing:.*after processing:`)
+	var line string
+	for sc.Scan() {
+		line = sc.Text()
+		if strings.HasPrefix(line, "{\"Issues\"") {
+			break
+		} else if fullScan && (strings.HasPrefix(line, "level=warning") || n.MatchString(line)) {
+			msg = strings.ReplaceAll(r.FindString(line), "\"", "")
+			if strings.HasPrefix(line, "level=warning") {
+				msg = color.YellowString(msg)
 			}
 			log.Println(msg)
-			vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
-			output, _ := exec.Command(vCmd, args...).CombinedOutput()
-			// save the report
-			file := filepath.Join(linter.targetDir, linter.output)
-			sc := bufio.NewScanner(strings.NewReader(string(output)))
-			r, _ := regexp.Compile(`".*"`)
-			n, _ := regexp.Compile(`config_reader|lintersdb|before processing:.*after processing:`)
-			var line string
-			for sc.Scan() {
-				line = sc.Text()
-				if strings.HasPrefix(line, "{\"Issues\"") {
-					break
-				} else {
-					if strings.HasPrefix(line, "level=warning") || n.MatchString(line) {
-						msg = strings.ReplaceAll(r.FindString(line), "\"", "")
-						if strings.HasPrefix(line, "level=warning") {
-							msg = color.YellowString(msg)
-						}
-						log.Println(msg)
-					}
-				}
-			}
-
-			var prettyJSON bytes.Buffer
-			if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
-				log.Fatalln(color.RedString("runs into error %s", err))
-			}
-			os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm)
-			log.Printf("lint report is generated at %s \n", file)
-		} else {
-			log.Fatalln(color.RedString("can't find %s, please run 'gbt setup linter' to setup linter", lintCfg))
 		}
 	}
-}
 
-func VerifyLinter(halt bool) {
-	f := filepath.Join(linter.targetDir, linter.output)
-	jq := gojsonq.New().File(f).From(IssueNode)
+	var prettyJSON bytes.Buffer
+	if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
+		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
+	}
+	if err = os.WriteFile(file, prettyJSON.Bytes(), os.ModePerm); err != nil {
+		log.Fatalln(color.RedString("failed to save lint report: %s", err.Error()))
+	}
+	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issues := jq.Count()
-
-	jq = gojsonq.New().File(f).From(IssueNode)
-	files := jq.Distinct("Pos.Filename").Count()
-	if issues > 0 {
-		msg := fmt.Sprintf("%d of new issues are found in %d files, please refer to %s", issues, files, f)
-		if halt {
-			log.Fatalln(color.RedString(msg))
-		} else {
-			log.Println(color.YellowString(msg))
-		}
+	msg = fmt.Sprintf("%d of issues are found, you can get detail report at %s", issues, file)
+	if failOnIssue {
+		log.Fatalln(color.RedString(msg))
 	} else {
-		log.Println(color.GreenString("no issues are found"))
+		log.Println(msg)
 	}
 }
 
 func GenerateLintCfg(data interface{}, trunk bool) {
-	GenerateFile(golangCiTmp, lintCfg, data, trunk)
+	if err := GenerateFile(golangCiTmp, lintCfg, data, trunk); err != nil {
+		log.Fatalln(color.RedString("failed to generate lint config:%s", err.Error()))
+	}
 }

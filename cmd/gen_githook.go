@@ -4,13 +4,14 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gos/builder"
-	"github.com/kcmvp/gos/infra"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // githookCmd represents the githook command.
@@ -25,9 +26,9 @@ var githookCmd = &cobra.Command{
 		}
 		return err
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		builder, _ := cmd.Context().Value(_ctxBuilder).(*builder.Builder)
-		return infra.SetupHook(builder.ScriptDir(), builder.RootDir(), true)
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.WithValue(cmd.Context(), builder.GenHook, true) //nolint
+		getBuilder(ctx).RunCtx(ctx, builder.SetupGitHook)
 	},
 }
 

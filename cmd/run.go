@@ -6,9 +6,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/kcmvp/gos/builder"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 var scanAll = false
@@ -38,7 +39,7 @@ var runCmd = &cobra.Command{
 			}
 		}
 		ctx := context.WithValue(context.Background(), builder.ScanAll, scanAll)
-		getBuilder(cmd).RunCtx(ctx, acts...)
+		getBuilder(ctx).RunCtx(ctx, acts...)
 	},
 }
 

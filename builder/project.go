@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/kcmvp/gos/infra"
 	"io/fs"
 	"log"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/kcmvp/gos/infra"
 )
 
 const (
@@ -26,12 +26,9 @@ const (
 )
 
 type project struct {
-	versioned bool
 	moduleDir string
 	scriptDir string
 	targetDir string
-	gitCheck  Action
-	gitVerify Action
 }
 
 type TestCase struct {
@@ -99,11 +96,15 @@ func (project *project) test(args ...string) {
 		os.Exit(1)
 	}
 
-	os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm)
+	if err := os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm); err != nil {
+		log.Fatalln(color.RedString("failed to generate coverage report:%s", err.Error()))
+	}
 	//  go tool cover -func ./targetDir/coverage.data
 	params = []string{"tool", "cover", "-func", filepath.Join(project.targetDir, lineCoverageReport)}
 	out, _ = exec.Command("go", params...).CombinedOutput()
-	os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm)
+	if err := os.WriteFile(filepath.Join(project.targetDir, methodCoverageReport), out, os.ModePerm); err != nil {
+		log.Fatalln(color.RedString("failed to generate coverage detail report:%s", err.Error()))
+	}
 }
 
 // Build walk from module directory and run build command for each executable
@@ -114,7 +115,7 @@ func (project *project) build(files ...string) *project {
 		targetFiles = append(targetFiles, "main.go")
 	}
 	log.Println("build project ......")
-	os.MkdirAll(project.targetDir, os.ModePerm)
+	os.MkdirAll(project.targetDir, os.ModePerm) //nolint:errcheck
 	filepath.Walk(project.moduleDir, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -150,9 +151,9 @@ func FatalIfError(err error) {
 
 func (project *project) coverage(keepInGit bool) {
 	cover := filepath.Join(project.targetDir, coverage)
-	if keepInGit {
-		cover = filepath.Join(project.scriptDir, coverage)
-	}
+	// if keepInGit {
+	//	cover = filepath.Join(project.moduleDir, coverage)
+	//}
 	log.Println("generating test coverage report")
 	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))
 	if err != nil {
@@ -168,7 +169,7 @@ func (project *project) coverage(keepInGit bool) {
 	for scanner.Scan() {
 		text := scanner.Text()
 		c := TestCase{}
-		json.Unmarshal([]byte(text), &c)
+		json.Unmarshal([]byte(text), &c) //nolint:errcheck
 		if len(c.Test) > 0 {
 			testSet[c.Test] = true
 		} else if len(c.Output) > 0 {

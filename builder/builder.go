@@ -2,8 +2,8 @@ package builder
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/kcmvp/gos/infra"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,18 +12,22 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
+	"github.com/kcmvp/gos/infra"
 	"github.com/looplab/fsm"
 	"golang.org/x/mod/modfile"
 )
 
 const (
 	ScanAll = "_scan_all"
+	GenHook = "_gen_hook"
 )
 
 type Action string
 
 var initialized Action = "initialized" // 0
+
+// SetupGitHook setup git hook action.
+var SetupGitHook Action = "SetupGitHook" // 0
 
 // for pre-commit git hook.
 var preCommitHook Action = "pre-commit" // -1
@@ -35,10 +39,10 @@ var commitMsgHook Action = "commit-msg" // -2
 var prePushHook Action = "pre-push" // -3
 
 var (
-	Clean Action = "clean" // 1
-	Lint  Action = "lint"  // 2
-	Test  Action = "test"  // 3
-	Build Action = "build" // 4
+	Clean Action = "clean" // 2
+	Lint  Action = "lint"  // 3
+	Test  Action = "test"  // 4
+	Build Action = "build" // 5
 )
 
 func ValueOf(v string) (Action, bool) {
@@ -60,7 +64,6 @@ var (
 type Builder struct {
 	fsm     *fsm.FSM
 	project *project
-	repo    *git.Repository
 	*buildOption
 
 	root string
@@ -86,47 +89,51 @@ func NewBuilder(root string) *Builder {
 				log.Fatalln(color.RedString("invalid mod file %v", err))
 			}
 		}
-		repo, err := git.PlainOpen(root)
-		if err != nil {
-			log.Println(color.YellowString("project is not at version control"))
-		}
 		var hook Action
 		_, filename, _, ok := runtime.Caller(4)
 		if ok {
 			hook = trigger(filepath.Base(filename))
 			if len(hook) > 0 {
-				log.Println(color.GreenString("%s", hook))
+				log.Printf("%s \n", hook)
 			}
 		}
 		instance = &Builder{
 			fsm.NewFSM(string(initialized), events(), callBacks()),
 			newProject(root),
-			repo,
 			defaultOption(),
 			root,
 			hook,
 		}
-		instance.setup()
+		infra.NewGitHookService(root)
 	})
 	return instance
 }
 
+//nolint:govet
 func events() fsm.Events {
 	return fsm.Events{
 		// builtin for git commit
-		{string(preCommitHook), []string{string(initialized)}, string(preCommitHook)},
-		{string(commitMsgHook), []string{string(initialized)}, string(commitMsgHook)},
-		{string(prePushHook), []string{string(initialized)}, string(prePushHook)},
+		{string(SetupGitHook), []string{string(initialized)}, string(SetupGitHook)},
+		{string(preCommitHook), []string{string(Test)}, string(preCommitHook)},
+		{string(commitMsgHook), []string{string(SetupGitHook)}, string(commitMsgHook)},
+		{string(prePushHook), []string{string(initialized), string(Test)}, string(prePushHook)},
 		{string(Clean), []string{string(initialized), string(prePushHook)}, string(Clean)},
 		// commit-msg and pre-push can't trigger lint
-		{string(Lint), []string{string(initialized), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
-		{string(Test), []string{string(initialized), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
+		{string(Lint), []string{string(initialized), string(SetupGitHook), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
+		{string(Test), []string{string(initialized), string(SetupGitHook), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
 		{string(Build), []string{string(Test)}, string(Build)},
 	}
 }
 
 func callBacks() fsm.Callbacks {
 	return map[string]fsm.Callback{
+		// setupGit
+		string(SetupGitHook): func(ctx context.Context, event *fsm.Event) {
+			v, ok := ctx.Value(GenHook).(bool)
+			if err := infra.SetupHook(ok && v); err != nil {
+				log.Fatalln(color.RedString("failed to setup hook: %s", err.Error()))
+			}
+		},
 		// Clean
 		string(Clean): func(ctx context.Context, event *fsm.Event) {
 			instance.project.clean()
@@ -136,8 +143,6 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-commit: do linter format
 		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-			//linter.LintScan(instance.project.TargetDir(), true)
-			log.Println("run linter against project")
 		},
 		// commit-msg : validate message
 		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
@@ -145,24 +150,22 @@ func callBacks() fsm.Callbacks {
 		},
 		// pre-push : validate repo status
 		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
-			log.Println("validate unit test coverage")
-			//if instance.repo != nil {
-			//	infra.PrePush(filepath.Join(instance.root, scriptDir, "coverage.json"),
-			//		filepath.Join(instance.root, targetDir, "coverage.json"), instance.repo)
+			log.Println("validate code quality for push")
+		},
+		// Lint : before
+		string(Lint): func(ctx context.Context, event *fsm.Event) {
+			isPreCommitHooK := preCommitHook == instance.hook
+			v, _ := ctx.Value(ScanAll).(bool)
+			v = v && !isPreCommitHooK
+			infra.LintScan(instance.project.TargetDir(), v, isPreCommitHooK)
+			// if !isPreCommitHooK {
+			//	event.Cancel()
 			//}
 		},
-		// Lint
-		string(Lint): func(ctx context.Context, event *fsm.Event) {
-			v, ok := ctx.Value(ScanAll).(bool)
-			if !ok {
-				v = false
-			}
-			infra.LintScan(instance.project.TargetDir(), v)
-		},
-		fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-			infra.VerifyLinter(string(preCommitHook) == event.Src)
-		},
-		// Test
+
+		// fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
+		//	infra.LintScan(instance.project.moduleDir, true, false)
+		// },
 		string(Test): func(ctx context.Context, event *fsm.Event) {
 			instance.project.test()
 		},
@@ -192,12 +195,12 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 	actions = sort(builder.hook, actions...)
 	if len(actions) < 1 {
 		log.Println(color.YellowString("no Action provided"))
-		return
 	}
-	log.Printf("actions are: %+v \n", actions)
+
 	for _, evt := range actions {
 		err := builder.fsm.Event(ctx, string(evt))
-		if err != nil {
+		var t1 fsm.CanceledError
+		if err != nil && !errors.Is(err, t1) {
 			log.Fatalln(color.RedString("%v", err))
 		}
 	}
@@ -206,11 +209,11 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 func sort(builtIn Action, actions ...Action) []Action {
 	switch builtIn {
 	case preCommitHook:
-		return []Action{preCommitHook, Lint, Test}
+		return []Action{SetupGitHook, Lint, Test, preCommitHook}
 	case commitMsgHook:
-		return []Action{commitMsgHook}
+		return []Action{SetupGitHook, commitMsgHook}
 	case prePushHook:
-		return []Action{Test, prePushHook}
+		return []Action{SetupGitHook, Test, prePushHook}
 	default:
 		var r []Action
 		for _, a := range actions {
@@ -221,13 +224,5 @@ func sort(builtIn Action, actions ...Action) []Action {
 			}
 		}
 		return r
-	}
-}
-
-func (builder *Builder) setup() {
-	if builder.repo != nil {
-		if infra.SetupHook(builder.RootDir(), builder.ScriptDir(), false) != nil {
-			log.Println(color.RedString("failed to setup hook"))
-		}
 	}
 }

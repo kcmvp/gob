@@ -5,10 +5,10 @@ package cmd
 
 import (
 	_ "embed"
-	"github.com/kcmvp/gos/infra"
 	"log"
 	"path/filepath"
 
+	"github.com/kcmvp/gos/infra"
 	"github.com/spf13/cobra"
 )
 
@@ -21,10 +21,9 @@ var builderCmd = &cobra.Command{
 	Short: "Generate build script for go current project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code Scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		builder := getBuilder(cmd)
+		builder := getBuilder(cmd.Context())
 		log.Println("generating `builder.go`")
-		infra.GenerateFile(builderTmp, filepath.Join(builder.ScriptDir(), "builder.go"), nil, false)
-		return nil
+		return infra.GenerateFile(builderTmp, filepath.Join(builder.ScriptDir(), "builder.go"), nil, false) //nolint:wrapcheck
 	},
 }
 
