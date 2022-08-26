@@ -1,4 +1,3 @@
-
 <div style="text-align: center;">About Golang Boot</div>
 
 ## Why I build this framework
