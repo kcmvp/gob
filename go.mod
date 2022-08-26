@@ -3,8 +3,10 @@ module github.com/kcmvp/gob
 go 1.18
 
 require (
+	github.com/c-bata/go-prompt v0.2.6
 	github.com/fatih/color v1.13.0
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/looplab/fsm v0.3.1-0.20220726110243-54bbb61e7a6c
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.0
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
@@ -23,10 +25,12 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
-	github.com/looplab/fsm v0.3.1-0.20220726110243-54bbb61e7a6c // indirect
 	github.com/mattn/go-colorable v0.1.9 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/mattn/go-tty v0.0.3 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

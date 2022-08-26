@@ -7,12 +7,13 @@ only need to focus on system business, it reduces programmer's mental overhead v
 the same functionalities as [Spring Boot](https://spring.io/projects/spring-boot/)did in Java ecosystem.
 
 ## Features
-- [ ] SLDC supports which includes
-  - [ ] Uniform build scripts(Test, Build and delivery) on all platform
-  - [ ] Git Hook(local) for code format and quality
-  - [ ] Beautify unit test coverage report and Lint report
+- [x] SLDC supports which includes
+  - [x] Uniform build scripts(Test, Build and delivery) on all platform
+  - [x] Git Hook(local) for code format and quality
+  - [ ] Beautify unit test coverage report and Lint report (in progress)
 
-## Roadmap
+## Roadmap and Release
+### [v1.0.0](https://github.com/kcmvp/gob/releases/tag/v1.0.0)
 
 
 ## Document

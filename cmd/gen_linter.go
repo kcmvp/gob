@@ -5,14 +5,9 @@ package cmd
 
 import (
 	_ "embed"
-
 	"github.com/kcmvp/gob/infra"
 	"github.com/spf13/cobra"
 )
-
-//
-////go:embed template/.golangci.yml
-// var golangCiTmp string
 
 var version string
 
@@ -33,5 +28,5 @@ var linterCmd = &cobra.Command{
 
 func init() {
 	setupCmd.AddCommand(linterCmd)
-	linterCmd.Flags().StringVarP(&version, "version", "v", "latest", "golangci-lint version")
+	linterCmd.Flags().StringVarP(&version, "version", "v", infra.LatestVer, "golangci-lint version")
 }
