@@ -12,8 +12,9 @@ the same functionalities as [Spring Boot](https://spring.io/projects/spring-boot
   - [ ] Git Hook(local) for code format and quality
   - [ ] Beautify unit test coverage report and Lint report
 
-## [Roadmap](https://github.com/kcmvp/gob/discussions/33)
-
+## Roadmap
+The project roadmap may be found [here](https://github.com/kcmvp/gob/discussions/33). Please consult
+this before open up an enhancement request.
 
 ## [Document](https://github.com/kcmvp/gob/wiki)
 
