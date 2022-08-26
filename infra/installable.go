@@ -3,16 +3,20 @@ package infra
 import (
 	"errors"
 	"fmt"
+	"github.com/c-bata/go-prompt"
 	"io"
 	"io/fs"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
 )
+
+const LatestVer = "latest"
 
 type VerFunc func(cmd string) string
 
@@ -69,7 +73,11 @@ func (i *defaultIns) Installed() []string {
 		vs = append(vs, s)
 	}
 	if len(vs) > 0 {
-		log.Printf("installed versions of %s: %+v \n", i.cmd, strings.Join(vs, ","))
+		var desc []string
+		for idx, v := range vs {
+			desc = append(desc, fmt.Sprintf("%s):%s", strconv.Itoa(idx+1), v))
+		}
+		log.Printf("installed versions of %s: %s \n", i.cmd, strings.Join(desc, ", "))
 	}
 	return vs
 }
@@ -77,28 +85,44 @@ func (i *defaultIns) Installed() []string {
 func (i *defaultIns) Install(ver string) (string, error) {
 	var err error
 	var out []byte
-	installed := false
-	for _, v := range i.Installed() {
-		if installed = ver == v; installed {
-			break
+	ivs := i.Installed()
+	for _, v := range ivs {
+		if v == ver {
+			return ver, nil
 		}
 	}
-	if !installed {
-		vm := fmt.Sprintf("%s@%s", i.module, ver)
-		log.Printf("installing %s ...\n", vm)
-		cmd := exec.Command("go", "install", vm)
-		out, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Println(string(out))
-			log.Println(color.RedString("failed to install %s", vm))
-			log.Println(color.RedString("you can manually install it by 'go install %s'", vm))
-		} else {
-			ver = i.Version(i.Cmd())
-			vm = fmt.Sprintf("%s@%s", i.module, ver)
-			log.Printf("%s is installed successfully\n", vm)
-			i.tagVersion(cmd.Path, ver)
+	if len(ivs) > 0 && LatestVer == ver {
+		fmt.Println("please select version number:")
+		completer := func(d prompt.Document) []prompt.Suggest {
+			var s []prompt.Suggest
+			for idx, v := range ivs {
+				s = append(s, prompt.Suggest{Text: strconv.Itoa(idx + 1), Description: fmt.Sprintf("using %s", v)})
+			}
+			return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+		}
+		v := prompt.Input(">> ", completer)
+		if idx, err := strconv.Atoi(v); err == nil && idx >= 1 && idx <= len(ivs) {
+			v = ivs[idx-1]
+			fmt.Printf("using existing %s\n", v)
+			return v, nil
 		}
 	}
+
+	vm := fmt.Sprintf("%s@%s", i.module, ver)
+	log.Printf("installing %s ...\n", vm)
+	cmd := exec.Command("go", "install", vm)
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Println(string(out))
+		log.Println(color.RedString("failed to install %s", vm))
+		log.Println(color.RedString("you can manually install it by 'go install %s'", vm))
+	} else {
+		ver = i.Version(i.Cmd())
+		vm = fmt.Sprintf("%s@%s", i.module, ver)
+		log.Printf("%s is installed successfully\n", vm)
+		i.tagVersion(cmd.Path, ver)
+	}
+
 	return ver, err
 }
 

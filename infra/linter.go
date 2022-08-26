@@ -106,11 +106,6 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 	log.Println(msg)
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
 	output, err := exec.Command(vCmd, args...).CombinedOutput()
-	if err == nil {
-		log.Println("no linter issues are found")
-		return
-	}
-	// save the LintReport
 
 	file := filepath.Join(targetDir, linter.output)
 	sc := bufio.NewScanner(strings.NewReader(string(output)))
@@ -121,13 +116,17 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 		line = sc.Text()
 		if strings.HasPrefix(line, "{\"Issues\"") {
 			break
-		} else if fullScan && (strings.HasPrefix(line, "level=warning") || n.MatchString(line)) {
+		} else if strings.HasPrefix(line, "level=warning") || n.MatchString(line) {
 			msg = strings.ReplaceAll(r.FindString(line), "\"", "")
 			if strings.HasPrefix(line, "level=warning") {
 				msg = color.YellowString(msg)
 			}
 			log.Println(msg)
 		}
+	}
+	if err == nil {
+		log.Println("no linter issues are found")
+		return
 	}
 
 	var prettyJSON bytes.Buffer
