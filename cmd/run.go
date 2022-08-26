@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kcmvp/gos/builder"
+	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
 

@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gos/builder"
+	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
 

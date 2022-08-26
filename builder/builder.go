@@ -12,7 +12,7 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gos/infra"
+	"github.com/kcmvp/gob/infra"
 	"github.com/looplab/fsm"
 	"golang.org/x/mod/modfile"
 )

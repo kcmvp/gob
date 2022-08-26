@@ -1,9 +1,9 @@
-//go:build gos
+//go:build gob
 
 package main
 
 import (
-	"github.com/kcmvp/gos/builder"
+	"github.com/kcmvp/gob/builder"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,5 +18,5 @@ func main() {
 	}
 	root := filepath.Dir(filepath.Dir(filename))
 	builder.NewBuilder(root).Run(builder.Lint, builder.Test)
-	os.exit(0)
+	os.Exit(0)
 }

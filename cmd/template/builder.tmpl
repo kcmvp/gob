@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/kcmvp/gos/builder"
+	"github.com/kcmvp/gob/builder"
 	"path/filepath"
 	"runtime"
 )

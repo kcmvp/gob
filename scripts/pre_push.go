@@ -1,11 +1,11 @@
-//go:build gbt
+//go:build gob
 
 package main
 
 import (
 	"bufio"
 	"fmt"
-	"github.com/kcmvp/gos/builder"
+	"github.com/kcmvp/gob/builder"
 	"os"
 	"path/filepath"
 	"runtime"

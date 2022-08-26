@@ -8,7 +8,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/kcmvp/gos/infra"
+	"github.com/kcmvp/gob/infra"
 	"github.com/spf13/cobra"
 )
 

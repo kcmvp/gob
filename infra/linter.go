@@ -30,7 +30,7 @@ var _ Installable = (*golangCiLinter)(nil)
 //go:embed template/.golangci.yml
 var golangCiTmp string
 
-//go:embed template/golang-lint.tmpl
+//go:embed template/golang_lint.tmpl
 var reportTpl string
 
 var linter golangCiLinter

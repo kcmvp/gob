@@ -12,7 +12,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kcmvp/gos/builder"
+	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
 )
