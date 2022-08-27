@@ -79,8 +79,10 @@ func (project *project) clean() {
 
 // Test run the test with -race, -cover, -fuzz and -bench.
 func (project *project) test(args ...string) {
-	os.Chdir(project.moduleDir)
-	os.MkdirAll(project.targetDir, os.ModePerm)
+	err := os.Chdir(project.moduleDir)
+	checkError(err, "failed to change directory")
+	err = os.MkdirAll(project.targetDir, os.ModePerm)
+	checkError(err, "failed to mkdir")
 	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(project.targetDir, lineCoverageReport), "./..."}
 	if len(args) > 0 {
 		params = append(params, args...)
