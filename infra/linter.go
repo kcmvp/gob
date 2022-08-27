@@ -3,6 +3,7 @@ package infra
 import (
 	"bufio"
 	"bytes"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -38,6 +39,7 @@ var linter golangCiLinter
 type golangCiLinter struct {
 	Installable
 	output string
+	root   string
 }
 
 var linterVersion = func(cmd string) string {
@@ -51,11 +53,24 @@ var linterVersion = func(cmd string) string {
 	return ver
 }
 
-func init() {
-	ins := NewInstallable(lintModule, lintCmd, linterVersion)
-	linter = golangCiLinter{
-		ins,
-		fmt.Sprintf("%s.html", lintCmd),
+// func init() {
+//	ins := NewInstallable(lintModule, lintCmd, linterVersion)
+//	linter = golangCiLinter{
+//		ins,
+//		fmt.Sprintf("%s.html", lintCmd),
+//	}
+//}
+
+func SetLinterService(ctx context.Context) {
+	if dir, err := root(ctx); err == nil {
+		ins := NewInstallable(lintModule, lintCmd, linterVersion)
+		linter = golangCiLinter{
+			ins,
+			fmt.Sprintf("%s.html", lintCmd),
+			dir,
+		}
+	} else {
+		log.Println(color.YellowString("%s", err.Error()))
 	}
 }
 
@@ -66,7 +81,7 @@ func Install(ver string) (string, error) {
 func ConfiguredLinterVer() (string, error) {
 	var ver string
 	var err error
-	f, err := os.Open(lintCfg)
+	f, err := os.Open(filepath.Join(linter.root, lintCfg))
 	defer f.Close()
 	if err == nil {
 		scanner := bufio.NewScanner(f)
@@ -124,16 +139,18 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 			log.Println(msg)
 		}
 	}
-	if err == nil {
-		log.Println("no linter issues are found")
-		return
-	}
+	// hasLinterIssue := err == nil
+	// if err == nil {
+	//	log.Println("no linter issues are found")
+	//	return
+	//}
 
 	var prettyJSON bytes.Buffer
 	if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
 		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
 	}
 	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
+	issues := jq.Count()
 	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
 	data := jq.Get()
 	funcMap := template.FuncMap{
@@ -155,10 +172,15 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 	err = t.Execute(f, data)
 	checkError(err)
 	msg = fmt.Sprintf("lint report is generated at %s", file)
-	if failOnIssue {
-		log.Fatalln(color.RedString(msg))
+	if issues > 0 {
+		msg = fmt.Sprintf("total %d linter issues are found", issues)
+		if failOnIssue {
+			log.Fatalln(color.RedString(msg))
+		} else {
+			log.Println(color.YellowString(msg))
+		}
 	} else {
-		log.Println(msg)
+		log.Println(color.GreenString("no linter issues are found"))
 	}
 }
 

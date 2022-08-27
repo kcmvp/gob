@@ -18,5 +18,5 @@ func main() {
 	}
 	root := filepath.Dir(filepath.Dir(filename))
 	builder.NewBuilder(root).Run(builder.Lint, builder.Test)
-	os.exit(0)
+	os.Exit(0)
 }

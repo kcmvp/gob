@@ -104,7 +104,9 @@ func NewBuilder(root string) *Builder {
 			root,
 			hook,
 		}
-		infra.NewGitHookService(root)
+		ctx := context.WithValue(context.Background(), infra.ProjectRootDir, root)
+		infra.SetupGitHookService(ctx)
+		infra.SetLinterService(ctx)
 	})
 	return instance
 }
@@ -198,10 +200,11 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 	}
 
 	for _, evt := range actions {
+		log.Printf("starts %sing ...\n", string(evt))
 		err := builder.fsm.Event(ctx, string(evt))
 		var t1 fsm.CanceledError
 		if err != nil && !errors.Is(err, t1) {
-			log.Fatalln(color.RedString("%v", err))
+			log.Fatalln(color.RedString("%s", err.Error()))
 		}
 	}
 }

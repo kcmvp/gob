@@ -5,6 +5,7 @@ package cmd
 
 import (
 	_ "embed"
+
 	"github.com/kcmvp/gob/infra"
 	"github.com/spf13/cobra"
 )
