@@ -49,11 +49,12 @@ func (bs *BuilderTestSuite) TestSortWithPrePushHook() {
 
 func (bs *BuilderTestSuite) TestPreCommitHook() {
 	if _, ok := os.LookupEnv(testCallerFlag); ok {
+		// fix infinite loop
 		return
 	}
 	os.Setenv(testCallerFlag, "1")
-	//os.Remove(filepath.Join(bs.builder.project.targetDir, "golangci-lint.html"))
 	bs.builder.Run(SetupGitHook, Clean, Lint, Test)
+	// check lint report
 	_, err := os.Stat(filepath.Join(bs.builder.root, infra.TargetDir, "golangci-lint.html"))
 	require.NoError(bs.T(), err)
 	for s, g := range infra.Hooks() {
@@ -68,6 +69,14 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 		info, err := os.Stat(path)
 		require.NoError(bs.T(), err)
 		require.True(bs.T(), time.Now().Nanosecond()/1e6-info.ModTime().Nanosecond()/1e6 < 1000)
+
 	}
+	// check test report
+	_, err = os.Stat(filepath.Join(bs.builder.root, infra.TargetDir, "cover.out"))
+	require.NoError(bs.T(), err)
+	_, err = os.Stat(filepath.Join(bs.builder.root, infra.TargetDir, "package.out"))
+	require.NoError(bs.T(), err)
+	_, err = os.Stat(filepath.Join(bs.builder.root, infra.TargetDir, "coverage.json"))
+	require.NoError(bs.T(), err)
 
 }
