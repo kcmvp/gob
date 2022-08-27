@@ -1,9 +1,9 @@
 package infra
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -23,29 +23,32 @@ var (
 	templateDir embed.FS
 )
 
-const HookScriptDir = "scripts"
-
 type gitHookService struct {
 	root  string
 	repo  *git.Repository
 	hooks []string
-	valid bool
+	err   error
 }
 
-func NewGitHookService(path string) *gitHookService {
+func SetupGitHookService(ctx context.Context) {
 	once.Do(func() {
-		repo, err := git.PlainOpen(path)
+		var err error
+		var repo *git.Repository
+		path, err := root(ctx)
 		if err != nil {
-			log.Println(color.YellowString("project is not at version control"))
+			log.Println(color.YellowString("runs into error: %s", err.Error()))
+		} else {
+			if repo, err = git.PlainOpen(path); err != nil {
+				log.Println(color.YellowString("project is not at version control"))
+			}
 		}
 		gitHook = &gitHookService{
 			root:  path,
 			hooks: []string{"pre-commit", "commit-msg", "pre-push"},
 			repo:  repo,
-			valid: err == nil,
+			err:   err,
 		}
 	})
-	return gitHook
 }
 
 func Hooks() map[string]string {
@@ -64,15 +67,14 @@ type hookData struct {
 func SetupHook(genNew bool) error {
 	var err error
 	var tf []byte
-	if !gitHook.valid {
-		msg := "current project is not in git"
-		log.Println(color.RedString(msg))
-		return errors.New(msg) //nolint
+	if gitHook.err != nil {
+		log.Println(color.RedString("%s", gitHook.err))
+		return gitHook.err
 	}
 	gitDir := filepath.Join(gitHook.root, ".git")
 	for s, g := range Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
-		abs, _ := filepath.Abs(filepath.Join(HookScriptDir, gof))
+		abs, _ := filepath.Abs(filepath.Join(gitHook.root, ScriptDir, gof))
 		if _, err = os.Stat(abs); err != nil {
 			if !genNew {
 				continue
@@ -85,7 +87,7 @@ func SetupHook(genNew bool) error {
 		}
 	}
 	if err == nil {
-		log.Println("git gitHook is setup successfully")
+		log.Println("git hooks are setup successfully")
 	}
 	return err
 }
