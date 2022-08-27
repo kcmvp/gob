@@ -46,7 +46,7 @@ func (bs *BuilderTestSuite) TestSortWithPrePushHook() {
 }
 
 func (bs *BuilderTestSuite) TestPreCommitHook() {
-	bs.builder.project.clean()
+	os.Remove(filepath.Join(bs.builder.project.targetDir, "golangci-lint.html"))
 	bs.builder.Run(SetupGitHook, Lint)
 	_, err := os.Stat(filepath.Join(bs.builder.root, infra.TargetDir, "golangci-lint.html"))
 	require.NoError(bs.T(), err)

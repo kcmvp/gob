@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"bytes"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"os"
 	"path/filepath"
@@ -35,10 +33,10 @@ func (s *RunTestSuite) SetupTest() {
 	}
 }
 
-func (s *RunTestSuite) TestRunTest() {
-	b := bytes.NewBufferString("")
-	runCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"run", "test"})
-	err := rootCmd.Execute()
-	require.Error(s.T(), err)
-}
+//func (s *RunTestSuite) TestRunTest() {
+//	b := bytes.NewBufferString("")
+//	runCmd.SetOut(b)
+//	rootCmd.SetArgs([]string{"run", "test"})
+//	err := rootCmd.Execute()
+//	require.Error(s.T(), err)
+//}

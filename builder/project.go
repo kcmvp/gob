@@ -17,10 +17,9 @@ import (
 )
 
 const (
-	lineCoverageReport   = "line.data"
-	methodCoverageReport = "method.data"
-	rawTestReport        = "test.data"
-	coverage             = "coverage.json"
+	coverOut   = "cover.out"
+	packageOut = "package.out"
+	coverage   = "coverage.json"
 )
 
 type project struct {
@@ -83,21 +82,21 @@ func (project *project) test(args ...string) {
 	checkError(err, "failed to change directory")
 	err = os.MkdirAll(project.targetDir, os.ModePerm)
 	checkError(err, "failed to mkdir")
-	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(project.targetDir, lineCoverageReport), "./..."}
+	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(project.targetDir, coverOut), "./..."}
 	if len(args) > 0 {
 		params = append(params, args...)
 	}
 	out, err := exec.Command("go", params...).CombinedOutput()
 	checkError(err, string(out))
 
-	if err := os.WriteFile(filepath.Join(project.targetDir, rawTestReport), out, os.ModePerm); err != nil {
+	if err := os.WriteFile(filepath.Join(project.targetDir, packageOut), out, os.ModePerm); err != nil {
 		log.Fatalln(color.RedString("failed to generate coverage report:%s", err.Error()))
 	} else {
-		log.Printf("test output is generated at %s", filepath.Join(project.targetDir, rawTestReport))
+		log.Printf("test output is generated at %s", filepath.Join(project.targetDir, packageOut))
 	}
 	//  go tool cover -func ./targetDir/coverage.data
 	fileCover := filepath.Join(project.targetDir, "cover_file.html")
-	params = []string{"tool", "cover", "-html", filepath.Join(project.targetDir, lineCoverageReport), "-o", fileCover}
+	params = []string{"tool", "cover", "-html", filepath.Join(project.targetDir, coverOut), "-o", fileCover}
 	out, err = exec.Command("go", params...).CombinedOutput()
 	checkError(err, string(out))
 	log.Printf("coverage report is generated at %s \n", fileCover)
@@ -150,9 +149,9 @@ func (project *project) coverage(keepInGit bool) {
 	// if keepInGit {
 	//	cover = filepath.Join(project.moduleDir, coverage)
 	//}
-	file, err := os.Open(filepath.Join(project.targetDir, rawTestReport))
+	file, err := os.Open(filepath.Join(project.targetDir, packageOut))
 	if err != nil {
-		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(project.targetDir, rawTestReport)))
+		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(project.targetDir, packageOut)))
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
