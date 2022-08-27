@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const testCallerFlag = "BuilderTestSuit"
+
 type BuilderTestSuite struct {
 	suite.Suite
 	builder *Builder
@@ -46,8 +48,12 @@ func (bs *BuilderTestSuite) TestSortWithPrePushHook() {
 }
 
 func (bs *BuilderTestSuite) TestPreCommitHook() {
-	os.Remove(filepath.Join(bs.builder.project.targetDir, "golangci-lint.html"))
-	bs.builder.Run(SetupGitHook, Lint)
+	if _, ok := os.LookupEnv(testCallerFlag); ok {
+		return
+	}
+	os.Setenv(testCallerFlag, "1")
+	//os.Remove(filepath.Join(bs.builder.project.targetDir, "golangci-lint.html"))
+	bs.builder.Run(SetupGitHook, Clean, Lint, Test)
 	_, err := os.Stat(filepath.Join(bs.builder.root, infra.TargetDir, "golangci-lint.html"))
 	require.NoError(bs.T(), err)
 	for s, g := range infra.Hooks() {

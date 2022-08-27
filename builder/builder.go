@@ -119,7 +119,7 @@ func events() fsm.Events {
 		{string(preCommitHook), []string{string(Test)}, string(preCommitHook)},
 		{string(commitMsgHook), []string{string(SetupGitHook)}, string(commitMsgHook)},
 		{string(prePushHook), []string{string(initialized), string(Test)}, string(prePushHook)},
-		{string(Clean), []string{string(initialized), string(prePushHook)}, string(Clean)},
+		{string(Clean), []string{string(initialized), string(prePushHook), string(SetupGitHook)}, string(Clean)},
 		// commit-msg and pre-push can't trigger lint
 		{string(Lint), []string{string(initialized), string(SetupGitHook), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
 		{string(Test), []string{string(initialized), string(SetupGitHook), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
