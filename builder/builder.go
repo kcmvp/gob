@@ -34,15 +34,16 @@ const (
 type Action string
 
 var (
-	initialized   Action = "initialized"  // 0
-	preCommitHook Action = "pre-commit"   // -1
-	commitMsgHook Action = "commit-msg"   // -2
-	prePushHook   Action = "pre-push"     // -3
-	SetupGitHook  Action = "SetupGitHook" // 0
-	Clean         Action = "clean"        // 2
-	Lint          Action = "lint"         // 3
-	Test          Action = "test"         // 4
-	Build         Action = "build"        // 5
+	initialized   Action = "initialized"
+	preCommitHook Action = "pre-commit"
+	commitMsgHook Action = "commit-msg"
+	prePushHook   Action = "pre-push"
+	SetupGitHook  Action = "SetupGitHook"
+	SetupBuilder  Action = "SetupBuilder"
+	Clean         Action = "clean"
+	Lint          Action = "lint"
+	Test          Action = "test"
+	Build         Action = "build"
 )
 
 var actionResultMap = map[Action][]string{
@@ -120,6 +121,7 @@ func events() fsm.Events {
 	return fsm.Events{
 		// builtin for git commit
 		{string(SetupGitHook), []string{string(initialized)}, string(SetupGitHook)},
+		{string(SetupBuilder), []string{string(initialized)}, string(SetupBuilder)},
 		{string(preCommitHook), []string{string(Test)}, string(preCommitHook)},
 		{string(commitMsgHook), []string{string(SetupGitHook)}, string(commitMsgHook)},
 		{string(prePushHook), []string{string(initialized), string(Test)}, string(prePushHook)},
@@ -133,6 +135,9 @@ func events() fsm.Events {
 
 func callBacks() fsm.Callbacks {
 	return map[string]fsm.Callback{
+		// setup builder
+		fmt.Sprintf("before_%s", SetupBuilder): createDirCallback,
+		string(SetupBuilder):                   setupBuilderCallback,
 		// setupGit
 		fmt.Sprintf("before_%s", SetupGitHook): createDirCallback,
 		string(SetupGitHook):                   gitHookCallback,
@@ -175,7 +180,6 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 	}
 
 	for _, evt := range actions {
-		log.Printf("starts %sing ...\n", string(evt))
 		err := builder.fsm.Event(ctx, string(evt))
 		var t1 fsm.CanceledError
 		if err != nil && !errors.Is(err, t1) {
