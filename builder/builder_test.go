@@ -94,3 +94,18 @@ func (bs *BuilderTestSuite) TestCreateDirs() {
 		require.NoError(bs.T(), err, "target dir should be created")
 	}
 }
+
+func (bs *BuilderTestSuite) TestTestOutput() {
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		// fix infinite loop
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	bs.builder.Run(Clean, Test)
+
+	for _, f := range actionResultMap[Test] {
+		_, err := os.Stat(filepath.Join(bs.builder.targetDir, f))
+		require.NoError(bs.T(), err)
+	}
+
+}
