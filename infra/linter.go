@@ -2,10 +2,8 @@ package infra
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -124,26 +122,16 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 	report := filepath.Join(targetDir, linter.report)
 	sc := bufio.NewScanner(stderr)
 	output, err := os.OpenFile(filepath.Join(targetDir, linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
+	defer output.Close()                                                                                                  //nolint                                                                                    //nolint
 	CheckError(err, "Failed to create linter output file")
-	defer output.Close() //nolint                                                                                    //nolint
 	for sc.Scan() {
 		tmpLine := sc.Text()
 		_, err = output.WriteString(tmpLine + "\n")
 		CheckError(err, "Failed to create linter output")
 		log.Println(tmpLine)
 	}
-
 	CheckError(err, "Failed to get lint standard out")
-	sc = bufio.NewScanner(stdout)
-	var line string
-	for sc.Scan() {
-		line = sc.Text()
-	}
-
-	var prettyJSON bytes.Buffer
-	err = json.Indent(&prettyJSON, []byte(line), "", "\t")
-	CheckError(err, "Failed to indent lint report")
-	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
+	jq := gojsonq.New().Reader(stdout).From(IssueNode)
 	issues := jq.Count()
 	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
 	data := jq.Get()
