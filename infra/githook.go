@@ -2,7 +2,6 @@ package infra
 
 import (
 	"context"
-	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -19,8 +18,6 @@ import (
 var (
 	gitHook *gitHookService
 	once    sync.Once
-	//go:embed template/*.tmpl
-	templateDir embed.FS
 )
 
 type gitHookService struct {

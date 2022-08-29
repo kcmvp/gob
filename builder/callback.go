@@ -24,10 +24,15 @@ type TestCase struct {
 	Elapsed float64
 }
 
+var setupBuilderCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
+	log.Println("Creating project build file")
+	infra.SetupBuilder(instance.scriptDir)
+}
+
 var createDirCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	var dir string
 	switch event.Dst {
-	case string(SetupGitHook):
+	case string(SetupGitHook), string(SetupBuilder):
 		dir = instance.scriptDir
 	case string(Lint), string(Test), string(Build):
 		dir = instance.targetDir

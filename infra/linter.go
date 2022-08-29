@@ -166,11 +166,11 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 		},
 	}
 	t, err := template.New("report").Funcs(funcMap).Parse(reportTpl)
-	checkError(err)
+	checkError(err, "Failed to parse lint report template")
 	f, err := os.Create(file)
-	checkError(err)
+	checkError(err, "Failed to create lint report")
 	err = t.Execute(f, data)
-	checkError(err)
+	checkError(err, "Failed to generate lint report")
 	msg = fmt.Sprintf("lint report is generated at %s", file)
 	if issues > 0 {
 		msg = fmt.Sprintf("total %d linter issues are found", issues)
@@ -190,8 +190,8 @@ func GenerateLintCfg(data interface{}, trunk bool) {
 	}
 }
 
-func checkError(err error) {
-	if err != nil {
-		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
-	}
-}
+// func checkError(err error) {
+//	if err != nil {
+//		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
+//	}
+//}
