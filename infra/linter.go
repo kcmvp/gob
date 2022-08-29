@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/fatih/color"
@@ -38,6 +37,7 @@ var linter golangCiLinter
 
 type golangCiLinter struct {
 	Installable
+	report string
 	output string
 	root   string
 }
@@ -53,20 +53,13 @@ var linterVersion = func(cmd string) string {
 	return ver
 }
 
-// func init() {
-//	ins := NewInstallable(lintModule, lintCmd, linterVersion)
-//	linter = golangCiLinter{
-//		ins,
-//		fmt.Sprintf("%s.html", lintCmd),
-//	}
-//}
-
 func SetupLinterService(ctx context.Context) {
 	if dir, err := root(ctx); err == nil {
 		ins := NewInstallable(lintModule, lintCmd, linterVersion)
 		linter = golangCiLinter{
 			ins,
 			fmt.Sprintf("%s.html", lintCmd),
+			fmt.Sprintf("%s.out", lintCmd),
 			dir,
 		}
 	} else {
@@ -120,35 +113,36 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 	}
 	log.Println(msg)
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
-	output, err := exec.Command(vCmd, args...).CombinedOutput()
 
-	file := filepath.Join(targetDir, linter.output)
-	sc := bufio.NewScanner(strings.NewReader(string(output)))
-	r := regexp.MustCompile(`".*"`)
-	n := regexp.MustCompile(`config_reader|lintersdb|before processing:.*after processing:`)
+	cmd := exec.Command(vCmd, args...)
+	stderr, err := cmd.StderrPipe()
+	CheckError(err, "Failed to get error pipe from linter command")
+	stdout, err := cmd.StdoutPipe()
+	CheckError(err, "Failed to get output pipe from linter command")
+	err = cmd.Start()
+	CheckError(err, "Failed to execute linter command")
+	report := filepath.Join(targetDir, linter.report)
+	sc := bufio.NewScanner(stderr)
+	output, err := os.OpenFile(filepath.Join(targetDir, linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
+	CheckError(err, "Failed to create linter output file")
+	defer output.Close() //nolint                                                                                    //nolint
+	for sc.Scan() {
+		tmpLine := sc.Text()
+		_, err = output.WriteString(tmpLine + "\n")
+		CheckError(err, "Failed to create linter output")
+		log.Println(tmpLine)
+	}
+
+	CheckError(err, "Failed to get lint standard out")
+	sc = bufio.NewScanner(stdout)
 	var line string
 	for sc.Scan() {
 		line = sc.Text()
-		if strings.HasPrefix(line, "{\"Issues\"") {
-			break
-		} else if strings.HasPrefix(line, "level=warning") || n.MatchString(line) {
-			msg = strings.ReplaceAll(r.FindString(line), "\"", "")
-			if strings.HasPrefix(line, "level=warning") {
-				msg = color.YellowString(msg)
-			}
-			log.Println(msg)
-		}
 	}
-	// hasLinterIssue := err == nil
-	// if err == nil {
-	//	log.Println("no linter issues are found")
-	//	return
-	//}
 
 	var prettyJSON bytes.Buffer
-	if err = json.Indent(&prettyJSON, []byte(line), "", "\t"); err != nil {
-		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
-	}
+	err = json.Indent(&prettyJSON, []byte(line), "", "\t")
+	CheckError(err, "Failed to indent lint report")
 	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issues := jq.Count()
 	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
@@ -166,12 +160,13 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 		},
 	}
 	t, err := template.New("report").Funcs(funcMap).Parse(reportTpl)
-	checkError(err, "Failed to parse lint report template")
-	f, err := os.Create(file)
-	checkError(err, "Failed to create lint report")
+	CheckError(err, "Failed to parse lint report template")
+	f, err := os.Create(report)
+	defer f.Close() //nolint
+	CheckError(err, "Failed to create lint report")
 	err = t.Execute(f, data)
-	checkError(err, "Failed to generate lint report")
-	msg = fmt.Sprintf("lint report is generated at %s", file)
+	CheckError(err, "Failed to generate lint report")
+	log.Printf("lint report is generated at %s", report)
 	if issues > 0 {
 		msg = fmt.Sprintf("total %d linter issues are found", issues)
 		if failOnIssue {
@@ -189,9 +184,3 @@ func GenerateLintCfg(data interface{}, trunk bool) {
 		log.Fatalln(color.RedString("failed to generate lint config:%s", err.Error()))
 	}
 }
-
-// func checkError(err error) {
-//	if err != nil {
-//		log.Fatalln(color.RedString("runs into error: %s", err.Error()))
-//	}
-//}

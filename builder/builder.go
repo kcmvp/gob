@@ -23,7 +23,8 @@ const (
 	testCoverOut     = "cover.out"
 	testCoverReport  = "cover.html"
 	testPackageCover = "cover_package.json"
-	lintersOut       = "golangci-lint.html"
+	linterReport     = "golangci-lint.html"
+	linterOut        = "golangci-lint.out"
 )
 
 const (
@@ -48,7 +49,7 @@ var (
 
 var actionResultMap = map[Action][]string{
 	Test: {testCoverOut, testPackageCover, testCoverReport},
-	Lint: {lintersOut},
+	Lint: {linterReport, linterOut},
 }
 
 func RunAction(v string) (Action, bool) {

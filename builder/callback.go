@@ -77,7 +77,7 @@ var lintCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 
 var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	err := os.Chdir(instance.root)
-	checkError(err, "failed to change directory")
+	infra.CheckError(err, "failed to change directory")
 	CleanResult(Test)
 	params := []string{"test", "-v", "-coverprofile", filepath.Join(instance.TargetDir(), testCoverOut), "./..."}
 	// @todo for test parameter
@@ -87,9 +87,9 @@ var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
-	checkError(err, "runs into error")
+	infra.CheckError(err, "runs into error")
 	err = testCmd.Start()
-	checkError(err, "Failed to start test")
+	infra.CheckError(err, "Failed to start test")
 	scanner := bufio.NewScanner(stdout)
 	// ok  	github.com/kcmvp/gob/builder	0.155s	coverage: 16.9% of statements
 	pkr := regexp.MustCompile(`\sok\s+\S+\s+\S+s\s+coverage:\s+\S+% of statements`)
@@ -121,15 +121,15 @@ var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 		event.Cancel(err)
 	} else {
 		data, err := json.MarshalIndent(&pkgCoverage, "", " ")
-		checkError(err, "Failed to marshal package coverage report")
+		infra.CheckError(err, "Failed to marshal package coverage report")
 		err = os.WriteFile(filepath.Join(instance.targetDir, testPackageCover), data, os.ModePerm)
-		checkError(err, "Failed to save package coverage report")
+		infra.CheckError(err, "Failed to save package coverage report")
 	}
 	//  go tool cover -func ./targetDir/coverage.data
 	fileCover := filepath.Join(instance.TargetDir(), testCoverReport)
 	params = []string{"tool", "cover", "-html", filepath.Join(instance.TargetDir(), testCoverOut), "-o", fileCover}
 	out, err := exec.Command("go", params...).CombinedOutput()
-	checkError(err, string(out))
+	infra.CheckError(err, string(out))
 	log.Printf("coverage report is generated at %s \n", fileCover)
 }
 
@@ -154,11 +154,5 @@ var buildCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 		}
 		return nil
 	})
-	checkError(err, "Failed to build project")
-}
-
-func checkError(err error, msg string) {
-	if err != nil {
-		log.Fatalln(color.RedString("%s: %s", msg, err.Error()))
-	}
+	infra.CheckError(err, "Failed to build project")
 }
