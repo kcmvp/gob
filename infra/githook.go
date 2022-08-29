@@ -30,7 +30,7 @@ type gitHookService struct {
 	err   error
 }
 
-func SetupGitHookService(ctx context.Context) {
+func SetupHookService(ctx context.Context) {
 	once.Do(func() {
 		var err error
 		var repo *git.Repository
@@ -64,7 +64,7 @@ type hookData struct {
 	Type   string
 }
 
-func SetupHook(genNew bool) error {
+func SetupHook(scriptDir string, genNew bool) error {
 	var err error
 	var tf []byte
 	if gitHook.err != nil {
@@ -74,7 +74,7 @@ func SetupHook(genNew bool) error {
 	gitDir := filepath.Join(gitHook.root, ".git")
 	for s, g := range Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
-		abs, _ := filepath.Abs(filepath.Join(gitHook.root, ScriptDir, gof))
+		abs, _ := filepath.Abs(filepath.Join(gitHook.root, scriptDir, gof))
 		if _, err = os.Stat(abs); err != nil {
 			if !genNew {
 				continue

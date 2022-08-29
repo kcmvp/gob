@@ -30,7 +30,8 @@ var runCmd = &cobra.Command{
 		fmt.Printf("%v \n", args)
 		var acts []builder.Action
 		for _, act := range args {
-			if a, ok := builder.ValueOf(act); ok {
+			if a, ok := builder.RunAction(act); ok {
+				// @todo review the design
 				if len(acts) > 0 && a == acts[len(acts)-1] {
 					log.Printf("ignore repeat action %s \n", a)
 				} else {

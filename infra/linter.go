@@ -61,7 +61,7 @@ var linterVersion = func(cmd string) string {
 //	}
 //}
 
-func SetLinterService(ctx context.Context) {
+func SetupLinterService(ctx context.Context) {
 	if dir, err := root(ctx); err == nil {
 		ins := NewInstallable(lintModule, lintCmd, linterVersion)
 		linter = golangCiLinter{

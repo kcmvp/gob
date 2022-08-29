@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"bytes"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"os"
 	"path/filepath"
@@ -33,10 +35,15 @@ func (s *RunTestSuite) SetupTest() {
 	}
 }
 
-//func (s *RunTestSuite) TestRunTest() {
-//	b := bytes.NewBufferString("")
-//	runCmd.SetOut(b)
-//	rootCmd.SetArgs([]string{"run", "test"})
-//	err := rootCmd.Execute()
-//	require.Error(s.T(), err)
-//}
+func (s *RunTestSuite) TestRunTest() {
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		// fix infinite loop
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	b := bytes.NewBufferString("")
+	runCmd.SetOut(b)
+	rootCmd.SetArgs([]string{"run", "test"})
+	err := rootCmd.Execute()
+	require.NoError(s.T(), err)
+}

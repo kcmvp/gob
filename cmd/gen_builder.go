@@ -28,5 +28,5 @@ var builderCmd = &cobra.Command{
 }
 
 func init() {
-	setupCmd.AddCommand(builderCmd)
+	genCmd.AddCommand(builderCmd)
 }

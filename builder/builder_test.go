@@ -46,13 +46,18 @@ func (bs *BuilderTestSuite) TestSortWithPrePushHook() {
 }
 
 func (bs *BuilderTestSuite) TestPreCommitHook() {
-	os.Remove(filepath.Join(bs.builder.project.targetDir, "golangci-lint.html"))
-	bs.builder.Run(SetupGitHook, Lint)
-	_, err := os.Stat(filepath.Join(bs.builder.root, infra.TargetDir, "golangci-lint.html"))
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		// fix infinite loop
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	bs.builder.Run(SetupGitHook, Clean, Lint, Test)
+	// check lint report
+	_, err := os.Stat(filepath.Join(bs.builder.targetDir, lintersOut))
 	require.NoError(bs.T(), err)
 	for s, g := range infra.Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
-		path, err := filepath.Abs(filepath.Join(bs.builder.root, infra.ScriptDir, gof))
+		path, err := filepath.Abs(filepath.Join(bs.builder.scriptDir, gof))
 		require.NoError(bs.T(), err)
 		_, err = os.Stat(path)
 		require.NoError(bs.T(), err)
@@ -62,6 +67,30 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 		info, err := os.Stat(path)
 		require.NoError(bs.T(), err)
 		require.True(bs.T(), time.Now().Nanosecond()/1e6-info.ModTime().Nanosecond()/1e6 < 1000)
-	}
 
+	}
+	// check test report
+	_, err = os.Stat(filepath.Join(bs.builder.targetDir, "cover.out"))
+	require.NoError(bs.T(), err)
+	_, err = os.Stat(filepath.Join(bs.builder.targetDir, "package.out"))
+	require.NoError(bs.T(), err)
+	_, err = os.Stat(filepath.Join(bs.builder.targetDir, "coverage.json"))
+	require.NoError(bs.T(), err)
+}
+
+func (bs *BuilderTestSuite) TestCreateDirs() {
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		// fix infinite loop
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	for _, action := range []Action{Lint, Test, Build} {
+		bs.builder.Run(Clean)
+		_, err := os.Stat(bs.builder.targetDir)
+		require.Error(bs.T(), err, "target dir should be deleted")
+
+		bs.builder.Run(action)
+		_, err = os.Stat(bs.builder.targetDir)
+		require.NoError(bs.T(), err, "target dir should be created")
+	}
 }
