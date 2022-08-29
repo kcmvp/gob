@@ -34,10 +34,10 @@ func SetupBuilder(dir string) {
 	if err == nil {
 		err = GenerateFile(string(tf), filepath.Join(dir, "builder.go"), nil, false)
 	}
-	checkError(err, "Failed to create builder.go")
+	CheckError(err, "Failed to create builder.go")
 }
 
-func checkError(err error, msg string) {
+func CheckError(err error, msg string) {
 	if err != nil {
 		log.Fatalln(color.RedString("%s: %s", msg, err.Error()))
 	}

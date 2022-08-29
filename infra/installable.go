@@ -3,7 +3,6 @@ package infra
 import (
 	"errors"
 	"fmt"
-	"github.com/c-bata/go-prompt"
 	"io"
 	"io/fs"
 	"log"
@@ -13,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
 )
 

@@ -4,25 +4,19 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"io/fs"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/infra"
 	"github.com/looplab/fsm"
 )
-
-type TestCase struct {
-	Package string
-	Test    string
-	Action  string
-	Output  string
-	Elapsed float64
-}
 
 var setupBuilderCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	log.Println("Creating project build file")
@@ -83,62 +77,60 @@ var lintCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 
 var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	err := os.Chdir(instance.root)
-	checkError(err, "failed to change directory")
+	infra.CheckError(err, "failed to change directory")
 	CleanResult(Test)
-	params := []string{"test", "-v", "-json", "-coverprofile", filepath.Join(instance.TargetDir(), testCoverOut), "./..."}
+	params := []string{"test", "-v", "-coverprofile", filepath.Join(instance.TargetDir(), testCoverOut), "./..."}
 	// @todo for test parameter
 	// if len(args) > 0 {
 	//	params = append(params, args...)
 	//}
-	out, err := exec.Command("go", params...).CombinedOutput()
-	checkError(err, string(out))
 
-	if err := os.WriteFile(filepath.Join(instance.TargetDir(), testPackageOut), out, os.ModePerm); err != nil {
-		log.Fatalln(color.RedString("failed to generate coverage report:%s", err.Error()))
+	testCmd := exec.Command("go", params...)
+	stdout, err := testCmd.StdoutPipe()
+	infra.CheckError(err, "runs into error")
+	err = testCmd.Start()
+	infra.CheckError(err, "Failed to start test")
+	scanner := bufio.NewScanner(stdout)
+	// ok  	github.com/kcmvp/gob/builder	0.155s	coverage: 16.9% of statements
+	pkr := regexp.MustCompile(`\sok\s+\S+\s+\S+s\s+coverage:\s+\S+% of statements`)
+	// ?   	github.com/kcmvp/gob/infra	[no test files]
+	ntr := regexp.MustCompile(`\s+\S+\s+\[no test files\]`)
+	pkgCoverage := map[string]string{}
+	for scanner.Scan() {
+		m := scanner.Text()
+		switch {
+		case strings.Contains(m, "[build failed]"):
+			m = color.RedString(m)
+			err = errors.New("build failed") //nolint
+		case strings.Contains(m, "--- FAIL:"):
+			m = color.RedString(m)
+			err = errors.New("test failure") //nolint
+		case pkr.MatchString(m):
+			m = color.GreenString(m)
+			find := strings.Fields(pkr.FindString(m))
+			pkgCoverage[find[1]] = find[4]
+		case ntr.MatchString(m):
+			m = color.YellowString(m)
+			find := strings.Fields(ntr.FindString(m))
+			pkgCoverage[find[0]] = "-"
+		}
+		log.Println(m)
+	}
+
+	if err != nil {
+		event.Cancel(err)
 	} else {
-		log.Printf("test output is generated at %s", filepath.Join(instance.TargetDir(), testPackageOut))
+		data, err := json.MarshalIndent(&pkgCoverage, "", " ")
+		infra.CheckError(err, "Failed to marshal package coverage report")
+		err = os.WriteFile(filepath.Join(instance.targetDir, testPackageCover), data, os.ModePerm)
+		infra.CheckError(err, "Failed to save package coverage report")
 	}
 	//  go tool cover -func ./targetDir/coverage.data
-	fileCover := filepath.Join(instance.TargetDir(), "cover_file.html")
+	fileCover := filepath.Join(instance.TargetDir(), testCoverReport)
 	params = []string{"tool", "cover", "-html", filepath.Join(instance.TargetDir(), testCoverOut), "-o", fileCover}
-	out, err = exec.Command("go", params...).CombinedOutput()
-	checkError(err, string(out))
+	out, err := exec.Command("go", params...).CombinedOutput()
+	infra.CheckError(err, string(out))
 	log.Printf("coverage report is generated at %s \n", fileCover)
-}
-
-var afterTestCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
-	cover := filepath.Join(instance.TargetDir(), testCoverageJSON)
-	file, err := os.Open(filepath.Join(instance.TargetDir(), testPackageOut))
-	if err != nil {
-		log.Fatalln(color.RedString("failed to open the file %v \n", filepath.Join(instance.TargetDir(), testPackageOut)))
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-
-	report := infra.Report{
-		Packages: map[string]string{},
-	}
-	testSet := map[string]bool{}
-	for scanner.Scan() {
-		text := scanner.Text()
-		c := TestCase{}
-		json.Unmarshal([]byte(text), &c) //nolint:errcheck
-		if len(c.Test) > 0 {
-			testSet[c.Test] = true
-		} else if len(c.Output) > 0 {
-			if strings.Contains(c.Output, "no test files") {
-				report.Packages[c.Package] = "-"
-			} else if strings.HasPrefix(c.Output, "coverage:") {
-				report.Packages[c.Package] = strings.Fields(c.Output)[1]
-			}
-		}
-	}
-	report.Tests = len(testSet)
-	data, err := json.MarshalIndent(report, "", " ")
-	checkError(err, "Failed to marshall json")
-	if os.WriteFile(cover, data, os.ModePerm) == nil {
-		log.Printf("coverage report is generated at %s", cover)
-	}
 }
 
 var buildCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
@@ -162,11 +154,5 @@ var buildCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 		}
 		return nil
 	})
-	checkError(err, "Failed to build project")
-}
-
-func checkError(err error, msg string) {
-	if err != nil {
-		log.Fatalln(color.RedString("%s: %s", msg, err.Error()))
-	}
+	infra.CheckError(err, "Failed to build project")
 }

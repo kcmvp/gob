@@ -53,7 +53,7 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 	os.Setenv("callFromTest", "1")
 	bs.builder.Run(SetupGitHook, Clean, Lint, Test)
 	// check lint report
-	_, err := os.Stat(filepath.Join(bs.builder.targetDir, lintersOut))
+	_, err := os.Stat(filepath.Join(bs.builder.targetDir, linterReport))
 	require.NoError(bs.T(), err)
 	for s, g := range infra.Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
@@ -93,4 +93,34 @@ func (bs *BuilderTestSuite) TestCreateDirs() {
 		_, err = os.Stat(bs.builder.targetDir)
 		require.NoError(bs.T(), err, "target dir should be created")
 	}
+}
+
+func (bs *BuilderTestSuite) TestTestOutput() {
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		// fix infinite loop
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	bs.builder.Run(Clean, Test)
+
+	for _, f := range actionResultMap[Test] {
+		_, err := os.Stat(filepath.Join(bs.builder.targetDir, f))
+		require.NoError(bs.T(), err)
+	}
+
+}
+
+func (bs *BuilderTestSuite) TestLintOutput() {
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		// fix infinite loop
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	bs.builder.Run(Clean, Lint)
+
+	for _, f := range actionResultMap[Lint] {
+		_, err := os.Stat(filepath.Join(bs.builder.targetDir, f))
+		require.NoError(bs.T(), err)
+	}
+
 }

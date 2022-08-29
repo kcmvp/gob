@@ -21,9 +21,10 @@ const (
 	projectScriptDir = "scripts"
 	projectTargetDir = "target"
 	testCoverOut     = "cover.out"
-	testPackageOut   = "package.out"
-	testCoverageJSON = "coverage.json"
-	lintersOut       = "golangci-lint.html"
+	testCoverReport  = "cover.html"
+	testPackageCover = "cover_package.json"
+	linterReport     = "golangci-lint.html"
+	linterOut        = "golangci-lint.out"
 )
 
 const (
@@ -47,8 +48,8 @@ var (
 )
 
 var actionResultMap = map[Action][]string{
-	Test: {testCoverOut, testPackageOut, testCoverageJSON},
-	Lint: {lintersOut},
+	Test: {testCoverOut, testPackageCover, testCoverReport},
+	Lint: {linterReport, linterOut},
 }
 
 func RunAction(v string) (Action, bool) {
@@ -138,22 +139,26 @@ func callBacks() fsm.Callbacks {
 		// setup builder
 		fmt.Sprintf("before_%s", SetupBuilder): createDirCallback,
 		string(SetupBuilder):                   setupBuilderCallback,
-		// setupGit
+		// setup git
 		fmt.Sprintf("before_%s", SetupGitHook): createDirCallback,
 		string(SetupGitHook):                   gitHookCallback,
 		// Clean
-		string(Clean):                          cleanCallback,
-		fmt.Sprintf("after_%s", Clean):         afterCleanCallback,
-		string(preCommitHook):                  preCommitCallback,
-		string(commitMsgHook):                  commitMsgCallback,
-		string(prePushHook):                    prePushHookCallback,
-		fmt.Sprintf("before_%s", Lint):         createDirCallback,
-		string(Lint):                           lintCallback,
-		fmt.Sprintf("before_%s", Test):         createDirCallback,
-		string(Test):                           testCallback,
-		fmt.Sprintf("before_%s", string(Test)): createDirCallback,
-		fmt.Sprintf("after_%s", string(Test)):  afterTestCallback,
-		string(Build):                          buildCallback,
+		string(Clean):                  cleanCallback,
+		fmt.Sprintf("after_%s", Clean): afterCleanCallback,
+		// pre-commit
+		string(preCommitHook): preCommitCallback,
+		// commit-msg
+		string(commitMsgHook): commitMsgCallback,
+		// pre-push
+		string(prePushHook): prePushHookCallback,
+		// lint
+		fmt.Sprintf("before_%s", Lint): createDirCallback,
+		string(Lint):                   lintCallback,
+		// test
+		fmt.Sprintf("before_%s", Test): createDirCallback,
+		string(Test):                   testCallback,
+		// build
+		string(Build): buildCallback,
 	}
 }
 
