@@ -18,42 +18,45 @@ import (
 )
 
 const (
+	projectScriptDir = "scripts"
+	projectTargetDir = "target"
+	testCoverOut     = "cover.out"
+	testPackageOut   = "package.out"
+	testCoverageJSON = "coverage.json"
+	lintersOut       = "golangci-lint.html"
+)
+
+const (
 	ScanAll = "_scan_all"
 	GenHook = "_gen_hook"
 )
 
 type Action string
 
-var initialized Action = "initialized" // 0
-
-// SetupGitHook setup git hook action.
-var SetupGitHook Action = "SetupGitHook" // 0
-
-// for pre-commit git hook.
-var preCommitHook Action = "pre-commit" // -1
-
-// for commit-msg git hook.
-var commitMsgHook Action = "commit-msg" // -2
-
-// for pre-push git hook.
-var prePushHook Action = "pre-push" // -3
-
 var (
-	Clean Action = "clean" // 2
-	Lint  Action = "lint"  // 3
-	Test  Action = "test"  // 4
-	Build Action = "build" // 5
+	initialized   Action = "initialized"  // 0
+	preCommitHook Action = "pre-commit"   // -1
+	commitMsgHook Action = "commit-msg"   // -2
+	prePushHook   Action = "pre-push"     // -3
+	SetupGitHook  Action = "SetupGitHook" // 0
+	Clean         Action = "clean"        // 2
+	Lint          Action = "lint"         // 3
+	Test          Action = "test"         // 4
+	Build         Action = "build"        // 5
 )
 
-func ValueOf(v string) (Action, bool) {
-	am := map[string]Action{
-		"clean": Clean,
-		"lint":  Lint,
-		"test":  Test,
-		"build": Build,
+var actionResultMap = map[Action][]string{
+	Test: {testCoverOut, testPackageOut, testCoverageJSON},
+	Lint: {lintersOut},
+}
+
+func RunAction(v string) (Action, bool) {
+	for _, action := range []Action{Clean, Lint, Test, Build} {
+		if string(action) == v {
+			return action, true
+		}
 	}
-	a, ok := am[v]
-	return a, ok
+	return "", false
 }
 
 var (
@@ -62,12 +65,12 @@ var (
 )
 
 type Builder struct {
-	fsm     *fsm.FSM
-	project *project
+	fsm *fsm.FSM
 	*buildOption
-
-	root string
-	hook Action
+	root      string
+	scriptDir string
+	targetDir string
+	hook      Action
 }
 
 func trigger(name string) Action {
@@ -99,14 +102,15 @@ func NewBuilder(root string) *Builder {
 		}
 		instance = &Builder{
 			fsm.NewFSM(string(initialized), events(), callBacks()),
-			newProject(root),
 			defaultOption(),
 			root,
+			filepath.Join(root, projectScriptDir),
+			filepath.Join(root, projectTargetDir),
 			hook,
 		}
 		ctx := context.WithValue(context.Background(), infra.ProjectRootDir, root)
-		infra.SetupGitHookService(ctx)
-		infra.SetLinterService(ctx)
+		infra.SetupHookService(ctx)
+		infra.SetupLinterService(ctx)
 	})
 	return instance
 }
@@ -119,74 +123,45 @@ func events() fsm.Events {
 		{string(preCommitHook), []string{string(Test)}, string(preCommitHook)},
 		{string(commitMsgHook), []string{string(SetupGitHook)}, string(commitMsgHook)},
 		{string(prePushHook), []string{string(initialized), string(Test)}, string(prePushHook)},
-		{string(Clean), []string{string(initialized), string(prePushHook), string(SetupGitHook)}, string(Clean)},
+		{string(Clean), []string{string(initialized), string(prePushHook), string(SetupGitHook), string(Lint), string(Test), string(Build)}, string(Clean)},
 		// commit-msg and pre-push can't trigger lint
 		{string(Lint), []string{string(initialized), string(SetupGitHook), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
 		{string(Test), []string{string(initialized), string(SetupGitHook), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
-		{string(Build), []string{string(Test)}, string(Build)},
+		{string(Build), []string{string(Test), string(Clean)}, string(Build)},
 	}
 }
 
 func callBacks() fsm.Callbacks {
 	return map[string]fsm.Callback{
 		// setupGit
-		string(SetupGitHook): func(ctx context.Context, event *fsm.Event) {
-			v, ok := ctx.Value(GenHook).(bool)
-			if err := infra.SetupHook(ok && v); err != nil {
-				log.Fatalln(color.RedString("failed to setup hook: %s", err.Error()))
-			}
-		},
+		fmt.Sprintf("before_%s", SetupGitHook): createDirCallback,
+		string(SetupGitHook):                   gitHookCallback,
 		// Clean
-		string(Clean): func(ctx context.Context, event *fsm.Event) {
-			instance.project.clean()
-		},
-		fmt.Sprintf("after_%s", Clean): func(ctx context.Context, event *fsm.Event) {
-			log.Println("clean success")
-		},
-		// pre-commit: do linter format
-		string(preCommitHook): func(ctx context.Context, event *fsm.Event) {
-		},
-		// commit-msg : validate message
-		string(commitMsgHook): func(ctx context.Context, event *fsm.Event) {
-			infra.CommitMsg(string(instance.buildOption.MsgPattern))
-		},
-		// pre-push : validate repo status
-		string(prePushHook): func(ctx context.Context, event *fsm.Event) {
-			log.Println("validate code quality for push")
-		},
-		// Lint : before
-		string(Lint): func(ctx context.Context, event *fsm.Event) {
-			isPreCommitHooK := preCommitHook == instance.hook
-			v, _ := ctx.Value(ScanAll).(bool)
-			v = v && !isPreCommitHooK
-			infra.LintScan(instance.project.TargetDir(), v, isPreCommitHooK)
-			// if !isPreCommitHooK {
-			//	event.Cancel()
-			//}
-		},
-
-		// fmt.Sprintf("after_%s", string(Lint)): func(ctx context.Context, event *fsm.Event) {
-		//	infra.LintScan(instance.project.moduleDir, true, false)
-		// },
-		string(Test): func(ctx context.Context, event *fsm.Event) {
-			instance.project.test()
-		},
-		fmt.Sprintf("after_%s", string(Test)): func(ctx context.Context, event *fsm.Event) {
-			instance.project.coverage(preCommitHook == instance.hook)
-		},
-		// Build
-		string(Build): func(ctx context.Context, event *fsm.Event) {
-			instance.project.build()
-		},
+		string(Clean):                          cleanCallback,
+		fmt.Sprintf("after_%s", Clean):         afterCleanCallback,
+		string(preCommitHook):                  preCommitCallback,
+		string(commitMsgHook):                  commitMsgCallback,
+		string(prePushHook):                    prePushHookCallback,
+		fmt.Sprintf("before_%s", Lint):         createDirCallback,
+		string(Lint):                           lintCallback,
+		fmt.Sprintf("before_%s", Test):         createDirCallback,
+		string(Test):                           testCallback,
+		fmt.Sprintf("before_%s", string(Test)): createDirCallback,
+		fmt.Sprintf("after_%s", string(Test)):  afterTestCallback,
+		string(Build):                          buildCallback,
 	}
 }
 
 func (builder *Builder) ScriptDir() string {
-	return builder.project.ScriptDir()
+	return builder.scriptDir
+}
+
+func (builder *Builder) TargetDir() string {
+	return builder.targetDir
 }
 
 func (builder *Builder) RootDir() string {
-	return builder.project.ModuleDir()
+	return builder.root
 }
 
 func (builder *Builder) Run(actions ...Action) {
@@ -227,5 +202,17 @@ func sort(builtIn Action, actions ...Action) []Action {
 			}
 		}
 		return r
+	}
+}
+
+func CleanResult(a Action) {
+	if _, err := os.Stat(instance.TargetDir()); err != nil {
+		return
+	}
+	if outputs, ok := actionResultMap[a]; ok {
+		log.Printf("Cleaning %s output \n", a)
+		for _, output := range outputs {
+			os.Remove(filepath.Join(instance.TargetDir(), output))
+		}
 	}
 }

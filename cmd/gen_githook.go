@@ -33,5 +33,5 @@ var githookCmd = &cobra.Command{
 }
 
 func init() {
-	setupCmd.AddCommand(githookCmd)
+	genCmd.AddCommand(githookCmd)
 }

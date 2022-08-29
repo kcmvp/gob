@@ -11,10 +11,6 @@ var errEnv = errors.New("environment error")
 type EnvCtxKey string
 
 const ProjectRootDir EnvCtxKey = "_projectRootDir"
-const (
-	ScriptDir = "scripts"
-	TargetDir = "target"
-)
 
 func root(ctx context.Context) (string, error) {
 	if v, ok := ctx.Value(ProjectRootDir).(string); ok {

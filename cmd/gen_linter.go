@@ -28,6 +28,6 @@ var linterCmd = &cobra.Command{
 }
 
 func init() {
-	setupCmd.AddCommand(linterCmd)
+	genCmd.AddCommand(linterCmd)
 	linterCmd.Flags().StringVarP(&version, "version", "v", infra.LatestVer, "golangci-lint version")
 }
