@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -18,42 +19,30 @@ import (
 	"github.com/looplab/fsm"
 )
 
-var setupBuilderCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
-	log.Println("Creating project build file")
-	infra.SetupBuilder(instance.scriptDir)
-}
-
 var createDirCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	var dir string
+	builder := GetBuilder(ctx)
 	switch event.Dst {
-	case string(SetupGitHook), string(SetupBuilder):
-		dir = instance.scriptDir
+	case string(GenGitHook), string(GenBuilder):
+		dir = builder.ScriptDir()
 	case string(Lint), string(Test), string(Build):
-		dir = instance.targetDir
+		dir = builder.TargetDir()
 	}
 	if len(dir) < 1 {
 		return
 	}
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		log.Fatalln(color.RedString("Failed to create dir %s: %s", dir, err.Error()))
-	}
+	err := os.MkdirAll(dir, os.ModePerm)
+	cancelEvent(event, err, "failed to create dir")
 }
 
-var gitHookCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
-	v, ok := ctx.Value(GenHook).(bool)
-	if err := infra.SetupHook(projectScriptDir, ok && v); err != nil {
-		log.Fatalln(color.RedString("failed to setup hook: %s", err.Error()))
-	}
+var cleanAllCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
+	builder := GetBuilder(ctx)
+	log.Printf("clean directory %s \n", GetBuilder(ctx).TargetDir())
+	err := os.RemoveAll(GetBuilder(ctx).TargetDir())
+	cancelEvent(event, err, fmt.Sprintf("failed to delete %s\n", builder.TargetDir()))
 }
 
-var cleanCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
-	log.Printf("clean directory %s \n", instance.TargetDir())
-	if err := os.RemoveAll(instance.TargetDir()); err != nil {
-		log.Fatalln(color.RedString("failed to delete %s\n", instance.TargetDir()))
-	}
-}
-
-var afterCleanCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
+var afterCleanAllCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	log.Println("clean success")
 }
 
@@ -61,7 +50,8 @@ var preCommitCallback fsm.Callback = func(ctx context.Context, event *fsm.Event)
 }
 
 var commitMsgCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
-	infra.CommitMsg(string(instance.buildOption.MsgPattern))
+	builder := GetBuilder(ctx)
+	infra.CommitMsg(string(builder.buildOption.MsgPattern))
 }
 
 var prePushHookCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
@@ -69,17 +59,21 @@ var prePushHookCallback fsm.Callback = func(ctx context.Context, event *fsm.Even
 }
 
 var lintCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
-	isPreCommitHooK := preCommitHook == instance.hook
+	builder := GetBuilder(ctx)
+	isPreCommitHooK := preCommitHook == builder.hook
 	v, _ := ctx.Value(ScanAll).(bool)
 	v = v && !isPreCommitHooK
-	infra.LintScan(instance.TargetDir(), v, isPreCommitHooK)
+	builder.cleanOutput(Lint)
+	err := infra.LintScan(builder.RootDir(), builder.TargetDir(), v, isPreCommitHooK)
+	cancelEvent(event, err)
 }
 
 var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
-	err := os.Chdir(instance.root)
-	infra.CheckError(err, "failed to change directory")
-	CleanResult(Test)
-	params := []string{"test", "-v", "-coverprofile", filepath.Join(instance.TargetDir(), testCoverOut), "./..."}
+	builder := GetBuilder(ctx)
+	err := os.Chdir(builder.RootDir())
+	cancelEvent(event, err, "failed to change directory")
+	builder.cleanOutput(Test)
+	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), testCoverOut), "./..."}
 	// @todo for test parameter
 	// if len(args) > 0 {
 	//	params = append(params, args...)
@@ -87,9 +81,9 @@ var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
-	infra.CheckError(err, "runs into error")
+	cancelEvent(event, err, "runs into error")
 	err = testCmd.Start()
-	infra.CheckError(err, "Failed to start test")
+	cancelEvent(event, err, "runs into error")
 	scanner := bufio.NewScanner(stdout)
 	// ok  	github.com/kcmvp/gob/builder	0.155s	coverage: 16.9% of statements
 	pkr := regexp.MustCompile(`\sok\s+\S+\s+\S+s\s+coverage:\s+\S+% of statements`)
@@ -121,32 +115,33 @@ var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 		event.Cancel(err)
 	} else {
 		data, err := json.MarshalIndent(&pkgCoverage, "", " ")
-		infra.CheckError(err, "Failed to marshal package coverage report")
-		err = os.WriteFile(filepath.Join(instance.targetDir, testPackageCover), data, os.ModePerm)
-		infra.CheckError(err, "Failed to save package coverage report")
+		cancelEvent(event, err, "failed to marshal package coverage report")
+		err = os.WriteFile(filepath.Join(builder.TargetDir(), testPackageCover), data, os.ModePerm)
+		cancelEvent(event, err, "failed to save package coverage report")
 	}
 	//  go tool cover -func ./targetDir/coverage.data
-	fileCover := filepath.Join(instance.TargetDir(), testCoverReport)
-	params = []string{"tool", "cover", "-html", filepath.Join(instance.TargetDir(), testCoverOut), "-o", fileCover}
+	fileCover := filepath.Join(builder.TargetDir(), testCoverReport)
+	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), testCoverOut), "-o", fileCover}
 	out, err := exec.Command("go", params...).CombinedOutput()
-	infra.CheckError(err, string(out))
+	cancelEvent(event, err, string(out))
 	log.Printf("coverage report is generated at %s \n", fileCover)
 }
 
 var buildCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	// @todo multiple main.go
+	builder := GetBuilder(ctx)
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")
 	}
 	log.Println("build project ......")
-	err := filepath.Walk(instance.TargetDir(), func(path string, info fs.FileInfo, err error) error {
+	err := filepath.Walk(builder.TargetDir(), func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
 		for _, t := range targetFiles {
 			if strings.EqualFold(info.Name(), t) {
-				if output, err := exec.Command("go", "build", "-o", instance.TargetDir(), path).CombinedOutput(); err != nil { //nolint
+				if output, err := exec.Command("go", "build", "-o", builder.TargetDir(), path).CombinedOutput(); err != nil { //nolint
 					log.Println(string(output))
 					return err //nolint
 				}
@@ -154,5 +149,5 @@ var buildCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 		}
 		return nil
 	})
-	infra.CheckError(err, "Failed to build project")
+	cancelEvent(event, err, "failed to build project")
 }

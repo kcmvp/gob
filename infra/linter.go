@@ -2,8 +2,8 @@ package infra
 
 import (
 	"bufio"
-	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -23,7 +23,7 @@ const (
 	lintModule = "github.com/golangci/golangci-lint/cmd/golangci-lint"
 )
 
-var _ Installable = (*golangCiLinter)(nil)
+var _ Installable = (*Linter)(nil)
 
 //go:embed template/.golangci.yml
 var golangCiTmp string
@@ -31,13 +31,16 @@ var golangCiTmp string
 //go:embed template/golang_lint.tmpl
 var reportTpl string
 
-var linter golangCiLinter
+var linter = &Linter{
+	NewInstallable(lintModule, lintCmd, linterVersion),
+	fmt.Sprintf("%s.html", lintCmd),
+	fmt.Sprintf("%s.out", lintCmd),
+}
 
-type golangCiLinter struct {
+type Linter struct {
 	Installable
 	report string
 	output string
-	root   string
 }
 
 var linterVersion = func(cmd string) string {
@@ -51,28 +54,14 @@ var linterVersion = func(cmd string) string {
 	return ver
 }
 
-func SetupLinterService(ctx context.Context) {
-	if dir, err := root(ctx); err == nil {
-		ins := NewInstallable(lintModule, lintCmd, linterVersion)
-		linter = golangCiLinter{
-			ins,
-			fmt.Sprintf("%s.html", lintCmd),
-			fmt.Sprintf("%s.out", lintCmd),
-			dir,
-		}
-	} else {
-		log.Println(color.YellowString("%s", err.Error()))
-	}
-}
-
-func Install(ver string) (string, error) {
+func InstallLinter(ver string) (string, error) {
 	return linter.Install(ver)
 }
 
-func ConfiguredLinterVer() (string, error) {
+func GetLinterVer(root string) (string, error) {
 	var ver string
 	var err error
-	f, err := os.Open(filepath.Join(linter.root, lintCfg))
+	f, err := os.Open(filepath.Join(root, lintCfg))
 	defer f.Close()
 	if err == nil {
 		scanner := bufio.NewScanner(f)
@@ -93,15 +82,14 @@ func ConfiguredLinterVer() (string, error) {
 	return ver, err
 }
 
-//nolint:cyclop
-func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
-	ver, err := ConfiguredLinterVer()
+func LintScan(cfgDir, targetDir string, fullScan bool, failOnIssue bool) error {
+	ver, err := GetLinterVer(cfgDir)
 	if err != nil {
-		log.Fatalln(color.RedString("lint scan: %s", err.Error()))
+		return fmt.Errorf("lint scan: %w", err)
 	}
 	ver, err = linter.Install(ver)
 	if err != nil {
-		log.Fatalln(color.RedString("failed to install golangci-linter %s: %s", ver, err.Error()))
+		return fmt.Errorf("failed to install golangci-linter %s: %w", ver, err)
 	}
 	msg := "lint all source code"
 	args := []string{"run", "-v", "./...", "--out-format=json"}
@@ -114,23 +102,35 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()
-	CheckError(err, "Failed to get error pipe from linter command")
+	if err != nil {
+		return fmt.Errorf("failed to get error pipe from linter command: %w", err)
+	}
 	stdout, err := cmd.StdoutPipe()
-	CheckError(err, "Failed to get output pipe from linter command")
+	if err != nil {
+		return fmt.Errorf("failed to get error pipe from linter command: %w", err)
+	}
 	err = cmd.Start()
-	CheckError(err, "Failed to execute linter command")
+	if err != nil {
+		return fmt.Errorf("failed to execute linter command: %w", err)
+	}
 	report := filepath.Join(targetDir, linter.report)
 	sc := bufio.NewScanner(stderr)
 	output, err := os.OpenFile(filepath.Join(targetDir, linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
 	defer output.Close()                                                                                                  //nolint                                                                                    //nolint
-	CheckError(err, "Failed to create linter output file")
+	if err != nil {
+		return fmt.Errorf("failed to create linter output file: %w", err)
+	}
 	for sc.Scan() {
 		tmpLine := sc.Text()
 		_, err = output.WriteString(tmpLine + "\n")
-		CheckError(err, "Failed to create linter output")
+		if err != nil {
+			return fmt.Errorf("failed to create linter output: %w", err)
+		}
 		log.Println(tmpLine)
 	}
-	CheckError(err, "Failed to get lint standard out")
+	if err != nil {
+		return fmt.Errorf("failed to get lint standard out: %w", err)
+	}
 	jq := gojsonq.New().Reader(stdout).From(IssueNode)
 	issues := jq.Count()
 	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
@@ -148,26 +148,33 @@ func LintScan(targetDir string, fullScan bool, failOnIssue bool) {
 		},
 	}
 	t, err := template.New("report").Funcs(funcMap).Parse(reportTpl)
-	CheckError(err, "Failed to parse lint report template")
+	if err != nil {
+		return fmt.Errorf("failed to parse lint report template: %w", err)
+	}
 	f, err := os.Create(report)
 	defer f.Close() //nolint
-	CheckError(err, "Failed to create lint report")
+	if err != nil {
+		return fmt.Errorf("failed to create lint report: %w", err)
+	}
 	err = t.Execute(f, data)
-	CheckError(err, "Failed to generate lint report")
+	if err != nil {
+		return fmt.Errorf("failed to generate lint report: %w", err)
+	}
 	log.Printf("lint report is generated at %s", report)
 	if issues > 0 {
 		msg = fmt.Sprintf("total %d linter issues are found", issues)
 		if failOnIssue {
-			log.Fatalln(color.RedString(msg))
+			return errors.New(msg)
 		} else {
 			log.Println(color.YellowString(msg))
 		}
 	} else {
 		log.Println(color.GreenString("no linter issues are found"))
 	}
+	return nil
 }
 
-func GenerateLintCfg(data interface{}, trunk bool) {
+func GenLinterCfg(data interface{}, trunk bool) {
 	if err := GenerateFile(golangCiTmp, lintCfg, data, trunk); err != nil {
 		log.Fatalln(color.RedString("failed to generate lint config:%s", err.Error()))
 	}

@@ -2,12 +2,10 @@ package infra
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
-
-	"github.com/fatih/color"
 )
 
 func GenerateFile(content string, targetName string, data interface{}, trunk bool) error {
@@ -20,18 +18,17 @@ func GenerateFile(content string, targetName string, data interface{}, trunk boo
 	var err error
 	var f *os.File
 	var t *template.Template
-
 	if f, err = os.OpenFile(targetName, flag, os.ModePerm); err == nil {
 		defer f.Close()
 		if t, err = template.New(targetName).Parse(content); err != nil {
-			log.Println(color.RedString("Failed to parse template, %+v", err))
+			err = fmt.Errorf("failed to parse template: %w", err)
 		} else {
 			if err = t.Execute(f, data); err != nil {
-				log.Println(color.RedString("Failed to create file %v, %+v\n", filepath.Base(targetName), err))
+				err = fmt.Errorf("failed to create file %v: %w", filepath.Base(targetName), err)
 			}
 		}
 	} else if !errors.Is(err, os.ErrExist) {
-		log.Println(color.RedString("failed to generate file %s, %v\n", filepath.Base(targetName), err))
+		err = fmt.Errorf("failed to create file %v: %w", filepath.Base(targetName), err)
 	}
 	return err
 }

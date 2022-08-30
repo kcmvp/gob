@@ -1,56 +1,30 @@
 package infra
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 )
 
 var (
-	gitHook *gitHookService
-	once    sync.Once
+	gitHooker = &GitHooker{[]string{"pre-commit", "commit-msg", "pre-push"}}
 )
 
-type gitHookService struct {
-	root  string
-	repo  *git.Repository
+type GitHooker struct {
 	hooks []string
-	err   error
-}
-
-func SetupHookService(ctx context.Context) {
-	once.Do(func() {
-		var err error
-		var repo *git.Repository
-		path, err := root(ctx)
-		if err != nil {
-			log.Println(color.YellowString("runs into error: %s", err.Error()))
-		} else {
-			if repo, err = git.PlainOpen(path); err != nil {
-				log.Println(color.YellowString("project is not at version control"))
-			}
-		}
-		gitHook = &gitHookService{
-			root:  path,
-			hooks: []string{"pre-commit", "commit-msg", "pre-push"},
-			repo:  repo,
-			err:   err,
-		}
-	})
 }
 
 func Hooks() map[string]string {
 	m := map[string]string{}
-	for _, h := range gitHook.hooks {
+	for _, h := range gitHooker.hooks {
 		m[h] = strings.Replace(h, "-", "_", 1)
 	}
 	return m
@@ -61,17 +35,15 @@ type hookData struct {
 	Type   string
 }
 
-func SetupHook(scriptDir string, genNew bool) error {
+func GenGitHooks(gitHome, scriptDir string, genNew bool) error {
 	var err error
 	var tf []byte
-	if gitHook.err != nil {
-		log.Println(color.RedString("%s", gitHook.err))
-		return gitHook.err
+	if _, err = git.PlainOpen(gitHome); err != nil {
+		return errors.New("project is not at version control")
 	}
-	gitDir := filepath.Join(gitHook.root, ".git")
 	for s, g := range Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
-		abs, _ := filepath.Abs(filepath.Join(gitHook.root, scriptDir, gof))
+		abs, _ := filepath.Abs(filepath.Join(scriptDir, gof))
 		if _, err = os.Stat(abs); err != nil {
 			if !genNew {
 				continue
@@ -80,7 +52,7 @@ func SetupHook(scriptDir string, genNew bool) error {
 				err = GenerateFile(string(tf), abs, nil, false)
 			}
 		} else if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
-			err = GenerateFile(string(tf), filepath.Join(gitDir, "hooks", s), hookData{abs, s}, true)
+			err = GenerateFile(string(tf), filepath.Join(gitHome, "hooks", s), hookData{abs, s}, true)
 		}
 	}
 	if err == nil {
@@ -99,8 +71,9 @@ func CommitMsg(pattern string) {
 	}
 }
 
+/*
 func GitCheckout(files ...string) {
-	w, _ := gitHook.repo.Worktree()
+	w, _ := gitHooker.repo.Worktree()
 	s, _ := w.Status()
 	for _, file := range files {
 		log.Printf("git status: %s: %s\n", file, string(s.File(file).Worktree))
@@ -112,7 +85,7 @@ func GitCheckout(files ...string) {
 }
 
 func GitAdd(files ...string) {
-	w, _ := gitHook.repo.Worktree()
+	w, _ := gitHooker.repo.Worktree()
 	s, _ := w.Status()
 	for _, file := range files {
 		log.Printf("git status: %s: %s\n", file, string(s.File(file).Worktree))
@@ -122,6 +95,7 @@ func GitAdd(files ...string) {
 		}
 	}
 }
+*/
 
 func PrePush(version, target string, repo *git.Repository) {
 	input, _ := os.ReadFile(os.Args[1])

@@ -5,11 +5,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"os"
-
-	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
@@ -19,16 +14,16 @@ var githookCmd = &cobra.Command{
 	Use:   "githook",
 	Short: "Generate git hook for project",
 	Long:  `Generate git hooks for project, which include: commit_message, pre_push`,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		_, err := os.Stat(git.GitDirName)
-		if errors.Is(err, os.ErrNotExist) {
-			err = fmt.Errorf("project is not versioned in git: %w", err)
-		}
-		return err
-	},
+	//PreRunE: func(cmd *cobra.Command, args []string) error {
+	//	_, err := os.Stat(git.GitDirName)
+	//	if errors.Is(err, os.ErrNotExist) {
+	//		err = fmt.Errorf("project is not versioned in git: %w", err)
+	//	}
+	//	return err
+	// },
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.WithValue(cmd.Context(), builder.GenHook, true) //nolint
-		getBuilder(ctx).RunCtx(ctx, builder.SetupGitHook)
+		builder.RunCtx(ctx, builder.GenGitHook)
 	},
 }
 
