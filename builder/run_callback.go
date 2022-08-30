@@ -91,24 +91,24 @@ var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	ntr := regexp.MustCompile(`\s+\S+\s+\[no test files\]`)
 	pkgCoverage := map[string]string{}
 	for scanner.Scan() {
-		m := scanner.Text()
+		line := scanner.Text()
 		switch {
-		case strings.Contains(m, "[build failed]"):
-			m = color.RedString(m)
+		case strings.Contains(line, "[build failed]"):
+			line = color.RedString(line)
 			err = errors.New("build failed") //nolint
-		case strings.Contains(m, "--- FAIL:"):
-			m = color.RedString(m)
+		case strings.Contains(line, "--- FAIL:"), strings.Contains(line, "FAIL"):
+			line = color.RedString(line)
 			err = errors.New("test failure") //nolint
-		case pkr.MatchString(m):
-			m = color.GreenString(m)
-			find := strings.Fields(pkr.FindString(m))
+		case pkr.MatchString(line):
+			line = color.GreenString(line)
+			find := strings.Fields(pkr.FindString(line))
 			pkgCoverage[find[1]] = find[4]
-		case ntr.MatchString(m):
-			m = color.YellowString(m)
-			find := strings.Fields(ntr.FindString(m))
+		case ntr.MatchString(line):
+			line = color.YellowString(line)
+			find := strings.Fields(ntr.FindString(line))
 			pkgCoverage[find[0]] = "-"
 		}
-		log.Println(m)
+		log.Println(line)
 	}
 
 	if err != nil {

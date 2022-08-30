@@ -48,10 +48,13 @@ func NewTestProject() *TestProject {
 type CallbackTestSuite struct {
 	suite.Suite
 	*Builder
+	context.Context
 }
 
 func (ts *CallbackTestSuite) SetupSuite() {
-	ts.Builder = NewBuilderWith(NewTestProject())
+	builder := NewBuilderWith(NewTestProject())
+	ts.Builder = builder
+	ts.Context = context.WithValue(context.Background(), CtxKeyBuilder, builder)
 }
 
 func (ts *CallbackTestSuite) SetupTest() {
@@ -81,13 +84,13 @@ func (ts *CallbackTestSuite) TestDirs() {
 func (ts *CallbackTestSuite) TestGenBuilder() {
 	_, err := os.Stat(filepath.Join(ts.ScriptDir(), "builder.go"))
 	require.Error(ts.T(), err)
-	genBuilderCallback(context.Background(), nil)
+	genBuilderCallback(ts.Context, nil)
 	_, err = os.Stat(filepath.Join(ts.ScriptDir(), "builder.go"))
 	require.NoError(ts.T(), err)
 }
 
 func (ts *CallbackTestSuite) TestGenGitHookScripts() {
-	ctx := context.WithValue(context.Background(), GenHook, true)
+	ctx := context.WithValue(ts.Context, GenHook, true)
 	genGitHookCallback(ctx, nil)
 	gitHome, _ := ts.GitHome()
 	for k, _ := range infra.Hooks() {
@@ -100,7 +103,7 @@ func (ts *CallbackTestSuite) TestGenGitHookScripts() {
 }
 
 func (ts *CallbackTestSuite) TestLint() {
-	lintCallback(context.Background(), nil)
+	lintCallback(ts.Context, nil)
 	for _, r := range actionOutputMap(Lint) {
 		_, err := os.Stat(filepath.Join(ts.TargetDir(), r))
 		require.NoError(ts.T(), err)
@@ -113,7 +116,7 @@ func (ts *CallbackTestSuite) TestCallback() {
 		return
 	}
 	os.Setenv("callFromTest", "1")
-	testCallback(context.Background(), nil)
+	testCallback(ts.Context, nil)
 	for _, r := range actionOutputMap(Test) {
 		_, err := os.Stat(filepath.Join(ts.TargetDir(), r))
 		require.NoError(ts.T(), err)
@@ -123,10 +126,10 @@ func (ts *CallbackTestSuite) TestCallback() {
 func (ts *CallbackTestSuite) TestCreateDir() {
 	os.Remove(ts.TargetDir())
 	os.Remove(ts.ScriptDir())
-	createDirCallback(context.Background(), &fsm.Event{Dst: string(Test)})
+	createDirCallback(ts.Context, &fsm.Event{Dst: string(Test)})
 	_, err := os.Stat(ts.TargetDir())
 	require.NoError(ts.T(), err)
-	createDirCallback(context.Background(), &fsm.Event{Dst: string(GenGitHook)})
+	createDirCallback(ts.Context, &fsm.Event{Dst: string(GenGitHook)})
 	_, err = os.Stat(ts.ScriptDir())
 	require.NoError(ts.T(), err)
 }

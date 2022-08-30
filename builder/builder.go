@@ -221,7 +221,7 @@ func GetBuilder(ctx context.Context) *Builder {
 	if ok {
 		return b
 	}
-	log.Fatalln("Failed to get builder from context")
+	log.Fatalln(color.RedString("failed to get builder from context"))
 	return nil
 }
 
