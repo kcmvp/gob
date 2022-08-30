@@ -64,7 +64,8 @@ var lintCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
 	v, _ := ctx.Value(ScanAll).(bool)
 	v = v && !isPreCommitHooK
 	builder.cleanOutput(Lint)
-	infra.LintScan(builder.RootDir(), builder.TargetDir(), v, isPreCommitHooK)
+	err := infra.LintScan(builder.RootDir(), builder.TargetDir(), v, isPreCommitHooK)
+	cancelEvent(event, err)
 }
 
 var testCallback fsm.Callback = func(ctx context.Context, event *fsm.Event) {
