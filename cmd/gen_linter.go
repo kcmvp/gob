@@ -6,6 +6,8 @@ package cmd
 import (
 	_ "embed"
 
+	"github.com/kcmvp/gob/builder"
+
 	"github.com/kcmvp/gob/infra"
 	"github.com/spf13/cobra"
 )
@@ -17,12 +19,12 @@ var linterCmd = &cobra.Command{
 	Use:   "linter",
 	Short: "setup linter for the project",
 	Run: func(cmd *cobra.Command, args []string) {
-		if ver, err := infra.ConfiguredLinterVer(); err != nil {
-			if v, err := infra.Install(version); err == nil {
-				infra.GenerateLintCfg(v, false)
+		if ver, err := infra.GetLinterVer(builder.GetBuilder(cmd.Context()).RootDir()); err != nil {
+			if v, err := infra.InstallLinter(version); err == nil {
+				infra.GenLinterCfg(v, false)
 			}
 		} else {
-			infra.Install(ver)
+			infra.InstallLinter(ver)
 		}
 	},
 }

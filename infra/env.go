@@ -1,10 +1,8 @@
 package infra
 
 import (
-	"context"
 	"embed"
 	"errors"
-	"fmt"
 	"log"
 	"path/filepath"
 
@@ -16,25 +14,14 @@ var errEnv = errors.New("environment error")
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-type EnvCtxKey string
-
-const ProjectRootDir EnvCtxKey = "_projectRootDir"
-
-func root(ctx context.Context) (string, error) {
-	if v, ok := ctx.Value(ProjectRootDir).(string); ok {
-		return v, nil
-	}
-	return "", fmt.Errorf("%w: %s", errEnv, "can't find project root dir")
-}
-
-func SetupBuilder(dir string) {
+func SetupBuilder(dir string) error {
 	var err error
 	var tf []byte
 	tf, err = templateDir.ReadFile(filepath.Join("template", "builder.tmpl"))
-	if err == nil {
-		err = GenerateFile(string(tf), filepath.Join(dir, "builder.go"), nil, false)
+	if err != nil {
+		return err
 	}
-	CheckError(err, "Failed to create builder.go")
+	return GenerateFile(string(tf), filepath.Join(dir, "builder.go"), nil, false)
 }
 
 func CheckError(err error, msg string) {

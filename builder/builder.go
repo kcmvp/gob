@@ -9,10 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/infra"
 	"github.com/looplab/fsm"
 	"golang.org/x/mod/modfile"
 )
@@ -27,6 +25,10 @@ const (
 	linterOut        = "golangci-lint.out"
 )
 
+type ContextKey string
+
+const BuilderContextKey ContextKey = "_builder"
+
 const (
 	ScanAll = "_scan_all"
 	GenHook = "_gen_hook"
@@ -39,17 +41,20 @@ var (
 	preCommitHook Action = "pre-commit"
 	commitMsgHook Action = "commit-msg"
 	prePushHook   Action = "pre-push"
-	SetupGitHook  Action = "SetupGitHook"
-	SetupBuilder  Action = "SetupBuilder"
+	GenGitHook    Action = "genGitHook"
+	GenBuilder    Action = "genBuilder"
 	Clean         Action = "clean"
 	Lint          Action = "lint"
 	Test          Action = "test"
 	Build         Action = "build"
 )
 
-var actionResultMap = map[Action][]string{
-	Test: {testCoverOut, testPackageCover, testCoverReport},
-	Lint: {linterReport, linterOut},
+func actionOutputMap(action Action) []string {
+	m := map[Action][]string{
+		Test: {testCoverOut, testPackageCover, testCoverReport},
+		Lint: {linterReport, linterOut},
+	}
+	return m[action]
 }
 
 func RunAction(v string) (Action, bool) {
@@ -61,18 +66,15 @@ func RunAction(v string) (Action, bool) {
 	return "", false
 }
 
-var (
-	instance *Builder
-	once     sync.Once
-)
+// var (
+//	builder *Builder
+//)
 
 type Builder struct {
 	fsm *fsm.FSM
 	*buildOption
-	root      string
-	scriptDir string
-	targetDir string
-	hook      Action
+	Buildable
+	hook Action
 }
 
 func trigger(name string) Action {
@@ -84,52 +86,56 @@ func trigger(name string) Action {
 	return ""
 }
 
+func NewBuilderWith(project Buildable) *Builder {
+	data, err := os.ReadFile(filepath.Join(project.RootDir(), "go.mod"))
+	if err != nil {
+		log.Fatalln(color.RedString("can not find go.mod in %s", project.RootDir()))
+	} else {
+		if _, err := modfile.Parse("go.mod", data, nil); err != nil {
+			log.Fatalln(color.RedString("invalid mod file %v", err))
+		}
+	}
+	var hook Action
+	pc := make([]uintptr, 15)   //nolint
+	n := runtime.Callers(2, pc) //nolint
+	frames := runtime.CallersFrames(pc[:n])
+	for {
+		frame, more := frames.Next()
+		if !more {
+			break
+		}
+		hook = trigger(filepath.Base(frame.File))
+		if len(hook) > 0 {
+			log.Printf("%s \n", hook)
+			break
+		}
+	}
+	builder := &Builder{
+		fsm.NewFSM(string(initialized), builderEvents(), callBacks()),
+		defaultOption(),
+		project,
+		hook,
+	}
+	return builder
+}
+
 func NewBuilder(root string) *Builder {
-	once.Do(func() {
-		data, err := os.ReadFile(filepath.Join(root, "go.mod"))
-		if err != nil {
-			log.Fatalln(color.RedString("can not find go.mod in %s", root))
-		} else {
-			if _, err := modfile.Parse("go.mod", data, nil); err != nil {
-				log.Fatalln(color.RedString("invalid mod file %v", err))
-			}
-		}
-		var hook Action
-		_, filename, _, ok := runtime.Caller(4)
-		if ok {
-			hook = trigger(filepath.Base(filename))
-			if len(hook) > 0 {
-				log.Printf("%s \n", hook)
-			}
-		}
-		instance = &Builder{
-			fsm.NewFSM(string(initialized), events(), callBacks()),
-			defaultOption(),
-			root,
-			filepath.Join(root, projectScriptDir),
-			filepath.Join(root, projectTargetDir),
-			hook,
-		}
-		ctx := context.WithValue(context.Background(), infra.ProjectRootDir, root)
-		infra.SetupHookService(ctx)
-		infra.SetupLinterService(ctx)
-	})
-	return instance
+	return NewBuilderWith(NewDefaultBuildable(root))
 }
 
 //nolint:govet
-func events() fsm.Events {
+func builderEvents() fsm.Events {
 	return fsm.Events{
 		// builtin for git commit
-		{string(SetupGitHook), []string{string(initialized)}, string(SetupGitHook)},
-		{string(SetupBuilder), []string{string(initialized)}, string(SetupBuilder)},
+		{string(GenGitHook), []string{string(initialized)}, string(GenGitHook)},
+		{string(GenBuilder), []string{string(initialized)}, string(GenBuilder)},
 		{string(preCommitHook), []string{string(Test)}, string(preCommitHook)},
-		{string(commitMsgHook), []string{string(SetupGitHook)}, string(commitMsgHook)},
+		{string(commitMsgHook), []string{string(GenGitHook)}, string(commitMsgHook)},
 		{string(prePushHook), []string{string(initialized), string(Test)}, string(prePushHook)},
-		{string(Clean), []string{string(initialized), string(prePushHook), string(SetupGitHook), string(Lint), string(Test), string(Build)}, string(Clean)},
+		{string(Clean), []string{string(initialized), string(prePushHook), string(GenGitHook), string(Lint), string(Test), string(Build)}, string(Clean)},
 		// commit-msg and pre-push can't trigger lint
-		{string(Lint), []string{string(initialized), string(SetupGitHook), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
-		{string(Test), []string{string(initialized), string(SetupGitHook), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
+		{string(Lint), []string{string(initialized), string(GenGitHook), string(Clean), string(preCommitHook), string(Test)}, string(Lint)},
+		{string(Test), []string{string(initialized), string(GenGitHook), string(Clean), string(commitMsgHook), string(prePushHook), string(Lint)}, string(Test)},
 		{string(Build), []string{string(Test), string(Clean)}, string(Build)},
 	}
 }
@@ -137,14 +143,14 @@ func events() fsm.Events {
 func callBacks() fsm.Callbacks {
 	return map[string]fsm.Callback{
 		// setup builder
-		fmt.Sprintf("before_%s", SetupBuilder): createDirCallback,
-		string(SetupBuilder):                   setupBuilderCallback,
+		fmt.Sprintf("before_%s", GenBuilder): createDirCallback,
+		string(GenBuilder):                   genBuilderCallback,
 		// setup git
-		fmt.Sprintf("before_%s", SetupGitHook): createDirCallback,
-		string(SetupGitHook):                   gitHookCallback,
+		fmt.Sprintf("before_%s", GenGitHook): createDirCallback,
+		string(GenGitHook):                   genGitHookCallback,
 		// Clean
-		string(Clean):                  cleanCallback,
-		fmt.Sprintf("after_%s", Clean): afterCleanCallback,
+		string(Clean):                  cleanAllCallback,
+		fmt.Sprintf("after_%s", Clean): afterCleanAllCallback,
 		// pre-commit
 		string(preCommitHook): preCommitCallback,
 		// commit-msg
@@ -162,28 +168,18 @@ func callBacks() fsm.Callbacks {
 	}
 }
 
-func (builder *Builder) ScriptDir() string {
-	return builder.scriptDir
-}
-
-func (builder *Builder) TargetDir() string {
-	return builder.targetDir
-}
-
-func (builder *Builder) RootDir() string {
-	return builder.root
-}
-
 func (builder *Builder) Run(actions ...Action) {
-	builder.RunCtx(context.Background(), actions...)
+	ctx := context.WithValue(context.Background(), BuilderContextKey, builder)
+	RunCtx(ctx, actions...)
 }
 
-func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
+func RunCtx(ctx context.Context, actions ...Action) {
+	builder := GetBuilder(ctx)
 	actions = sort(builder.hook, actions...)
 	if len(actions) < 1 {
 		log.Println(color.YellowString("no Action provided"))
 	}
-
+	ctx = context.WithValue(ctx, BuilderContextKey, builder)
 	for _, evt := range actions {
 		err := builder.fsm.Event(ctx, string(evt))
 		var t1 fsm.CanceledError
@@ -196,11 +192,11 @@ func (builder *Builder) RunCtx(ctx context.Context, actions ...Action) {
 func sort(builtIn Action, actions ...Action) []Action {
 	switch builtIn {
 	case preCommitHook:
-		return []Action{SetupGitHook, Lint, Test, preCommitHook}
+		return []Action{GenGitHook, Lint, Test, preCommitHook}
 	case commitMsgHook:
-		return []Action{SetupGitHook, commitMsgHook}
+		return []Action{GenGitHook, commitMsgHook}
 	case prePushHook:
-		return []Action{SetupGitHook, Test, prePushHook}
+		return []Action{GenGitHook, Test, prePushHook}
 	default:
 		var r []Action
 		for _, a := range actions {
@@ -214,14 +210,27 @@ func sort(builtIn Action, actions ...Action) []Action {
 	}
 }
 
-func CleanResult(a Action) {
-	if _, err := os.Stat(instance.TargetDir()); err != nil {
+func (builder *Builder) cleanOutput(a Action) {
+	if _, err := os.Stat(builder.TargetDir()); err != nil {
 		return
 	}
-	if outputs, ok := actionResultMap[a]; ok {
-		log.Printf("Cleaning %s output \n", a)
-		for _, output := range outputs {
-			os.Remove(filepath.Join(instance.TargetDir(), output))
-		}
+	log.Printf("Cleaning %s output \n", a)
+	for _, output := range actionOutputMap(a) {
+		os.Remove(filepath.Join(builder.TargetDir(), output))
+	}
+}
+
+func GetBuilder(ctx context.Context) *Builder {
+	b, ok := ctx.Value(BuilderContextKey).(*Builder)
+	if ok {
+		return b
+	}
+	log.Fatalln("Failed to get builder from context")
+	return nil
+}
+
+func cancelEvent(event *fsm.Event, err error, msg ...string) {
+	if err != nil {
+		event.Cancel(fmt.Errorf("%s:%w", msg, err))
 	}
 }

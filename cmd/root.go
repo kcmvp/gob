@@ -7,10 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/fatih/color"
 
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
@@ -20,7 +21,6 @@ import (
 const (
 	gbt           = "github.com/kcmvp/gbt"
 	ctxModFileKey = "mod"
-	ctxBuilder    = "builder"
 )
 
 var modules = []string{"github.com/kcmvp/gbt"}
@@ -64,13 +64,13 @@ var rootCmd = &cobra.Command{
 		pwd, _ := os.Getwd()
 		data, err := os.ReadFile("go.mod")
 		if err != nil {
-			err = errors.New("please run the command in the module root directory")
+			err = errors.New(color.RedString("please run the command in the module root directory"))
 		} else {
 			if f, err := modfile.Parse("go.mod", data, nil); err != nil {
 				return fmt.Errorf("invalid go.mod file")
 			} else {
-				ctx := context.WithValue(cmd.Context(), ctxModFileKey, f)         //nolint
-				ctx = context.WithValue(ctx, ctxBuilder, builder.NewBuilder(pwd)) //nolint
+				ctx := context.WithValue(cmd.Context(), ctxModFileKey, f) //nolint
+				ctx = context.WithValue(ctx, builder.BuilderContextKey, builder.NewBuilder(pwd))
 				cmd.SetContext(ctx)
 			}
 		}
@@ -88,13 +88,4 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-func getBuilder(ctx context.Context) *builder.Builder {
-	if b, ok := ctx.Value(ctxBuilder).(*builder.Builder); ok {
-		return b
-	} else {
-		log.Fatalln("failed to get current project")
-	}
-	return nil
 }

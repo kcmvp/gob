@@ -32,17 +32,17 @@ func TestBuilderSuit(t *testing.T) {
 
 func (bs *BuilderTestSuite) TestSortWithPreCommitHook() {
 	actions := sort(preCommitHook)
-	require.Equal(bs.T(), actions, []Action{SetupGitHook, Lint, Test, preCommitHook})
+	require.Equal(bs.T(), actions, []Action{GenGitHook, Lint, Test, preCommitHook})
 }
 
 func (bs *BuilderTestSuite) TestSortWithCommitMsgHook() {
 	actions := sort(commitMsgHook)
-	require.Equal(bs.T(), actions, []Action{SetupGitHook, commitMsgHook})
+	require.Equal(bs.T(), actions, []Action{GenGitHook, commitMsgHook})
 }
 
 func (bs *BuilderTestSuite) TestSortWithPrePushHook() {
 	actions := sort(prePushHook)
-	require.Equal(bs.T(), actions, []Action{SetupGitHook, Test, prePushHook})
+	require.Equal(bs.T(), actions, []Action{GenGitHook, Test, prePushHook})
 }
 
 func (bs *BuilderTestSuite) TestPreCommitHook() {
@@ -51,18 +51,18 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 		return
 	}
 	os.Setenv("callFromTest", "1")
-	bs.builder.Run(SetupGitHook, Clean, Lint, Test)
+	bs.builder.Run(GenGitHook, Clean, Lint, Test)
 	// check lint report
-	_, err := os.Stat(filepath.Join(bs.builder.targetDir, linterReport))
+	_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), linterReport))
 	require.NoError(bs.T(), err)
 	for s, g := range infra.Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
-		path, err := filepath.Abs(filepath.Join(bs.builder.scriptDir, gof))
+		path, err := filepath.Abs(filepath.Join(bs.builder.ScriptDir(), gof))
 		require.NoError(bs.T(), err)
 		_, err = os.Stat(path)
 		require.NoError(bs.T(), err)
 
-		path, err = filepath.Abs(filepath.Join(bs.builder.root, ".git", "hooks", s))
+		path, err = filepath.Abs(filepath.Join(bs.builder.RootDir(), ".git", "hooks", s))
 		require.NoError(bs.T(), err)
 		info, err := os.Stat(path)
 		require.NoError(bs.T(), err)
@@ -70,11 +70,11 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 
 	}
 	// check test report
-	_, err = os.Stat(filepath.Join(bs.builder.targetDir, "cover.out"))
+	_, err = os.Stat(filepath.Join(bs.builder.TargetDir(), "cover.out"))
 	require.NoError(bs.T(), err)
-	_, err = os.Stat(filepath.Join(bs.builder.targetDir, "package.out"))
+	_, err = os.Stat(filepath.Join(bs.builder.TargetDir(), "package.out"))
 	require.NoError(bs.T(), err)
-	_, err = os.Stat(filepath.Join(bs.builder.targetDir, "coverage.json"))
+	_, err = os.Stat(filepath.Join(bs.builder.TargetDir(), "coverage.json"))
 	require.NoError(bs.T(), err)
 }
 
@@ -86,11 +86,11 @@ func (bs *BuilderTestSuite) TestCreateDirs() {
 	os.Setenv("callFromTest", "1")
 	for _, action := range []Action{Lint, Test, Build} {
 		bs.builder.Run(Clean)
-		_, err := os.Stat(bs.builder.targetDir)
+		_, err := os.Stat(bs.builder.TargetDir())
 		require.Error(bs.T(), err, "target dir should be deleted")
 
 		bs.builder.Run(action)
-		_, err = os.Stat(bs.builder.targetDir)
+		_, err = os.Stat(bs.builder.TargetDir())
 		require.NoError(bs.T(), err, "target dir should be created")
 	}
 }
@@ -103,8 +103,8 @@ func (bs *BuilderTestSuite) TestTestOutput() {
 	os.Setenv("callFromTest", "1")
 	bs.builder.Run(Clean, Test)
 
-	for _, f := range actionResultMap[Test] {
-		_, err := os.Stat(filepath.Join(bs.builder.targetDir, f))
+	for _, f := range actionOutputMap(Test) {
+		_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), f))
 		require.NoError(bs.T(), err)
 	}
 
@@ -118,8 +118,8 @@ func (bs *BuilderTestSuite) TestLintOutput() {
 	os.Setenv("callFromTest", "1")
 	bs.builder.Run(Clean, Lint)
 
-	for _, f := range actionResultMap[Lint] {
-		_, err := os.Stat(filepath.Join(bs.builder.targetDir, f))
+	for _, f := range actionOutputMap(Lint) {
+		_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), f))
 		require.NoError(bs.T(), err)
 	}
 
