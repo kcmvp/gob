@@ -27,7 +27,7 @@ const (
 
 type ContextKey string
 
-const BuilderContextKey ContextKey = "_builder"
+const CtxKeyBuilder ContextKey = "_builder"
 
 const (
 	ScanAll = "_scan_all"
@@ -65,10 +65,6 @@ func RunAction(v string) (Action, bool) {
 	}
 	return "", false
 }
-
-// var (
-//	builder *Builder
-//)
 
 type Builder struct {
 	fsm *fsm.FSM
@@ -169,7 +165,7 @@ func callBacks() fsm.Callbacks {
 }
 
 func (builder *Builder) Run(actions ...Action) {
-	ctx := context.WithValue(context.Background(), BuilderContextKey, builder)
+	ctx := context.WithValue(context.Background(), CtxKeyBuilder, builder)
 	RunCtx(ctx, actions...)
 }
 
@@ -179,7 +175,7 @@ func RunCtx(ctx context.Context, actions ...Action) {
 	if len(actions) < 1 {
 		log.Println(color.YellowString("no Action provided"))
 	}
-	ctx = context.WithValue(ctx, BuilderContextKey, builder)
+	ctx = context.WithValue(ctx, CtxKeyBuilder, builder)
 	for _, evt := range actions {
 		err := builder.fsm.Event(ctx, string(evt))
 		var t1 fsm.CanceledError
@@ -221,7 +217,7 @@ func (builder *Builder) cleanOutput(a Action) {
 }
 
 func GetBuilder(ctx context.Context) *Builder {
-	b, ok := ctx.Value(BuilderContextKey).(*Builder)
+	b, ok := ctx.Value(CtxKeyBuilder).(*Builder)
 	if ok {
 		return b
 	}
