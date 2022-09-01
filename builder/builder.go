@@ -2,6 +2,7 @@ package builder
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -61,6 +62,7 @@ func NewBuilderWith(project Buildable) *Builder {
 			break
 		}
 		hook := filepath.Base(frame.File)
+		fmt.Printf("hook:%s\n", hook)
 		if _, ok := commands[hook]; ok {
 			builder.hook = hook
 			break
