@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
@@ -17,8 +18,8 @@ var scanAll = false
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:       "run",
-	Short:     "run clean, test, lint and build against current project",
-	ValidArgs: []string{"clean", "test", "lint", "build"},
+	Short:     fmt.Sprintf("Valid run flags are: %s", strings.Join(builder.Children("run"), ",")),
+	ValidArgs: builder.Children("run"),
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := cobra.MinimumNArgs(1)(cmd, args)
 		if err == nil {
@@ -27,20 +28,9 @@ var runCmd = &cobra.Command{
 		return err
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%v \n", args)
-		var acts []builder.Action
-		for _, act := range args {
-			if a, ok := builder.RunAction(act); ok {
-				// @todo review the design
-				if len(acts) > 0 && a == acts[len(acts)-1] {
-					log.Printf("ignore repeat action %s \n", a)
-				} else {
-					acts = append(acts, a)
-				}
-			}
-		}
+		log.Printf("Executing commands :%s\n", strings.Join(args, ","))
 		ctx := context.WithValue(cmd.Context(), builder.ScanAll, scanAll) //nolint
-		builder.RunCtx(ctx, acts...)
+		builder.RunCtx(ctx, args...)
 	},
 }
 

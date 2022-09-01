@@ -16,7 +16,7 @@ var builderCmd = &cobra.Command{
 	Short: "Generate build script for go current project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code Scan and Build`,
 	Run: func(cmd *cobra.Command, args []string) {
-		builder.RunCtx(cmd.Context(), builder.GenBuilder)
+		builder.RunCtx(cmd.Context(), "builder")
 	},
 }
 

@@ -9,8 +9,6 @@ import (
 )
 
 func GenerateFile(content string, targetName string, data interface{}, trunk bool) error {
-	dir := filepath.Dir(targetName)
-	os.MkdirAll(dir, os.ModePerm)               //nolint:errcheck
 	flag := os.O_RDWR | os.O_CREATE | os.O_EXCL //nolint:nosnakecase
 	if trunk {
 		flag = os.O_RDWR | os.O_CREATE | os.O_TRUNC //nolint:nosnakecase
