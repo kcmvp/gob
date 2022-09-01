@@ -41,10 +41,10 @@ func GetActions(cmd string) []Action {
 		"pre_push.go":   {cleanFunc, testFunc},
 		"builder":       {createDirFunc, builderFunc},
 		"gitHook":       {createDirFunc, gitHookFunc},
-		"clean":         {cleanFunc},
-		"lint":          {createDirFunc, lintFunc},
-		"test":          {createDirFunc, testFunc},
-		"build":         {createDirFunc, buildFunc},
+		"clean":         {cleanFunc, gitHookFunc},
+		"lint":          {createDirFunc, gitHookFunc, lintFunc},
+		"test":          {createDirFunc, gitHookFunc, testFunc},
+		"build":         {createDirFunc, gitHookFunc, buildFunc},
 	}
 	return acm[cmd]
 }

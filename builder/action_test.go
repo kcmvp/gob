@@ -2,6 +2,7 @@ package builder
 
 import (
 	"github.com/go-git/go-git/v5"
+	"github.com/kcmvp/gob/infra"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/context"
@@ -142,5 +143,31 @@ func (s *ActionTestSuite) TestTestAction() {
 		//}
 	} else {
 		require.Fail(s.T(), "builder is a valid command")
+	}
+}
+
+func (s *ActionTestSuite) TestAlwaysGenerateHook() {
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		// fix infinite loop
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	for _, a := range []string{"clean", "lint", "test", "build"} {
+		for h, _ := range infra.Hooks() {
+			err := os.Remove(filepath.Join(s.Builder.GitHome(), "hooks", h))
+			require.NoError(s.T(), err)
+		}
+		for h, _ := range infra.Hooks() {
+			_, err := os.Stat(filepath.Join(s.Builder.GitHome(), "hooks", h))
+			require.Error(s.T(), err)
+		}
+
+		if c, ok := commandMap()[a]; ok {
+			c.process(s.Context)
+		}
+		for h, _ := range infra.Hooks() {
+			_, err := os.Stat(filepath.Join(s.Builder.GitHome(), "hooks", h))
+			require.NoError(s.T(), err)
+		}
 	}
 }

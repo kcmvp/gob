@@ -45,9 +45,6 @@ func GenGitHooks(gitHome, scriptDir string) error {
 		gof := fmt.Sprintf("%s.go", g)
 		abs, _ := filepath.Abs(filepath.Join(scriptDir, gof))
 		if _, err = os.Stat(abs); err != nil {
-			// if !genNew {
-			//	continue
-			//}
 			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", g))); err == nil {
 				err = GenerateFile(string(tf), abs, nil, false)
 			}

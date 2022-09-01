@@ -1,16 +1,16 @@
 [
   {
-    "Name": "pre-commit.go",
+    "Name": "pre_commit.go",
     "Internal": true,
     "Output": ["golangci-lint.*","cover.*"]
   },
   {
-    "Name": "commit-msg.go",
+    "Name": "commit_msg.go",
     "Internal": true,
     "Output": ["golangci-lint.*","cover.*"]
   },
   {
-    "Name": "pre-push.go",
+    "Name": "pre_push.go",
     "Internal": true
   },
   {

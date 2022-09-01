@@ -14,8 +14,8 @@ func TestGetCommandMap(t *testing.T) {
 		names = append(names, s)
 	}
 	sort.Strings(names)
-	require.Equal(t, names, []string{"build", "builder", "clean", "commit-msg.go",
-		"gitHook", "lint", "pre-commit.go", "pre-push.go", "test"})
+	require.Equal(t, names, []string{"build", "builder", "clean", "commit_msg.go",
+		"gitHook", "lint", "pre_commit.go", "pre_push.go", "test"})
 
 }
 
@@ -33,13 +33,13 @@ func TestChildren(t *testing.T) {
 }
 
 func TestGetAction(t *testing.T) {
-	require.Equal(t, len(GetActions("pre-commit.go")), 3)
-	require.Equal(t, len(GetActions("commit-msg.go")), 1)
-	require.Equal(t, len(GetActions("pre-push.go")), 2)
-	require.Equal(t, len(GetActions("builder")), 2)
-	require.Equal(t, len(GetActions("gitHook")), 2)
-	require.Equal(t, len(GetActions("clean")), 1)
-	require.Equal(t, len(GetActions("lint")), 2)
-	require.Equal(t, len(GetActions("test")), 2)
-	require.Equal(t, len(GetActions("build")), 2)
+	require.Equal(t, 3, len(GetActions("pre_commit.go")))
+	require.Equal(t, 1, len(GetActions("commit_msg.go")))
+	require.Equal(t, 2, len(GetActions("pre_push.go")))
+	require.Equal(t, 2, len(GetActions("builder")))
+	require.Equal(t, 2, len(GetActions("gitHook")))
+	require.Equal(t, 2, len(GetActions("clean")))
+	require.Equal(t, 3, len(GetActions("lint")))
+	require.Equal(t, 3, len(GetActions("test")))
+	require.Equal(t, 3, len(GetActions("build")))
 }
