@@ -36,9 +36,9 @@ func commandMap() map[string]Command {
 
 func GetActions(cmd string) []Action {
 	acm := map[string][]Action{
-		"pre-commit.go": {cleanFunc, testFunc, lintFunc},
-		"commit-msg.go": {commitMsgFunc},
-		"pre-push.go":   {cleanFunc, testFunc},
+		"pre_commit.go": {cleanFunc, testFunc, lintFunc},
+		"commit_msg.go": {commitMsgFunc},
+		"pre_push.go":   {cleanFunc, testFunc},
 		"builder":       {createDirFunc, builderFunc},
 		"gitHook":       {createDirFunc, gitHookFunc},
 		"clean":         {cleanFunc},
