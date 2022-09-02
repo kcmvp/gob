@@ -45,15 +45,18 @@ var _ Action = (*actionFunc)(nil)
 
 var builderFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	log.Println("Creating project build file")
-	return infra.SetupBuilder(GetBuilder(ctx).ScriptDir())
+	return infra.SetupBuilder(GetBuilder(ctx).ScriptDir()) //nolint:wrapcheck
 }
 
 var gitHookFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	// value, ok := ctx.Value(GenHook).(bool)
+	showMsg := cmd.Name == "gitHook"
 	builder := GetBuilder(ctx)
 	err := infra.GenGitHooks(builder.GitHome(), builder.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
+	} else if showMsg {
+		log.Println("git hooks are setup successfully")
 	}
 	return err
 }
@@ -98,18 +101,18 @@ var cleanFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 		} else if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}
-		return err
+		return err //nolint:wrapcheck
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete %s :%w", builder.TargetDir(), err)
 	}
-	return err
+	return err //nolint:wrapcheck
 
 }
 
 var commitMsgFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	builder := GetBuilder(ctx)
-	return infra.CommitMsg(string(builder.buildOption.MsgPattern))
+	return infra.CommitMsg(string(builder.buildOption.MsgPattern)) //nolint:wrapcheck
 }
 
 var lintFunc actionFunc = func(ctx context.Context, cmd *Command) error {
@@ -188,7 +191,7 @@ var testFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 		return fmt.Errorf("%s:%w", string(out), err)
 	}
 	log.Printf("coverage report is generated at %s \n", fileCover)
-	return err
+	return err //nolint:wrapcheck
 }
 
 var buildFunc actionFunc = func(ctx context.Context, cmd *Command) error {

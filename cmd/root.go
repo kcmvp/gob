@@ -70,7 +70,8 @@ var rootCmd = &cobra.Command{
 				return fmt.Errorf("invalid go.mod file")
 			} else {
 				ctx := context.WithValue(cmd.Context(), ctxModFileKey, f) //nolint
-				ctx = context.WithValue(ctx, builder.CtxKeyBuilder, builder.NewBuilder(pwd))
+				// ctx = context.WithValue(ctx, builder.ctxKeyBuilder, builder.NewBuilder(pwd))
+				ctx = builder.BindBuilder(ctx, builder.NewBuilder(pwd))
 				cmd.SetContext(ctx)
 			}
 		}

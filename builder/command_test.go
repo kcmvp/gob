@@ -33,13 +33,13 @@ func TestChildren(t *testing.T) {
 }
 
 func TestGetAction(t *testing.T) {
-	require.Equal(t, 3, len(GetActions("pre_commit.go")))
-	require.Equal(t, 1, len(GetActions("commit_msg.go")))
-	require.Equal(t, 2, len(GetActions("pre_push.go")))
-	require.Equal(t, 2, len(GetActions("builder")))
-	require.Equal(t, 2, len(GetActions("gitHook")))
-	require.Equal(t, 2, len(GetActions("clean")))
-	require.Equal(t, 3, len(GetActions("lint")))
-	require.Equal(t, 3, len(GetActions("test")))
-	require.Equal(t, 3, len(GetActions("build")))
+	require.Equal(t, 3, len(Actions("pre_commit.go")))
+	require.Equal(t, 1, len(Actions("commit_msg.go")))
+	require.Equal(t, 2, len(Actions("pre_push.go")))
+	require.Equal(t, 2, len(Actions("builder")))
+	require.Equal(t, 2, len(Actions("gitHook")))
+	require.Equal(t, 2, len(Actions("clean")))
+	require.Equal(t, 3, len(Actions("lint")))
+	require.Equal(t, 3, len(Actions("test")))
+	require.Equal(t, 3, len(Actions("build")))
 }

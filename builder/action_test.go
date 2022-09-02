@@ -50,7 +50,7 @@ type ActionTestSuite struct {
 func (s *ActionTestSuite) SetupSuite() {
 	builder := NewBuilderWith(NewTestProject())
 	s.Builder = builder
-	s.Context = context.WithValue(context.Background(), CtxKeyBuilder, builder)
+	s.Context = context.WithValue(context.Background(), ctxKeyBuilder, builder)
 }
 
 func TestActionTestSuite(t *testing.T) {
