@@ -32,7 +32,7 @@ func TestChildren(t *testing.T) {
 
 }
 
-func TestGetAction(t *testing.T) {
+func TestActions(t *testing.T) {
 	require.Equal(t, 3, len(Actions("pre_commit.go")))
 	require.Equal(t, 1, len(Actions("commit_msg.go")))
 	require.Equal(t, 2, len(Actions("pre_push.go")))
@@ -42,4 +42,12 @@ func TestGetAction(t *testing.T) {
 	require.Equal(t, 3, len(Actions("lint")))
 	require.Equal(t, 3, len(Actions("test")))
 	require.Equal(t, 3, len(Actions("build")))
+}
+
+func TestFlags(t *testing.T) {
+	commands := commandMap()
+	c := commands["test"]
+	require.Equal(t, c.Flags, []string{"-run"})
+	c = commands["lint"]
+	require.Equal(t, c.Flags, []string{"-n", "--fix"})
 }

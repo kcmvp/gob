@@ -23,17 +23,26 @@ type Command struct {
 	stack    []string
 }
 
+func ValidFlags() []string {
+	commands := commandMap()
+	var flags []string
+	for _, command := range commands {
+		flags = append(flags, command.Flags...)
+	}
+	return flags
+}
+
 func commandMap() map[string]Command {
 	var commands []Command
 	err := json.Unmarshal([]byte(commandsJSON), &commands)
 	if err != nil {
 		log.Fatalf("failed to read command json:%s\n", err.Error())
 	}
-	cm := map[string]Command{}
+	cmdMap := map[string]Command{}
 	for _, command := range commands {
-		cm[command.Name] = command
+		cmdMap[command.Name] = command
 	}
-	return cm
+	return cmdMap
 }
 
 func Actions(cmdName string) []Action {
@@ -61,7 +70,7 @@ func Children(parent string) []string {
 	return children
 }
 
-func processCommands(ctx context.Context, cmds ...string) {
+func process(ctx context.Context, cmds ...string) {
 	cm := commandMap()
 	var err error
 	for _, cmd := range cmds {

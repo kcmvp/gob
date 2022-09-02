@@ -26,18 +26,19 @@ type actionFunc func(ctx context.Context, cmd *Command) error
 
 func (action actionFunc) Do(ctx context.Context, cmd *Command) error {
 	cmd.stack = append(cmd.stack, fmt.Sprintf("%T", action))
-	ctxFlags, _ := ctx.Value(CtxKeyRunFlags).(map[string]bool)
+	runFlags, _ := ctx.Value(CtxKeyRunFlags).([]string)
 	var flags []string
-	for _, f := range cmd.Flags {
-		if ctxFlags[f] {
-			flags = append(flags, f)
+	for _, cf := range cmd.Flags {
+		for _, rf := range runFlags {
+			if rf == cf {
+				flags = append(flags, rf)
+			}
 		}
 	}
 	cmd.Flags = flags
 	if len(flags) > 0 {
 		log.Printf("Run %s with flags: %s\n", cmd.Name, strings.Join(flags, ","))
 	}
-
 	return action(ctx, cmd)
 }
 

@@ -38,7 +38,7 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 	os.Setenv("callFromTest", "1")
 	bs.builder.Run("gitHook", "clean", "lint", "test")
 	// check lint report
-	_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), linterReport))
+	_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), "golangci-lint.html"))
 	require.NoError(bs.T(), err)
 	for s, g := range infra.Hooks() {
 		gof := fmt.Sprintf("%s.go", g)
