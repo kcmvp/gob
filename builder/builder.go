@@ -17,8 +17,6 @@ const (
 	testCoverOut     = "cover.out"
 	testCoverReport  = "cover.html"
 	testPackageCover = "cover.json"
-	linterReport     = "golangci-lint.html"
-	linterOut        = "golangci-lint.out"
 )
 
 type ContextKey string
@@ -29,7 +27,8 @@ const CtxKeyRunFlags ContextKey = "_flags"
 type Builder struct {
 	*buildOption
 	Buildable
-	hook string
+	hook  string
+	flags []string
 }
 
 func NewBuilderWith(project Buildable) *Builder {
@@ -46,6 +45,7 @@ func NewBuilderWith(project Buildable) *Builder {
 		defaultOption(),
 		project,
 		"",
+		[]string{},
 	}
 
 	commands := commandMap()
@@ -71,9 +71,23 @@ func NewBuilder(root string) *Builder {
 	return NewBuilderWith(NewDefaultBuildable(root))
 }
 
+func (builder *Builder) WithFlags(flags ...string) *Builder {
+	builder.flags = append(builder.flags, flags...)
+	validFlags := ValidFlags()
+	for _, flag := range builder.flags {
+		valid := false
+		for _, vFlag := range validFlags {
+			valid = flag == vFlag
+		}
+		if !valid {
+			log.Println(color.YellowString("ignore invalid flag: %s", flag))
+		}
+	}
+	return builder
+}
+
 func (builder *Builder) Run(cmds ...string) {
-	ctx := context.WithValue(context.Background(), ctxKeyBuilder, builder)
-	RunCtx(ctx, cmds...)
+	RunCtx(BindBuilder(context.Background(), builder), cmds...)
 }
 
 func RunCtx(ctx context.Context, cmds ...string) {
@@ -82,13 +96,14 @@ func RunCtx(ctx context.Context, cmds ...string) {
 		cmds = []string{builder.hook}
 	}
 	if len(cmds) < 1 {
-		log.Println(color.YellowString("no Action provided"))
+		log.Println(color.YellowString("no action provided"))
 	}
-	// in case the call from trigger
-	if _, ok := ctx.Value(CtxKeyRunFlags).(map[string]bool); !ok {
-		ctx = context.WithValue(ctx, CtxKeyRunFlags, map[string]bool{})
-	}
-	processCommands(ctx, cmds...)
+
+	// combine flags
+	flags, _ := ctx.Value(CtxKeyRunFlags).([]string)
+	flags = append(flags, builder.flags...)
+	ctx = context.WithValue(ctx, CtxKeyRunFlags, flags)
+	process(ctx, cmds...)
 }
 
 func GetBuilder(ctx context.Context) *Builder {

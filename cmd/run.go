@@ -33,13 +33,23 @@ var runCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Printf("Executing commands :%s\n", strings.Join(args, ","))
-		funFlags := map[string]bool{}
-		funFlags["-n"] = scanNew
-		funFlags["-cache"] = cleanCache
-		funFlags["-testcache"] = testCache
-		funFlags["-modcache"] = modCache
-		funFlags["-fuzzcache"] = fuzzcache
-		ctx := context.WithValue(cmd.Context(), builder.CtxKeyRunFlags, funFlags)
+		flags := []string{}
+		if scanNew {
+			flags = append(flags, "-n")
+		}
+		if cleanCache {
+			flags = append(flags, "-cache")
+		}
+		if testCache {
+			flags = append(flags, "-testcache")
+		}
+		if modCache {
+			flags = append(flags, "-modcache")
+		}
+		if fuzzcache {
+			flags = append(flags, "-fuzzcache")
+		}
+		ctx := context.WithValue(cmd.Context(), builder.CtxKeyRunFlags, flags)
 		builder.RunCtx(ctx, args...)
 	},
 }

@@ -45,10 +45,7 @@
     "Parent": "run",
     "Name": "test",
     "Output": ["cover.html","cover.out","cover.json"],
-    "Flags": [
-      "abc",
-      "def"
-    ]
+    "Flags": ["-run"]
   },
   {
     "Parent": "run",
