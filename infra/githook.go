@@ -35,7 +35,7 @@ type hookData struct {
 	Type   string
 }
 
-func GenGitHooks(gitHome, scriptDir string, genNew bool) error {
+func GenGitHooks(gitHome, scriptDir string) error {
 	var err error
 	var tf []byte
 	if _, err = git.PlainOpen(gitHome); err != nil {
@@ -45,13 +45,11 @@ func GenGitHooks(gitHome, scriptDir string, genNew bool) error {
 		gof := fmt.Sprintf("%s.go", g)
 		abs, _ := filepath.Abs(filepath.Join(scriptDir, gof))
 		if _, err = os.Stat(abs); err != nil {
-			if !genNew {
-				continue
-			}
 			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", g))); err == nil {
 				err = GenerateFile(string(tf), abs, nil, false)
 			}
-		} else if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
+		}
+		if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
 			err = GenerateFile(string(tf), filepath.Join(gitHome, "hooks", s), hookData{abs, s}, true)
 		}
 	}
@@ -61,14 +59,17 @@ func GenGitHooks(gitHome, scriptDir string, genNew bool) error {
 	return err
 }
 
-func CommitMsg(pattern string) {
+func CommitMsg(pattern string) error {
 	input, _ := os.ReadFile(os.Args[1])
 	rep := regexp.MustCompile(`\r?\n`)
 	commitMsg := rep.ReplaceAllString(string(input), "")
 	reg, err := regexp.Compile(pattern)
-	if err == nil && !reg.MatchString(commitMsg) {
-		log.Fatalln(color.RedString("commit message must follow %s", pattern))
+	if err != nil {
+		return err
+	} else if !reg.MatchString(commitMsg) {
+		return fmt.Errorf("commit message must follow %s", pattern)
 	}
+	return err
 }
 
 /*

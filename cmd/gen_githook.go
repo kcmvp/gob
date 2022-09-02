@@ -4,7 +4,6 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
-	"context"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
@@ -22,8 +21,8 @@ var githookCmd = &cobra.Command{
 	//	return err
 	// },
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.WithValue(cmd.Context(), builder.GenHook, true) //nolint
-		builder.RunCtx(ctx, builder.GenGitHook)
+		// ctx := context.WithValue(cmd.Context(), builder.GenHook, true) //nolint
+		builder.RunCtx(cmd.Context(), "gitHook")
 	},
 }
 

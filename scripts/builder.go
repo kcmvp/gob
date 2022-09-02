@@ -14,5 +14,5 @@ func main() {
 		panic("No caller information")
 	}
 	root := filepath.Dir(filepath.Dir(filename))
-	builder.NewBuilder(root).Run(builder.Clean, builder.Lint, builder.Test, builder.Build)
+	builder.NewBuilder(root).Run("clean","test")
 }

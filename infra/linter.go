@@ -82,7 +82,8 @@ func GetLinterVer(root string) (string, error) {
 	return ver, err
 }
 
-func LintScan(cfgDir, targetDir string, fullScan bool, failOnIssue bool) error {
+//nolint
+func LintScan(cfgDir, targetDir string, flags []string, failOnIssue bool) error {
 	ver, err := GetLinterVer(cfgDir)
 	if err != nil {
 		return fmt.Errorf("lint scan: %w", err)
@@ -93,8 +94,8 @@ func LintScan(cfgDir, targetDir string, fullScan bool, failOnIssue bool) error {
 	}
 	msg := "lint all source code"
 	args := []string{"run", "-v", "./...", "--out-format=json"}
-	if !fullScan {
-		args = append(args, "--new-from-rev=HEAD")
+	if len(flags) > 0 {
+		args = append(args, flags...)
 		msg = "lint changed source code"
 	}
 	log.Println(msg)

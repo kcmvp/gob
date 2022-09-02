@@ -1,8 +1,6 @@
 package builder
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
@@ -12,7 +10,7 @@ type Buildable interface {
 	ScriptDir() string
 	TargetDir() string
 	RootDir() string
-	GitHome() (string, error)
+	GitHome() string
 }
 
 var _ Buildable = (*DefaultBuildable)(nil)
@@ -21,14 +19,14 @@ type DefaultBuildable struct {
 	scriptDir, targetDir, root string
 }
 
-func (d *DefaultBuildable) GitHome() (string, error) {
+func (d *DefaultBuildable) GitHome() string {
 	dir := filepath.Join(d.RootDir(), git.GitDirName)
-	_, err := os.Stat(filepath.Join(d.RootDir(), git.GitDirName))
-	if err != nil {
-		dir = ""
-		err = fmt.Errorf("invalid git repository:%w", err)
-	}
-	return dir, err
+	// _, err := os.Stat(filepath.Join(d.RootDir(), git.GitDirName))
+	// if err != nil {
+	//	dir = ""
+	//	err = fmt.Errorf("invalid git repository:%w", err)
+	//}
+	return dir
 }
 
 func (d *DefaultBuildable) ScriptDir() string {

@@ -30,28 +30,13 @@ func TestBuilderSuit(t *testing.T) {
 	suite.Run(t, new(BuilderTestSuite))
 }
 
-func (bs *BuilderTestSuite) TestSortWithPreCommitHook() {
-	actions := sort(preCommitHook)
-	require.Equal(bs.T(), actions, []Action{GenGitHook, Lint, Test, preCommitHook})
-}
-
-func (bs *BuilderTestSuite) TestSortWithCommitMsgHook() {
-	actions := sort(commitMsgHook)
-	require.Equal(bs.T(), actions, []Action{GenGitHook, commitMsgHook})
-}
-
-func (bs *BuilderTestSuite) TestSortWithPrePushHook() {
-	actions := sort(prePushHook)
-	require.Equal(bs.T(), actions, []Action{GenGitHook, Test, prePushHook})
-}
-
 func (bs *BuilderTestSuite) TestPreCommitHook() {
 	if _, ok := os.LookupEnv("callFromTest"); ok {
 		// fix infinite loop
 		return
 	}
 	os.Setenv("callFromTest", "1")
-	bs.builder.Run(GenGitHook, Clean, Lint, Test)
+	bs.builder.Run("gitHook", "clean", "lint", "test")
 	// check lint report
 	_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), linterReport))
 	require.NoError(bs.T(), err)
@@ -78,49 +63,7 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 	require.NoError(bs.T(), err)
 }
 
-func (bs *BuilderTestSuite) TestCreateDirs() {
-	if _, ok := os.LookupEnv("callFromTest"); ok {
-		// fix infinite loop
-		return
-	}
-	os.Setenv("callFromTest", "1")
-	for _, action := range []Action{Lint, Test, Build} {
-		bs.builder.Run(Clean)
-		_, err := os.Stat(bs.builder.TargetDir())
-		require.Error(bs.T(), err, "target dir should be deleted")
-
-		bs.builder.Run(action)
-		_, err = os.Stat(bs.builder.TargetDir())
-		require.NoError(bs.T(), err, "target dir should be created")
-	}
-}
-
-func (bs *BuilderTestSuite) TestTestOutput() {
-	if _, ok := os.LookupEnv("callFromTest"); ok {
-		// fix infinite loop
-		return
-	}
-	os.Setenv("callFromTest", "1")
-	bs.builder.Run(Clean, Test)
-
-	for _, f := range actionOutputMap(Test) {
-		_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), f))
-		require.NoError(bs.T(), err)
-	}
-
-}
-
-func (bs *BuilderTestSuite) TestLintOutput() {
-	if _, ok := os.LookupEnv("callFromTest"); ok {
-		// fix infinite loop
-		return
-	}
-	os.Setenv("callFromTest", "1")
-	bs.builder.Run(Clean, Lint)
-
-	for _, f := range actionOutputMap(Lint) {
-		_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), f))
-		require.NoError(bs.T(), err)
-	}
-
+func (bs *BuilderTestSuite) TestBuild() {
+	bs.builder.Run("build")
+	require.FileExists(bs.T(), filepath.Join(bs.builder.TargetDir(), "main"))
 }
