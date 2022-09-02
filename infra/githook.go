@@ -53,9 +53,6 @@ func GenGitHooks(gitHome, scriptDir string) error {
 			err = GenerateFile(string(tf), filepath.Join(gitHome, "hooks", s), hookData{abs, s}, true)
 		}
 	}
-	if err == nil {
-		log.Println("git hooks are setup successfully")
-	}
 	return err
 }
 
@@ -65,11 +62,11 @@ func CommitMsg(pattern string) error {
 	commitMsg := rep.ReplaceAllString(string(input), "")
 	reg, err := regexp.Compile(pattern)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck
 	} else if !reg.MatchString(commitMsg) {
-		return fmt.Errorf("commit message must follow %s", pattern)
+		return fmt.Errorf("commit message must follow %s", pattern) //nolint
 	}
-	return err
+	return err //nolint
 }
 
 /*

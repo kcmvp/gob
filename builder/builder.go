@@ -23,7 +23,7 @@ const (
 
 type ContextKey string
 
-const CtxKeyBuilder ContextKey = "_builder"
+const ctxKeyBuilder ContextKey = "_builder"
 const CtxKeyRunFlags ContextKey = "_flags"
 
 type Builder struct {
@@ -72,8 +72,7 @@ func NewBuilder(root string) *Builder {
 }
 
 func (builder *Builder) Run(cmds ...string) {
-	ctx := context.WithValue(context.Background(), CtxKeyBuilder, builder)
-	ctx = context.WithValue(ctx, CtxKeyRunFlags, map[string]bool{})
+	ctx := context.WithValue(context.Background(), ctxKeyBuilder, builder)
 	RunCtx(ctx, cmds...)
 }
 
@@ -85,17 +84,24 @@ func RunCtx(ctx context.Context, cmds ...string) {
 	if len(cmds) < 1 {
 		log.Println(color.YellowString("no Action provided"))
 	}
-	ctx = context.WithValue(ctx, CtxKeyBuilder, builder)
+	// in case the call from trigger
+	if _, ok := ctx.Value(CtxKeyRunFlags).(map[string]bool); !ok {
+		ctx = context.WithValue(ctx, CtxKeyRunFlags, map[string]bool{})
+	}
 	processCommands(ctx, cmds...)
 }
 
 func GetBuilder(ctx context.Context) *Builder {
-	b, ok := ctx.Value(CtxKeyBuilder).(*Builder)
+	b, ok := ctx.Value(ctxKeyBuilder).(*Builder)
 	if ok {
 		return b
 	}
 	log.Fatalln(color.RedString("failed to get builder from context"))
 	return nil
+}
+
+func BindBuilder(ctx context.Context, b *Builder) context.Context {
+	return context.WithValue(ctx, ctxKeyBuilder, b)
 }
 
 func (builder *Builder) IsCommitHook() bool {

@@ -2,6 +2,7 @@ package builder
 
 import (
 	"context"
+	//nolint
 	_ "embed"
 	"encoding/json"
 	"log"
@@ -35,7 +36,7 @@ func commandMap() map[string]Command {
 	return cm
 }
 
-func GetActions(cmd string) []Action {
+func Actions(cmdName string) []Action {
 	acm := map[string][]Action{
 		"pre_commit.go": {cleanFunc, testFunc, lintFunc},
 		"commit_msg.go": {commitMsgFunc},
@@ -47,7 +48,7 @@ func GetActions(cmd string) []Action {
 		"test":          {createDirFunc, gitHookFunc, testFunc},
 		"build":         {createDirFunc, gitHookFunc, buildFunc},
 	}
-	return acm[cmd]
+	return acm[cmdName]
 }
 
 func Children(parent string) []string {
@@ -80,12 +81,12 @@ func processCommands(ctx context.Context, cmds ...string) {
 
 func (c *Command) process(ctx context.Context) (context.Context, error) {
 	var err error
-	for _, action := range GetActions(c.Name) {
+	for _, action := range Actions(c.Name) {
 		if err = action.Do(ctx, c); err != nil {
 			break
 		}
 	}
-	return ctx, err
+	return ctx, err //nolint:wrapcheck
 }
 
 func (c *Command) Stacks() []string {
