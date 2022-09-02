@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"log"
+	"strings"
 
 	"github.com/fatih/color"
 )
@@ -65,7 +66,11 @@ func processCommands(ctx context.Context, cmds ...string) {
 	for _, cmd := range cmds {
 		if c, ok := cm[cmd]; ok {
 			if ctx, err = c.process(ctx); err != nil {
-				log.Fatalln(color.RedString("%s: %s", c.Name, err.Error()))
+				action := c.Name
+				if strings.HasSuffix(action, ".go") {
+					action = "Hook"
+				}
+				log.Fatalln(color.RedString("%s: %s", action, err.Error()))
 			}
 		} else {
 			log.Println(color.YellowString("invalid command: %s", cmd))
@@ -77,7 +82,6 @@ func (c *Command) process(ctx context.Context) (context.Context, error) {
 	var err error
 	for _, action := range GetActions(c.Name) {
 		if err = action.Do(ctx, c); err != nil {
-			// log.Println(color.RedString("failed to execute %s: %s", c.Name, err.Error()))
 			break
 		}
 	}

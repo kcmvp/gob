@@ -24,10 +24,7 @@ const (
 type ContextKey string
 
 const CtxKeyBuilder ContextKey = "_builder"
-
-const (
-	ScanAll = "_scan_all"
-)
+const CtxKeyRunFlags ContextKey = "_flags"
 
 type Builder struct {
 	*buildOption
@@ -76,6 +73,7 @@ func NewBuilder(root string) *Builder {
 
 func (builder *Builder) Run(cmds ...string) {
 	ctx := context.WithValue(context.Background(), CtxKeyBuilder, builder)
+	ctx = context.WithValue(ctx, CtxKeyRunFlags, map[string]bool{})
 	RunCtx(ctx, cmds...)
 }
 
@@ -98,4 +96,8 @@ func GetBuilder(ctx context.Context) *Builder {
 	}
 	log.Fatalln(color.RedString("failed to get builder from context"))
 	return nil
+}
+
+func (builder *Builder) IsCommitHook() bool {
+	return builder.hook == "pre_commit.go" || builder.hook == "pre_push.go"
 }

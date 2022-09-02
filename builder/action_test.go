@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"testing"
 )
 
@@ -169,5 +170,20 @@ func (s *ActionTestSuite) TestAlwaysGenerateHook() {
 			_, err := os.Stat(filepath.Join(s.Builder.GitHome(), "hooks", h))
 			require.NoError(s.T(), err)
 		}
+	}
+}
+
+func (s *ActionTestSuite) TestLintFromHook() {
+
+	s.Builder.hook = "pre_commit.go"
+	if c, ok := commandMap()["lint"]; ok {
+		sort.Strings(c.Flags)
+		f2 := []string{"-n", "--fix"}
+		sort.Strings(f2)
+		require.Equal(s.T(), c.Flags, f2)
+		c.process(s.Context)
+
+		sort.Strings(c.Flags)
+		require.Equal(s.T(), c.Flags, f2)
 	}
 }

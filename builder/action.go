@@ -26,6 +26,18 @@ type actionFunc func(ctx context.Context, cmd *Command) error
 
 func (action actionFunc) Do(ctx context.Context, cmd *Command) error {
 	cmd.stack = append(cmd.stack, fmt.Sprintf("%T", action))
+	ctxFlags, _ := ctx.Value(CtxKeyRunFlags).(map[string]bool)
+	var flags []string
+	for _, f := range cmd.Flags {
+		if ctxFlags[f] {
+			flags = append(flags, f)
+		}
+	}
+	cmd.Flags = flags
+	if len(flags) > 0 {
+		log.Printf("Run %s with flags: %s\n", cmd.Name, strings.Join(flags, ","))
+	}
+
 	return action(ctx, cmd)
 }
 
@@ -67,8 +79,17 @@ var createDirFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 
 var cleanFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	builder := GetBuilder(ctx)
-	log.Printf("clean directory %s \n", GetBuilder(ctx).TargetDir())
-	err := filepath.WalkDir(builder.TargetDir(), func(path string, d fs.DirEntry, err error) error {
+	flags := append([]string{"clean"}, cmd.Flags...)
+	output, err := exec.Command("go", flags...).CombinedOutput()
+	msg := string(output)
+	if err != nil {
+		msg = color.RedString(string(output))
+		log.Println(msg)
+		return err //nolint:wrapcheck
+	}
+	log.Println(msg)
+	log.Printf("Clean directory %s \n", GetBuilder(ctx).TargetDir())
+	err = filepath.WalkDir(builder.TargetDir(), func(path string, d fs.DirEntry, err error) error {
 		if err == nil && !d.IsDir() {
 			err = os.Remove(path)
 			if err != nil {
@@ -93,11 +114,10 @@ var commitMsgFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 
 var lintFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	builder := GetBuilder(ctx)
-	isPreCommitHooK := "pre-commit.go" == builder.hook
-	v, _ := ctx.Value(ScanAll).(bool)
-	v = v && !isPreCommitHooK
-	err := infra.LintScan(builder.RootDir(), builder.TargetDir(), v, isPreCommitHooK)
-	return err
+	if builder.IsCommitHook() {
+		cmd.Flags = append(cmd.Flags, "--fix", "-n")
+	}
+	return infra.LintScan(builder.RootDir(), builder.TargetDir(), cmd.Flags, builder.IsCommitHook()) //nolint:wrapcheck
 }
 
 var testFunc actionFunc = func(ctx context.Context, cmd *Command) error {

@@ -28,15 +28,18 @@
     "Parent": "run",
     "Name": "clean",
     "Flags": [
-      "abc",
-      "def"
+      "-cache",
+      "-testcache",
+      "-modcache",
+      "-fuzzcache"
     ],
     "Output": ["*"]
   },
   {
     "Parent": "run",
     "Name": "lint",
-    "Output": ["golangci-lint.out","golangci-lint.out"]
+    "Output": ["golangci-lint.out","golangci-lint.out"],
+    "Flags": ["-n","--fix"]
   },
   {
     "Parent": "run",
