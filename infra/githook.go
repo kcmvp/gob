@@ -14,9 +14,7 @@ import (
 	"github.com/go-git/go-git/v5"
 )
 
-var (
-	gitHooker = &GitHooker{[]string{"pre-commit", "commit-msg", "pre-push"}}
-)
+var gitHooker = &GitHooker{[]string{"pre-commit", "commit-msg", "pre-push"}}
 
 type GitHooker struct {
 	hooks []string

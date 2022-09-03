@@ -38,8 +38,7 @@
   {
     "Parent": "run",
     "Name": "lint",
-    "Output": ["golangci-lint.out","golangci-lint.out"],
-    "Flags": ["-n","--fix"]
+    "Output": ["golangci-lint.out","golangci-lint.out"]
   },
   {
     "Parent": "run",

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/kcmvp/gob/boot"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
@@ -23,7 +24,7 @@ const (
 	lintModule = "github.com/golangci/golangci-lint/cmd/golangci-lint"
 )
 
-var _ Installable = (*Linter)(nil)
+var _ boot.Installer = (*Linter)(nil)
 
 //go:embed template/.golangci.yml
 var golangCiTmp string
@@ -31,16 +32,18 @@ var golangCiTmp string
 //go:embed template/golang_lint.tmpl
 var reportTpl string
 
-var linter = &Linter{
-	NewInstallable(lintModule, lintCmd, linterVersion),
-	fmt.Sprintf("%s.html", lintCmd),
-	fmt.Sprintf("%s.out", lintCmd),
-}
-
 type Linter struct {
-	Installable
+	boot.Installer
 	report string
 	output string
+}
+
+func NewLinter() *Linter {
+	return &Linter{
+		boot.NewInstallable(lintModule, lintCmd, lintCfg, linterVersion),
+		fmt.Sprintf("%s.html", lintCmd),
+		fmt.Sprintf("%s.out", lintCmd),
+	}
 }
 
 var linterVersion = func(cmd string) string {
@@ -54,37 +57,33 @@ var linterVersion = func(cmd string) string {
 	return ver
 }
 
-func InstallLinter(ver string) (string, error) {
-	return linter.Install(ver)
-}
+// func GetLinterVer(root string) (string, error) {
+//	var ver string
+//	var err error
+//	f, err := os.Open(filepath.Join(root, lintCfg))
+//	defer f.Close()
+//	if err == nil {
+//		scanner := bufio.NewScanner(f)
+//		for scanner.Scan() {
+//			line := scanner.Text()
+//			if items := strings.Split(line, "version:"); len(items) == 2 {
+//				ver = strings.TrimSpace(items[1])
+//				log.Printf("linter is configured as %s \n", ver)
+//				break
+//			}
+//		}
+//		if ver == "" {
+//			msg := color.RedString("missed version in %s", lintCfg)
+//			log.Println(msg)
+//			err = fmt.Errorf(msg)
+//		}
+//	}
+//	return ver, err
+//}
 
-func GetLinterVer(root string) (string, error) {
-	var ver string
-	var err error
-	f, err := os.Open(filepath.Join(root, lintCfg))
-	defer f.Close()
-	if err == nil {
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if items := strings.Split(line, "version:"); len(items) == 2 {
-				ver = strings.TrimSpace(items[1])
-				log.Printf("linter is configured as %s \n", ver)
-				break
-			}
-		}
-		if ver == "" {
-			msg := color.RedString("missed version in %s", lintCfg)
-			log.Println(msg)
-			err = fmt.Errorf(msg)
-		}
-	}
-	return ver, err
-}
-
-//nolint
-func LintScan(cfgDir, targetDir string, flags []string, failOnIssue bool) error {
-	ver, err := GetLinterVer(cfgDir)
+// nolint
+func (linter *Linter) Scan(targetDir string, flags []string, failOnIssue bool) error {
+	ver, err := linter.Configured()
 	if err != nil {
 		return fmt.Errorf("lint scan: %w", err)
 	}
@@ -94,12 +93,13 @@ func LintScan(cfgDir, targetDir string, flags []string, failOnIssue bool) error 
 	}
 	msg := "lint all source code"
 	args := []string{"run", "-v", "./...", "--out-format=json"}
-	if len(flags) > 0 {
-		args = append(args, flags...)
-		msg = "lint changed source code"
-	}
+	//if len(flags) > 0 {
+	//	args = append(args, flags...)
+	//	msg = "lint changed source code"
+	//}
 	log.Println(msg)
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
+	fmt.Println(vCmd)
 
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()

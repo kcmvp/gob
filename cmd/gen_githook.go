@@ -13,7 +13,7 @@ var githookCmd = &cobra.Command{
 	Use:   "githook",
 	Short: "Generate git hook for project",
 	Long:  `Generate git hooks for project, which include: commit_message, pre_push`,
-	//PreRunE: func(cmd *cobra.Command, args []string) error {
+	// PreRunE: func(cmd *cobra.Command, args []string) error {
 	//	_, err := os.Stat(git.GitDirName)
 	//	if errors.Is(err, os.ErrNotExist) {
 	//		err = fmt.Errorf("project is not versioned in git: %w", err)

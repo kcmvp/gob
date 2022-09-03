@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"

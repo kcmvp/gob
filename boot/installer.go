@@ -1,6 +1,7 @@
-package infra
+package boot
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -14,78 +15,106 @@ import (
 
 	"github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
+	"github.com/samber/lo"
 )
 
 const LatestVer = "latest"
 
-type VerFunc func(cmd string) string
+type Version func(cmd string) string
 
-type Installable interface {
+type Installer interface {
 	Install(ver string) (string, error)
 	Cmd() string
 	Installed() []string
+	Configured() (string, error)
 	Version(cmd string) string
 }
 
-type defaultIns struct {
-	module, cmd string
-	verFunc     VerFunc
+type installer struct {
+	module  string
+	cmd     string
+	config  string
+	version Version
 }
 
-func (i *defaultIns) Version(cmd string) string {
-	return i.verFunc(cmd)
+func (ins *installer) Version(cmd string) string {
+	return ins.version(cmd)
 }
 
-func (i *defaultIns) Cmd() string {
-	return i.cmd
+func (ins *installer) Cmd() string {
+	return ins.cmd
 }
 
-var _ Installable = (*defaultIns)(nil)
+var _ Installer = (*installer)(nil)
 
-func NewInstallable(module, cmd string, verFunc VerFunc) Installable {
-	return &defaultIns{
+func NewInstallable(module, cmd, config string, version Version) Installer {
+	return &installer{
 		module,
 		cmd,
-		verFunc,
+		config,
+		version,
 	}
 }
 
-func (i *defaultIns) Installed() []string {
+func (ins *installer) Configured() (string, error) {
+	var ver string
+	var err error
+	f, err := os.Open(ins.config)
+	defer f.Close()
+	if err == nil {
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if items := strings.Split(line, "version:"); len(items) == 2 {
+				ver = strings.TrimSpace(items[1])
+				log.Printf("linter is configured as %s \n", ver)
+				break
+			}
+		}
+		if ver == "" {
+			msg := color.RedString("missed version in %s", ins.config)
+			log.Println(msg)
+			err = fmt.Errorf(msg)
+		}
+	}
+	return ver, err
+}
+
+func (ins *installer) Installed() []string {
 	// Executables are installed in the directory named by the GOBIN environment
 	// variable, which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH
 	// environment variable is not set.
-	vm := map[string]byte{}
+	vMap := map[string]byte{}
 	h, _ := os.UserHomeDir()
 	goBin := filepath.Join(h, "go", "bin")
-	filepath.Walk(goBin, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && strings.HasPrefix(info.Name(), i.cmd) {
-			v := i.verFunc(path)
-			vm[v] = 1
-			i.tagVersion(path, v)
+	err := filepath.WalkDir(goBin, func(path string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && strings.HasPrefix(d.Name(), ins.cmd) {
+			v := ins.version(path)
+			vMap[v] = 1
+			ins.tagVersion(path, v)
 		}
 		return err
 	})
-	var vs []string
-	for s := range vm {
-		vs = append(vs, s)
+	if err != nil {
+		log.Fatalln(color.RedString("failed to get installed version of %s:%s", ins.cmd, err.Error()))
 	}
-	if len(vs) > 0 {
-		var desc []string
-		for idx, v := range vs {
-			desc = append(desc, fmt.Sprintf("%s):%s", strconv.Itoa(idx+1), v))
-		}
-		log.Printf("installed versions of %s: %s \n", i.cmd, strings.Join(desc, ", "))
+	versions := lo.MapToSlice(vMap, func(k string, v byte) string {
+		return k
+	})
+
+	desc := lo.Map(versions, func(t string, i int) string {
+		return fmt.Sprintf("%d):%s", i+1, t)
+	})
+	if len(desc) > 0 {
+		log.Printf("installed versions of %s: %s \n", ins.cmd, strings.Join(desc, ", "))
 	}
-	return vs
+	return versions
 }
 
-func (i *defaultIns) Install(ver string) (string, error) {
+func (ins *installer) Install(ver string) (string, error) {
 	var err error
 	var out []byte
-	ivs := i.Installed()
+	ivs := ins.Installed()
 	for _, v := range ivs {
 		if v == ver {
 			return ver, nil
@@ -108,7 +137,7 @@ func (i *defaultIns) Install(ver string) (string, error) {
 		}
 	}
 
-	vm := fmt.Sprintf("%s@%s", i.module, ver)
+	vm := fmt.Sprintf("%s@%s", ins.module, ver)
 	log.Printf("installing %s ...\n", vm)
 	cmd := exec.Command("go", "install", vm)
 	out, err = cmd.CombinedOutput()
@@ -117,21 +146,21 @@ func (i *defaultIns) Install(ver string) (string, error) {
 		log.Println(color.RedString("failed to install %s", vm))
 		log.Println(color.RedString("you can manually install it by 'go install %s'", vm))
 	} else {
-		ver = i.Version(i.Cmd())
-		vm = fmt.Sprintf("%s@%s", i.module, ver)
+		ver = ins.Version(ins.Cmd())
+		vm = fmt.Sprintf("%s@%s", ins.module, ver)
 		log.Printf("%s is installed successfully\n", vm)
-		i.tagVersion(cmd.Path, ver)
+		ins.tagVersion(cmd.Path, ver)
 	}
 
 	return ver, err
 }
 
-func (i *defaultIns) tagVersion(file, ver string) {
+func (ins *installer) tagVersion(file, ver string) {
 	base := filepath.Base(file)
-	if strings.HasPrefix(base, i.Cmd()) && strings.Contains(base, ver) {
+	if strings.HasPrefix(base, ins.Cmd()) && strings.Contains(base, ver) {
 		return
 	}
-	target := fmt.Sprintf("%s-%s", i.Cmd(), ver)
+	target := fmt.Sprintf("%s-%s", ins.Cmd(), ver)
 	if strings.HasSuffix(base, ".exe") {
 		target = fmt.Sprintf("%s.exe", target)
 	}

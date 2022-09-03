@@ -43,7 +43,7 @@ func (s *RunTestSuite) TestRunTest() {
 	os.Setenv("callFromTest", "1")
 	b := bytes.NewBufferString("")
 	runCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"run", "test"})
+	rootCmd.SetArgs([]string{"run", "lint"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 }

@@ -108,7 +108,6 @@ var cleanFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 		return fmt.Errorf("failed to delete %s :%w", builder.TargetDir(), err)
 	}
 	return err //nolint:wrapcheck
-
 }
 
 var commitMsgFunc actionFunc = func(ctx context.Context, cmd *Command) error {
@@ -121,7 +120,8 @@ var lintFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	if builder.IsCommitHook() {
 		cmd.Flags = append(cmd.Flags, "--fix", "-n")
 	}
-	return infra.LintScan(builder.RootDir(), builder.TargetDir(), cmd.Flags, builder.IsCommitHook()) //nolint:wrapcheck
+	linter := infra.NewLinter()
+	return linter.Scan(builder.TargetDir(), cmd.Flags, builder.IsCommitHook()) //nolint:wrapcheck
 }
 
 var testFunc actionFunc = func(ctx context.Context, cmd *Command) error {
@@ -140,7 +140,6 @@ var testFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	stdout, err := testCmd.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("test failed:%w", err)
-
 	}
 	err = testCmd.Start()
 	if err != nil {
@@ -217,7 +216,6 @@ var buildFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 		}
 		return nil
 	})
-
 	if err != nil {
 		err = fmt.Errorf("failed to build proejct:%w", err)
 	}

@@ -21,8 +21,10 @@ const (
 
 type ContextKey string
 
-const ctxKeyBuilder ContextKey = "_builder"
-const CtxKeyRunFlags ContextKey = "_flags"
+const (
+	ctxKeyBuilder  ContextKey = "_builder"
+	CtxKeyRunFlags ContextKey = "_flags"
+)
 
 type Builder struct {
 	*buildOption
