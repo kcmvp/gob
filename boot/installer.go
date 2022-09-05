@@ -20,14 +20,16 @@ import (
 
 const LatestVer = "latest"
 
-type Version func(cmd string) string
+type Version func(cmd string) (string, string)
 
 type Installer interface {
 	Install(ver string) (string, error)
 	Cmd() string
-	Installed() []string
-	Configured() (string, error)
-	Version(cmd string) string
+	Versions() []string
+	//@todo code refactor: make it's a project method
+	Configured(project *Project) (string, error)
+	Version(cmd string) (string, string)
+	Format(ver string) string
 }
 
 type installer struct {
@@ -37,7 +39,11 @@ type installer struct {
 	version Version
 }
 
-func (ins *installer) Version(cmd string) string {
+func (ins *installer) Format(ver string) string {
+	return strings.ReplaceAll(ver, ".", "-")
+}
+
+func (ins *installer) Version(cmd string) (string, string) {
 	return ins.version(cmd)
 }
 
@@ -56,10 +62,10 @@ func NewInstallable(module, cmd, config string, version Version) Installer {
 	}
 }
 
-func (ins *installer) Configured() (string, error) {
+func (ins *installer) Configured(project *Project) (string, error) {
 	var ver string
 	var err error
-	f, err := os.Open(ins.config)
+	f, err := os.Open(filepath.Join(project.root, ins.config))
 	defer f.Close()
 	if err == nil {
 		scanner := bufio.NewScanner(f)
@@ -80,16 +86,16 @@ func (ins *installer) Configured() (string, error) {
 	return ver, err
 }
 
-func (ins *installer) Installed() []string {
-	// Executables are installed in the directory named by the GOBIN environment
-	// variable, which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH
-	// environment variable is not set.
+func (ins *installer) Versions() []string {
+
 	vMap := map[string]byte{}
-	h, _ := os.UserHomeDir()
-	goBin := filepath.Join(h, "go", "bin")
-	err := filepath.WalkDir(goBin, func(path string, d fs.DirEntry, err error) error {
+	ver, file := ins.version(ins.Cmd())
+	if ver == "" {
+		return []string{}
+	}
+	err := filepath.WalkDir(filepath.Dir(file), func(path string, d fs.DirEntry, err error) error {
 		if err == nil && !d.IsDir() && strings.HasPrefix(d.Name(), ins.cmd) {
-			v := ins.version(path)
+			v, _ := ins.version(path)
 			vMap[v] = 1
 			ins.tagVersion(path, v)
 		}
@@ -114,7 +120,7 @@ func (ins *installer) Installed() []string {
 func (ins *installer) Install(ver string) (string, error) {
 	var err error
 	var out []byte
-	ivs := ins.Installed()
+	ivs := ins.Versions()
 	for _, v := range ivs {
 		if v == ver {
 			return ver, nil
@@ -146,21 +152,22 @@ func (ins *installer) Install(ver string) (string, error) {
 		log.Println(color.RedString("failed to install %s", vm))
 		log.Println(color.RedString("you can manually install it by 'go install %s'", vm))
 	} else {
-		ver = ins.Version(ins.Cmd())
+		ver, file := ins.Version(ins.Cmd())
 		vm = fmt.Sprintf("%s@%s", ins.module, ver)
 		log.Printf("%s is installed successfully\n", vm)
-		ins.tagVersion(cmd.Path, ver)
+		ins.tagVersion(file, ver)
 	}
 
 	return ver, err
 }
 
 func (ins *installer) tagVersion(file, ver string) {
+	fv := ins.Format(ver)
 	base := filepath.Base(file)
-	if strings.HasPrefix(base, ins.Cmd()) && strings.Contains(base, ver) {
+	if strings.HasPrefix(base, ins.Cmd()) && strings.Contains(base, fv) {
 		return
 	}
-	target := fmt.Sprintf("%s-%s", ins.Cmd(), ver)
+	target := fmt.Sprintf("%s-%s", ins.Cmd(), fv)
 	if strings.HasSuffix(base, ".exe") {
 		target = fmt.Sprintf("%s.exe", target)
 	}

@@ -1,4 +1,4 @@
-package infra
+package boot
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"text/template"
 )
 
-func GenerateFile(content string, targetName string, data interface{}, trunk bool) error {
+func GenerateFile(tmpl string, targetName string, data interface{}, trunk bool) error {
 	flag := os.O_RDWR | os.O_CREATE | os.O_EXCL //nolint:nosnakecase
 	if trunk {
 		flag = os.O_RDWR | os.O_CREATE | os.O_TRUNC //nolint:nosnakecase
@@ -18,7 +18,7 @@ func GenerateFile(content string, targetName string, data interface{}, trunk boo
 	var t *template.Template
 	if f, err = os.OpenFile(targetName, flag, os.ModePerm); err == nil {
 		defer f.Close()
-		if t, err = template.New(targetName).Parse(content); err != nil {
+		if t, err = template.New(targetName).Parse(tmpl); err != nil {
 			err = fmt.Errorf("failed to parse template: %w", err)
 		} else {
 			if err = t.Execute(f, data); err != nil {

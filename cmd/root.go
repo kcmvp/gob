@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
 )
@@ -54,13 +53,7 @@ var rootCmd = &cobra.Command{
 	Use:   "gob",
 	Short: "Generate project scaffold",
 	Long:  `Generate project scaffolds (builder, hook)`,
-	// Run: func(cmd *cobra.Command, args []string) {
-	//	for _, module := range modules {
-	//		importModule(cmd.Context(), module, false)
-	//	}
-	// },
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		pwd, _ := os.Getwd()
 		data, err := os.ReadFile("go.mod")
 		if err != nil {
 			err = errors.New(color.RedString("please run the command in the module root directory"))
@@ -69,8 +62,6 @@ var rootCmd = &cobra.Command{
 				return fmt.Errorf("invalid go.mod file")
 			} else {
 				ctx := context.WithValue(cmd.Context(), ctxModFileKey, f) //nolint
-				// ctx = context.WithValue(ctx, builder.ctxKeyBuilder, builder.NewBuilder(pwd))
-				ctx = builder.BindBuilder(ctx, builder.NewBuilder(pwd))
 				cmd.SetContext(ctx)
 			}
 		}

@@ -1,4 +1,4 @@
-package infra
+package builder
 
 import (
 	"bufio"
@@ -38,7 +38,7 @@ type Linter struct {
 	output string
 }
 
-func NewLinter() *Linter {
+func newLinter() *Linter {
 	return &Linter{
 		boot.NewInstallable(lintModule, lintCmd, lintCfg, linterVersion),
 		fmt.Sprintf("%s.html", lintCmd),
@@ -46,44 +46,21 @@ func NewLinter() *Linter {
 	}
 }
 
-var linterVersion = func(cmd string) string {
+var linterVersion = func(name string) (string, string) {
 	ver := ""
-	output, err := exec.Command(cmd, "version").CombinedOutput()
+	cmd := exec.Command(name, "version")
+	output, err := cmd.CombinedOutput()
 	if err == nil {
 		ver = strings.Fields(string(output))[3]
 	} else {
-		log.Fatalln(color.RedString("%s, %s", string(output), err.Error()))
+		log.Println(color.RedString("%s, %s", string(output), err.Error()))
 	}
-	return ver
+	return ver, cmd.Path
 }
 
-// func GetLinterVer(root string) (string, error) {
-//	var ver string
-//	var err error
-//	f, err := os.Open(filepath.Join(root, lintCfg))
-//	defer f.Close()
-//	if err == nil {
-//		scanner := bufio.NewScanner(f)
-//		for scanner.Scan() {
-//			line := scanner.Text()
-//			if items := strings.Split(line, "version:"); len(items) == 2 {
-//				ver = strings.TrimSpace(items[1])
-//				log.Printf("linter is configured as %s \n", ver)
-//				break
-//			}
-//		}
-//		if ver == "" {
-//			msg := color.RedString("missed version in %s", lintCfg)
-//			log.Println(msg)
-//			err = fmt.Errorf(msg)
-//		}
-//	}
-//	return ver, err
-//}
-
 // nolint
-func (linter *Linter) Scan(targetDir string, flags []string, failOnIssue bool) error {
-	ver, err := linter.Configured()
+func (linter *Linter) scan(project *boot.Project, failOnIssue bool) error {
+	ver, err := linter.Configured(project)
 	if err != nil {
 		return fmt.Errorf("lint scan: %w", err)
 	}
@@ -91,15 +68,14 @@ func (linter *Linter) Scan(targetDir string, flags []string, failOnIssue bool) e
 	if err != nil {
 		return fmt.Errorf("failed to install golangci-linter %s: %w", ver, err)
 	}
+	//os.Chdir(project.RootDir())
 	msg := "lint all source code"
-	args := []string{"run", "-v", "./...", "--out-format=json"}
+	args := []string{"run", "-v", "--out-format", "json", project.RootDir()}
 	//if len(flags) > 0 {
 	//	args = append(args, flags...)
 	//	msg = "lint changed source code"
-	//}
-	log.Println(msg)
-	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), ver)
-	fmt.Println(vCmd)
+	//
+	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
 
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()
@@ -114,10 +90,10 @@ func (linter *Linter) Scan(targetDir string, flags []string, failOnIssue bool) e
 	if err != nil {
 		return fmt.Errorf("failed to execute linter command: %w", err)
 	}
-	report := filepath.Join(targetDir, linter.report)
+	report := filepath.Join(project.TargetDir(), linter.report)
 	sc := bufio.NewScanner(stderr)
-	output, err := os.OpenFile(filepath.Join(targetDir, linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
-	defer output.Close()                                                                                                  //nolint                                                                                    //nolint
+	output, err := os.OpenFile(filepath.Join(project.TargetDir(), linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
+	defer output.Close()                                                                                                            //nolint                                                                                    //nolint
 	if err != nil {
 		return fmt.Errorf("failed to create linter output file: %w", err)
 	}
@@ -175,8 +151,8 @@ func (linter *Linter) Scan(targetDir string, flags []string, failOnIssue bool) e
 	return nil
 }
 
-func GenLinterCfg(data interface{}, trunk bool) {
-	if err := GenerateFile(golangCiTmp, lintCfg, data, trunk); err != nil {
+func genLinterCfg(data interface{}, trunk bool) {
+	if err := boot.GenerateFile(golangCiTmp, lintCfg, data, trunk); err != nil {
 		log.Fatalln(color.RedString("failed to generate lint config:%s", err.Error()))
 	}
 }

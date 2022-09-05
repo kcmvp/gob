@@ -5,6 +5,8 @@ package cmd
 
 import (
 	_ "embed"
+	"os"
+
 
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
@@ -14,9 +16,10 @@ import (
 var builderCmd = &cobra.Command{
 	Use:   "builder",
 	Short: "Generate build script for go current project",
-	Long:  `Includes mostly used build actions: Clean, Test, Code Scan and Build`,
+	Long:  `Includes mostly used build actions: Clean, Test, Code scan and Build`,
 	Run: func(cmd *cobra.Command, args []string) {
-		builder.RunCtx(cmd.Context(), "builder")
+		root, _ := os.Getwd()
+		builder.NewBuilder(root).Run(cmd.Name())
 	},
 }
 

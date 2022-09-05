@@ -2,7 +2,7 @@ package builder
 
 import (
 	"fmt"
-	"github.com/kcmvp/gob/infra"
+	"github.com/kcmvp/gob/boot"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -14,7 +14,7 @@ import (
 
 type BuilderTestSuite struct {
 	suite.Suite
-	builder *Builder
+	builder *boot.Project
 }
 
 func (bs *BuilderTestSuite) SetupSuite() {
@@ -40,7 +40,7 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 	// check lint report
 	_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), "golangci-lint.html"))
 	require.NoError(bs.T(), err)
-	for s, g := range infra.Hooks() {
+	for s, g := range HookMap() {
 		gof := fmt.Sprintf("%s.go", g)
 		path, err := filepath.Abs(filepath.Join(bs.builder.ScriptDir(), gof))
 		require.NoError(bs.T(), err)
