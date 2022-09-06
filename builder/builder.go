@@ -6,8 +6,8 @@ import (
 
 var builderActions = func(cmdName string) []boot.Action {
 	acm := map[string][]boot.Action{
-		"pre_commit.go": {cleanAction, testAction, lintAction},
-		"commit_msg.go": {commitMsgAction},
+		"pre_commit.go": {cleanAction, lintAction},
+		"commit_msg.go": {commitMsgAction, testAction},
 		"pre_push.go":   {cleanAction, testAction},
 		"builder":       {createDirAction, genBuilder},
 		"githook":       {createDirAction, getHook},

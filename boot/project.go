@@ -23,7 +23,7 @@ const (
 
 type Action func(project *Project, action string) error
 
-type Actions func(action string) []Action
+type Mapper func(action string) []Action
 
 type Project struct {
 	*buildOption
@@ -31,7 +31,7 @@ type Project struct {
 	scriptDir string
 	targetDir string
 	hook      string
-	actions   Actions
+	mapper    Mapper
 	cfg       *viper.Viper
 	*viper.Viper
 	ctx context.Context
@@ -47,7 +47,7 @@ func (project *Project) RunCtx(ctx context.Context, cmds ...string) error {
 		cmds = []string{project.hook}
 	}
 	for _, cmd := range cmds {
-		for _, action := range project.actions(cmd) {
+		for _, action := range project.mapper(cmd) {
 			err := action(project, cmd)
 			if err != nil {
 				log.Println(color.RedString("Failed to execute the command %s:%s", cmd, err.Error()))
@@ -75,7 +75,7 @@ func (project *Project) RootDir() string {
 	return project.root
 }
 
-func NewProject(root string, actions Actions) *Project {
+func NewProject(root string, mapper Mapper) *Project {
 	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		log.Fatalln(color.RedString("can not find go.mod in %s", root))
@@ -90,7 +90,7 @@ func NewProject(root string, actions Actions) *Project {
 		filepath.Join(root, scriptDir),
 		filepath.Join(root, targetDir),
 		"",
-		actions,
+		mapper,
 		viper.New(),
 		viper.New(),
 		context.Background(),
@@ -148,21 +148,8 @@ func (project *Project) TriggeredByHook() bool {
 	return true
 }
 
-func (project *Project) ToolVersion(cmd string) string {
-	// @todo why there is a method
-	return ""
-}
-
 func HookMap() map[string]string {
 	return lo.KeyBy([]string{"pre-commit", "commit-msg", "pre-push"}, func(v string) string {
 		return strings.ReplaceAll(v, "-", "_")
 	})
 }
-
-// func hooks() []string {
-//	return []string{
-//		"pre_commit.go",
-//		"commit_msg.go",
-//		"pre_push.go",
-//	}
-//}

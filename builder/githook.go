@@ -3,9 +3,6 @@ package builder
 import (
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gob/boot"
 	"log"
 	"os"
 	"path/filepath"
