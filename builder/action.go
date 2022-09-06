@@ -2,7 +2,7 @@ package builder
 
 import (
 	"bufio"
-	"context"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,61 +15,71 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/infra"
+	"github.com/kcmvp/gob/boot"
+	"github.com/samber/lo"
 )
 
-type Action interface {
-	Do(ctx context.Context, cmd *Command) error
-}
+const (
+	testCoverOut     = "cover.out"
+	testCoverReport  = "cover.html"
+	testPackageCover = "cover.json"
+)
 
-type actionFunc func(ctx context.Context, cmd *Command) error
+//go:embed template/*.tmpl
+var templateDir embed.FS
 
-func (action actionFunc) Do(ctx context.Context, cmd *Command) error {
-	cmd.stack = append(cmd.stack, fmt.Sprintf("%T", action))
-	runFlags, _ := ctx.Value(CtxKeyRunFlags).([]string)
-	var flags []string
-	for _, cf := range cmd.Flags {
-		for _, rf := range runFlags {
-			if rf == cf {
-				flags = append(flags, rf)
-			}
-		}
-	}
-	cmd.Flags = flags
-	if len(flags) > 0 {
-		log.Printf("Run %s with flags: %s\n", cmd.Name, strings.Join(flags, ","))
-	}
-	return action(ctx, cmd)
-}
-
-var _ Action = (*actionFunc)(nil)
-
-var builderFunc actionFunc = func(ctx context.Context, cmd *Command) error {
+var genBuilder boot.Action = func(project *boot.Project, cmd string) error {
 	log.Println("Creating project build file")
-	return infra.SetupBuilder(GetBuilder(ctx).ScriptDir()) //nolint:wrapcheck
+	var err error
+	var tf []byte
+	tf, err = templateDir.ReadFile(filepath.Join("template", "builder.tmpl"))
+	if err == nil {
+		err = boot.GenerateFile(string(tf), filepath.Join(project.ScriptDir(), "builder.go"), nil, false)
+	}
+	if err != nil {
+		err = fmt.Errorf("failed to generate builder script:%w", err)
+	}
+	return err
 }
 
-var gitHookFunc actionFunc = func(ctx context.Context, cmd *Command) error {
-	// value, ok := ctx.Value(GenHook).(bool)
-	showMsg := cmd.Name == "gitHook"
-	builder := GetBuilder(ctx)
-	err := infra.GenGitHooks(builder.GitHome(), builder.ScriptDir())
+var getHook boot.Action = func(project *boot.Project, cmd string) error {
+	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
-	} else if showMsg {
+	} else if cmd == "githook" {
 		log.Println("git hooks are setup successfully")
 	}
 	return err
 }
 
-var createDirFunc actionFunc = func(ctx context.Context, cmd *Command) error {
+var setupLinter boot.Action = func(project *boot.Project, action string) error {
+	linter := newLinter()
+	version := project.GetString("version")
+	cfgVersion := project.GetString(linter.CfgVerKey())
+	if len(cfgVersion) > 0 {
+		version = cfgVersion
+	}
+	// to get the real version
+	version, err := linter.Install(version)
+	if err != nil {
+		return err
+	}
+	err = boot.GenerateFile(golangCiTmp, lintCfg, nil, false)
+	if err != nil {
+		return fmt.Errorf("failed to generate lint config:%w", err)
+	}
+	project.SaveConfig(linter.CfgVerKey(), version)
+	return nil
+}
+
+var createDirAction boot.Action = func(project *boot.Project, cmd string) error {
 	var dir string
-	builder := GetBuilder(ctx)
-	switch cmd.Name {
+	// todo fix the bug
+	switch cmd {
 	case "gitHook", "builder":
-		dir = builder.ScriptDir()
+		dir = project.ScriptDir()
 	case "lint", "test", "build":
-		dir = builder.TargetDir()
+		dir = project.TargetDir()
 	}
 	if len(dir) < 1 {
 		return nil
@@ -81,19 +91,26 @@ var createDirFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	return err
 }
 
-var cleanFunc actionFunc = func(ctx context.Context, cmd *Command) error {
-	builder := GetBuilder(ctx)
-	flags := append([]string{"clean"}, cmd.Flags...)
-	output, err := exec.Command("go", flags...).CombinedOutput()
+var cleanAction boot.Action = func(project *boot.Project, _ string) error {
+	keys := project.AllKeys()
+	args := lo.FilterMap(keys, func(k string, _ int) (string, bool) {
+		if strings.HasPrefix(k, "clean.") && project.GetBool(k) {
+			return strings.Split(k, ".")[1], true
+		} else {
+			return "", false
+		}
+	})
+	log.Printf("Cleaning project with flags: %s\n", strings.Join(args, ","))
+	args = append([]string{"clean"}, args...)
+	output, err := exec.Command("go", args...).CombinedOutput()
 	msg := string(output)
 	if err != nil {
 		msg = color.RedString(string(output))
 		log.Println(msg)
 		return err //nolint:wrapcheck
 	}
-	log.Println(msg)
-	log.Printf("Clean directory %s \n", GetBuilder(ctx).TargetDir())
-	err = filepath.WalkDir(builder.TargetDir(), func(path string, d fs.DirEntry, err error) error {
+	log.Printf("Clean directory %s \n", project.TargetDir())
+	err = filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
 		if err == nil && !d.IsDir() {
 			err = os.Remove(path)
 			if err != nil {
@@ -105,27 +122,20 @@ var cleanFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 		return err //nolint:wrapcheck
 	})
 	if err != nil {
-		return fmt.Errorf("failed to delete %s :%w", builder.TargetDir(), err)
+		return fmt.Errorf("failed to delete %s :%w", project.TargetDir(), err)
 	}
 	return err //nolint:wrapcheck
-
 }
 
-var commitMsgFunc actionFunc = func(ctx context.Context, cmd *Command) error {
-	builder := GetBuilder(ctx)
-	return infra.CommitMsg(string(builder.buildOption.MsgPattern)) //nolint:wrapcheck
+var commitMsgAction boot.Action = func(project *boot.Project, cmd string) error {
+	return validateCommitMsg(string(project.MsgPattern)) //nolint:wrapcheck
 }
 
-var lintFunc actionFunc = func(ctx context.Context, cmd *Command) error {
-	builder := GetBuilder(ctx)
-	if builder.IsCommitHook() {
-		cmd.Flags = append(cmd.Flags, "--fix", "-n")
-	}
-	return infra.LintScan(builder.RootDir(), builder.TargetDir(), cmd.Flags, builder.IsCommitHook()) //nolint:wrapcheck
+var lintAction boot.Action = func(project *boot.Project, cmd string) error {
+	return newLinter().scan(project) //nolint:wrapcheck
 }
 
-var testFunc actionFunc = func(ctx context.Context, cmd *Command) error {
-	builder := GetBuilder(ctx)
+var testAction boot.Action = func(builder *boot.Project, cmd string) error {
 	err := os.Chdir(builder.RootDir())
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
@@ -140,7 +150,6 @@ var testFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	stdout, err := testCmd.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("test failed:%w", err)
-
 	}
 	err = testCmd.Start()
 	if err != nil {
@@ -195,9 +204,7 @@ var testFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 	return err //nolint:wrapcheck
 }
 
-var buildFunc actionFunc = func(ctx context.Context, cmd *Command) error {
-	// @todo multiple main.go
-	builder := GetBuilder(ctx)
+var buildAction boot.Action = func(builder *boot.Project, cmd string) error {
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")
@@ -217,7 +224,6 @@ var buildFunc actionFunc = func(ctx context.Context, cmd *Command) error {
 		}
 		return nil
 	})
-
 	if err != nil {
 		err = fmt.Errorf("failed to build proejct:%w", err)
 	}

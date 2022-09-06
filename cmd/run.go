@@ -4,26 +4,17 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
-	"fmt"
-	"log"
-	"strings"
+	"os"
 
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
 
-var scanNew = false
-var cleanCache = false
-var testCache = false
-var modCache = false
-var fuzzcache = false
-
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:       "run",
-	Short:     fmt.Sprintf("Valid run flags are: %s", strings.Join(builder.Children("run"), ",")),
-	ValidArgs: builder.Children("run"),
+	Short:     "Run 'clean', 'test', 'lint', 'build' commands against current project",
+	ValidArgs: []string{"clean", "test", "lint", "build"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := cobra.MinimumNArgs(1)(cmd, args)
 		if err == nil {
@@ -31,34 +22,30 @@ var runCmd = &cobra.Command{
 		}
 		return err
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		log.Printf("Executing commands :%s\n", strings.Join(args, ","))
-		flags := []string{}
-		if scanNew {
-			flags = append(flags, "-n")
-		}
-		if cleanCache {
-			flags = append(flags, "-cache")
-		}
-		if testCache {
-			flags = append(flags, "-testcache")
-		}
-		if modCache {
-			flags = append(flags, "-modcache")
-		}
-		if fuzzcache {
-			flags = append(flags, "-fuzzcache")
-		}
-		ctx := context.WithValue(cmd.Context(), builder.CtxKeyRunFlags, flags)
-		builder.RunCtx(ctx, args...)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		root, _ := os.Getwd()
+		ctx := cmd.Context()
+		builder := builder.NewBuilder(root)
+		builder.BindPFlag("clean.-cache", cmd.Flags().Lookup("cache"))
+		builder.BindPFlag("clean.-testcache", cmd.Flags().Lookup("testcache"))
+		builder.BindPFlag("clean.-modcache", cmd.Flags().Lookup("modcache"))
+		builder.BindPFlag("clean.-fuzzcache", cmd.Flags().Lookup("fuzzcache"))
+		// builder.BindPFlag("lint.new-from-rev", cmd.Flags().Lookup("new-from-rev"))
+		// builder.BindPFlag("lint.fix", cmd.Flags().Lookup("fix"))
+		return builder.RunCtx(ctx, args...)
 	},
 }
 
 func init() {
+	var boolValue bool
+	// var stringValue string
+	runCmd.Flags().BoolVarP(&boolValue, "cache", "c", false, "remove the entire go build cache")
+	runCmd.Flags().BoolVarP(&boolValue, "testcache", "t", false, "expire all test results")
+	runCmd.Flags().BoolVarP(&boolValue, "modcache", "m", false, "remove the entire module download cache")
+	runCmd.Flags().BoolVarP(&boolValue, "fuzzcache", "f", false, "remove the entire module download cache")
+
+	// runCmd.Flags().StringVarP(&stringValue, "new-from-head", "n", true, "only scan issues from new code(changed code)")
+	// runCmd.Flags().StringVar(&fuzzcache, "fix", "x", true, "only scan issues from new code(changed code)")
+
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().BoolVarP(&scanNew, "new", "n", true, " Show only new lint issues (default)")
-	runCmd.Flags().BoolVarP(&cleanCache, "clean-cache", "c", false, "remove the entire go build cache.")
-	runCmd.Flags().BoolVarP(&testCache, "clean-testcache", "t", false, "expire all test results in the go build cache")
-	runCmd.Flags().BoolVarP(&modCache, "clean-modecache", "m", false, "remove the entire module download cache")
-	runCmd.Flags().BoolVarP(&fuzzcache, "clean-fuzzcache", "f", false, "remove files build cache for fuzz testing")
 }

@@ -1,132 +1,124 @@
 package builder
 
 import (
-	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gob/infra"
+	"github.com/kcmvp/gob/boot"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/net/context"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
+	"strings"
 	"testing"
 )
 
-type TestProject struct {
-	root string
-}
-
-func (t *TestProject) GitHome() string {
-	return filepath.Join(t.RootDir(), git.GitDirName)
-}
-
-func (t *TestProject) RootDir() string {
-	return t.root
-}
-
-func (t *TestProject) ScriptDir() string {
-	return filepath.Join(os.TempDir(), "scripts")
-}
-
-func (t *TestProject) TargetDir() string {
-	return filepath.Join(os.TempDir(), "target")
-}
-
-func NewTestProject() *TestProject {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	return &TestProject{
-		root: filepath.Dir(dir),
-	}
-}
-
 type ActionTestSuite struct {
 	suite.Suite
-	*Builder
-	context.Context
+	*boot.Project
 }
 
 func (s *ActionTestSuite) SetupSuite() {
-	builder := NewBuilderWith(NewTestProject())
-	s.Builder = builder
-	s.Context = context.WithValue(context.Background(), ctxKeyBuilder, builder)
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("No caller information")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+	project := NewBuilder(root)
+	s.Project = project
 }
 
 func TestActionTestSuite(t *testing.T) {
 	suite.Run(t, new(ActionTestSuite))
 }
 
-func (s *ActionTestSuite) TestBuilderAction() {
-	err := os.RemoveAll(s.Builder.ScriptDir())
-	require.NoError(s.T(), err)
-	require.NoDirExists(s.T(), s.Builder.ScriptDir())
-	if c, ok := commandMap()["builder"]; ok {
-		_, err = c.process(s.Context)
+func (s *ActionTestSuite) TestCleanAction() {
+	lo.ForEach(builderActions("clean"), func(action boot.Action, _ int) {
+		err := action(s.Project, "clean")
 		require.NoError(s.T(), err)
-		require.DirExists(s.T(), s.Builder.ScriptDir())
-		require.FileExists(s.T(), filepath.Join(s.Builder.ScriptDir(), c.Output[0]))
-		require.Equal(s.T(), len(c.Stacks()), 2)
-	} else {
-		require.Fail(s.T(), "builder is a valid command")
-	}
+	})
+	require.DirExists(s.T(), s.Project.TargetDir())
+	f, err := os.Open(s.Project.TargetDir())
+	require.NoError(s.T(), err)
+	defer f.Close()
+	_, err = f.Readdirnames(1) // Or f.Readdir(1)
+	require.ErrorIs(s.T(), err, io.EOF)
+	flags := lo.Filter(s.Project.AllKeys(), func(k string, _ int) bool {
+		return strings.HasPrefix(k, "clean.")
+	})
+	require.Empty(s.T(), flags, "should no flags")
 }
-func (s *ActionTestSuite) TestGitHookAction() {
-	err := os.RemoveAll(s.Builder.ScriptDir())
-	require.NoError(s.T(), err)
-	require.NoDirExists(s.T(), s.Builder.ScriptDir())
-	if c, ok := commandMap()["gitHook"]; ok {
-		_, err = c.process(s.Context)
+
+func (s *ActionTestSuite) TestBuildAction() {
+	lo.ForEach(builderActions("build"), func(action boot.Action, _ int) {
+		err := action(s.Project, "build")
 		require.NoError(s.T(), err)
-		require.DirExists(s.T(), s.Builder.ScriptDir())
-		for _, f := range c.Output {
-			require.FileExists(s.T(), filepath.Join(s.Builder.ScriptDir(), f))
+	})
+	require.DirExists(s.T(), s.Project.TargetDir())
+	found := false
+	filepath.WalkDir(s.Project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
+		if !found && !d.IsDir() {
+			found = strings.HasPrefix(d.Name(), "main")
 		}
-		require.Equal(s.T(), len(c.Stacks()), 2)
-	} else {
-		require.Fail(s.T(), "builder is a valid command")
-	}
+		return err
+	})
+	require.True(s.T(), found, "file should exists")
+}
+
+func (s *ActionTestSuite) TestLintAction() {
+	err := os.RemoveAll(filepath.Join(s.Project.TargetDir(), "golangci-lint.out"))
+	require.NoError(s.T(), err)
+	err = os.RemoveAll(filepath.Join(s.Project.TargetDir(), "golangci-lint.html"))
+	require.NoError(s.T(), err)
+	lo.ForEach(builderActions("lint"), func(action boot.Action, _ int) {
+		err = action(s.Project, "lint")
+		require.NoError(s.T(), err)
+	})
+	require.DirExists(s.T(), s.Project.TargetDir())
+	out := false
+	html := false
+	filepath.WalkDir(s.Project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			out = out || d.Name() == "golangci-lint.out"
+			html = html || d.Name() == "golangci-lint.html"
+		}
+		return err
+	})
+	require.True(s.T(), out, "golangci-lint.out should be generated")
+	require.True(s.T(), html, "golangci-lint.html should be generated")
 }
 
 /*
-func (s *ActionTestSuite) TestCleanActionNotExists() {
-	err := os.RemoveAll(s.Builder.TargetDir())
-	require.NoError(s.T(), err)
-	if c, ok := commandMap()["clean"]; ok {
-		_, err = c.process(s.Context)
+func (s *ActionTestSuite) TestGitHookAction() {
+	lo.ForEach(builderActions("gitHook"), func(action boot.Action, _ int) {
+		err := action(s.Project, "gitHook")
 		require.NoError(s.T(), err)
-		require.DirExists(s.T(), s.Builder.TargetDir())
-	} else {
-		require.Fail(s.T(), "builder is a valid command")
-	}
+	})
+	require.DirExists(s.T(), s.Project.TargetDir())
+	found := false
+	filepath.WalkDir(s.Project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
+		if !found && !d.IsDir() {
+			found = strings.HasPrefix(d.Name(), "main")
+		}
+		return err
+	})
+	require.True(s.T(), found, "file should exists")
 }
 
+
 func (s *ActionTestSuite) TestCleanActionExists() {
-	err := os.MkdirAll(s.Builder.TargetDir(), os.ModePerm)
+	err := os.MkdirAll(s.BuildWithCommand.TargetDir(), os.ModePerm)
 	require.NoError(s.T(), err)
 	if c, ok := commandMap()["clean"]; ok {
 		_, err = c.process(s.Context)
 		require.NoError(s.T(), err)
-		require.DirExists(s.T(), s.Builder.TargetDir())
+		require.DirExists(s.T(), s.BuildWithCommand.TargetDir())
 	} else {
 		require.Fail(s.T(), "invalid command")
 	}
 }
-*/
 
-func (s *ActionTestSuite) TestLintAction() {
-	if c, ok := commandMap()["lint"]; ok {
-		_, err := c.process(s.Context)
-		require.NoError(s.T(), err)
-		require.DirExists(s.T(), s.Builder.TargetDir())
-		for _, f := range c.Output {
-			_, err = os.Stat(filepath.Join(s.Builder.TargetDir(), f))
-			require.NoError(s.T(), err)
-		}
-	} else {
-		require.Fail(s.T(), "builder is a valid command")
-	}
-}
 
 func (s *ActionTestSuite) TestTestAction() {
 	if _, ok := os.LookupEnv("callFromTest"); ok {
@@ -138,10 +130,6 @@ func (s *ActionTestSuite) TestTestAction() {
 		_, err := c.process(s.Context)
 		require.NoError(s.T(), err)
 		require.DirExists(s.T(), s.Builder.TargetDir())
-		//for _, f := range c.Output {
-		//	_, err = os.Stat(filepath.Join(s.Builder.TargetDir(), f))
-		//	require.NoError(s.T(), err)
-		//}
 	} else {
 		require.Fail(s.T(), "builder is a valid command")
 	}
@@ -187,3 +175,4 @@ func (s *ActionTestSuite) TestLintFromHook() {
 		require.Equal(s.T(), c.Flags, f2)
 	}
 }
+*/

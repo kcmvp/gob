@@ -2,68 +2,100 @@ package builder
 
 import (
 	"fmt"
-	"github.com/kcmvp/gob/infra"
+	"github.com/kcmvp/gob/boot"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"os"
-	"path/filepath"
-	"runtime"
 	"testing"
-	"time"
 )
 
-type BuilderTestSuite struct {
-	suite.Suite
-	builder *Builder
-}
+func TestCommandActionMapping(t *testing.T) {
+	action1 := lo.Map(builderActions("pre_commit.go"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 := lo.Map([]boot.Action{cleanAction, lintAction}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok := lo.Every(action1, action2)
+	require.True(t, ok)
 
-func (bs *BuilderTestSuite) SetupSuite() {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("No caller information")
-	}
-	root := filepath.Dir(filepath.Dir(filename))
-	bs.builder = NewBuilder(root)
-}
+	action1 = lo.Map(builderActions("commit_msg.go"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{commitMsgAction, testAction}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
 
-func TestBuilderSuit(t *testing.T) {
-	suite.Run(t, new(BuilderTestSuite))
-}
+	action1 = lo.Map(builderActions("pre_push.go"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{cleanAction, testAction}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
 
-func (bs *BuilderTestSuite) TestPreCommitHook() {
-	if _, ok := os.LookupEnv("callFromTest"); ok {
-		// fix infinite loop
-		return
-	}
-	os.Setenv("callFromTest", "1")
-	bs.builder.Run("gitHook", "clean", "lint", "test")
-	// check lint report
-	_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), "golangci-lint.html"))
-	require.NoError(bs.T(), err)
-	for s, g := range infra.Hooks() {
-		gof := fmt.Sprintf("%s.go", g)
-		path, err := filepath.Abs(filepath.Join(bs.builder.ScriptDir(), gof))
-		require.NoError(bs.T(), err)
-		_, err = os.Stat(path)
-		require.NoError(bs.T(), err)
+	action1 = lo.Map(builderActions("builder"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{createDirAction, genBuilder}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
 
-		path, err = filepath.Abs(filepath.Join(bs.builder.RootDir(), ".git", "hooks", s))
-		require.NoError(bs.T(), err)
-		info, err := os.Stat(path)
-		require.NoError(bs.T(), err)
-		require.True(bs.T(), time.Now().Nanosecond()/1e6-info.ModTime().Nanosecond()/1e6 < 1000)
+	action1 = lo.Map(builderActions("githook"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{createDirAction, getHook}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
 
-	}
-	// check test report
-	_, err = os.Stat(filepath.Join(bs.builder.TargetDir(), "cover.out"))
-	require.NoError(bs.T(), err)
-	_, err = os.Stat(filepath.Join(bs.builder.TargetDir(), "package.out"))
-	require.NoError(bs.T(), err)
-	_, err = os.Stat(filepath.Join(bs.builder.TargetDir(), "coverage.json"))
-	require.NoError(bs.T(), err)
-}
+	action1 = lo.Map(builderActions("linter"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{createDirAction, setupLinter}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
 
-func (bs *BuilderTestSuite) TestBuild() {
-	bs.builder.Run("build")
-	require.FileExists(bs.T(), filepath.Join(bs.builder.TargetDir(), "main"))
+	action1 = lo.Map(builderActions("clean"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{cleanAction, getHook}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
+
+	action1 = lo.Map(builderActions("lint"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{createDirAction, getHook, lintAction}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
+
+	action1 = lo.Map(builderActions("test"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{createDirAction, getHook, testAction}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
+
+	action1 = lo.Map(builderActions("build"), func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{createDirAction, getHook, buildAction}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
 }

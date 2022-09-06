@@ -1,62 +1,48 @@
-package infra
+package builder
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
+	"github.com/go-git/go-git/v5"
+	"github.com/kcmvp/gob/boot"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
-
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
 )
-
-var (
-	gitHooker = &GitHooker{[]string{"pre-commit", "commit-msg", "pre-push"}}
-)
-
-type GitHooker struct {
-	hooks []string
-}
-
-func Hooks() map[string]string {
-	m := map[string]string{}
-	for _, h := range gitHooker.hooks {
-		m[h] = strings.Replace(h, "-", "_", 1)
-	}
-	return m
-}
 
 type hookData struct {
 	Target string
 	Type   string
 }
 
-func GenGitHooks(gitHome, scriptDir string) error {
+func genGitHooks(gitHome, scriptDir string) error {
 	var err error
 	var tf []byte
 	if _, err = git.PlainOpen(gitHome); err != nil {
 		return errors.New("project is not at version control")
 	}
-	for s, g := range Hooks() {
-		gof := fmt.Sprintf("%s.go", g)
-		abs, _ := filepath.Abs(filepath.Join(scriptDir, gof))
+	for k, v := range boot.HookMap() {
+		g := fmt.Sprintf("%s.go", k)
+		abs, _ := filepath.Abs(filepath.Join(scriptDir, g))
 		if _, err = os.Stat(abs); err != nil {
-			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", g))); err == nil {
-				err = GenerateFile(string(tf), abs, nil, false)
+			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", k))); err == nil {
+				err = boot.GenerateFile(string(tf), abs, nil, false)
+			} else {
+				return err
 			}
 		}
 		if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
-			err = GenerateFile(string(tf), filepath.Join(gitHome, "hooks", s), hookData{abs, s}, true)
+			err = boot.GenerateFile(string(tf), filepath.Join(gitHome, "hooks", v), hookData{abs, v}, true)
+		} else {
+			return err
 		}
 	}
 	return err
 }
 
-func CommitMsg(pattern string) error {
+func validateCommitMsg(pattern string) error {
 	input, _ := os.ReadFile(os.Args[1])
 	rep := regexp.MustCompile(`\r?\n`)
 	commitMsg := rep.ReplaceAllString(string(input), "")
@@ -104,33 +90,4 @@ func PrePush(version, target string, repo *git.Repository) {
 		log.Fatalln(color.RedString("commit message must follow %s", version))
 	}
 	// check the consistent between version and target
-	s := Report{}
-	t := Report{}
-	data, err := os.ReadFile(version)
-	if err != nil {
-		log.Fatalln(color.RedString("can not open file %s", version))
-	}
-	err = json.Unmarshal(data, &s)
-	if err != nil {
-		log.Fatalln(color.RedString("incorrect data format %s", version))
-	}
-
-	data, err = os.ReadFile(target)
-	if err != nil {
-		log.Fatalln(color.RedString("can not open file %s", target))
-	}
-	err = json.Unmarshal(data, &t)
-	if err != nil {
-		log.Fatalln(color.RedString("incorrect data format %s", target))
-	}
-
-	for k, v := range s.Packages {
-		if t.Packages[k] != v {
-			log.Fatalln(color.RedString("value of %s is not the same between %s and %s", k, s, t))
-		}
-	}
-
-	if s.Tests != t.Tests {
-		log.Fatalln(color.RedString("number of the test is not the same between %s and %s", s, t))
-	}
 }

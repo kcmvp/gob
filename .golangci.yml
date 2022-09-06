@@ -1,5 +1,4 @@
 # Don't remove below line, it controls the version of golangci-linter at runtime.
-# version: v1.49.0
 run:
   tests: false
   skip-dirs:
@@ -7,12 +6,6 @@ run:
 output:
   sort-results: true
 linters:
-  disable:
-    - gci
-    - gofumpt
-    - nlreturn
-    - wsl
-    - gochecknoglobals
   enable-all: false
   enable:
     - deadcode
@@ -21,13 +14,13 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
+#    - typecheck
     - unused
     - varcheck
     - gosec
+#    - gofumpt
     - nosnakecase
     - goconst
-    - errorlint
   presets:
     - bugs
     - comment
@@ -39,8 +32,8 @@ linters:
     - module
     - performance
     - sql
-    - style
-    - test
+    #    - style
+    #    - test
     - unused
 issues:
   fix: true
