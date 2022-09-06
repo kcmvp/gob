@@ -34,26 +34,30 @@ func (s *CmdTestSuite) SetupSuite() {
 	}
 }
 
+func (s *CmdTestSuite) TearDownSuite() {
+	// revert all the changes in th file
+}
+
 func TestCmdTestSuit(t *testing.T) {
 	suite.Run(t, new(CmdTestSuite))
 }
 
-func (s *CmdTestSuite) TestGenBuilder() {
+func (s *CmdTestSuite) TestSetupBuilder() {
 	builder := filepath.Join(s.project.ScriptDir(), "builder.go")
 	os.Remove(builder)
 	require.NoFileExists(s.T(), builder)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"gen", "builder"})
+	rootCmd.SetArgs([]string{"setup", "builder"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
-	rootCmd.SetArgs([]string{"gen", "builder"})
+	rootCmd.SetArgs([]string{"setup", "builder"})
 	err = rootCmd.Execute()
 	require.NoError(s.T(), err)
 	require.FileExists(s.T(), builder)
 }
 
-func (s *CmdTestSuite) TestGenHook() {
+func (s *CmdTestSuite) TestSetupHook() {
 
 	for k, v := range boot.HookMap() {
 		gf := filepath.Join(s.project.ScriptDir(), fmt.Sprintf("%s.go", k))
@@ -65,7 +69,7 @@ func (s *CmdTestSuite) TestGenHook() {
 
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"gen", "githook"})
+	rootCmd.SetArgs([]string{"setup", "githook"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 
@@ -78,10 +82,10 @@ func (s *CmdTestSuite) TestGenHook() {
 
 }
 
-func (s *CmdTestSuite) TestGenLint() {
+func (s *CmdTestSuite) TestSetupLint() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"gen", "linter", "-v", "v1.49.0"})
+	rootCmd.SetArgs([]string{"setup", "linter", "-v", "v1.49.0"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), s.project.Config().GetString("toolset.golangci-lint"), "v1.49.0")

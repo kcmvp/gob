@@ -14,7 +14,7 @@ import (
 // builderCmd represents the builder command.
 var builderCmd = &cobra.Command{
 	Use:   "builder",
-	Short: "Generate build script for go current project",
+	Short: "Setup build script for go current project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
@@ -23,5 +23,5 @@ var builderCmd = &cobra.Command{
 }
 
 func init() {
-	genCmd.AddCommand(builderCmd)
+	setupCmd.AddCommand(builderCmd)
 }

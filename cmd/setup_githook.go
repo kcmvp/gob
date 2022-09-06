@@ -13,8 +13,8 @@ import (
 // githookCmd represents the githook command.
 var githookCmd = &cobra.Command{
 	Use:   "githook",
-	Short: "Generate git hook for project",
-	Long:  `Generate git hooks for project, which include: commit_message, pre_push`,
+	Short: "Setup git hook for project",
+	Long:  `Setup git hooks for project, which include: commit_message, pre_push`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
 		return builder.NewBuilder(root).Run(cmd.Name())
@@ -22,5 +22,5 @@ var githookCmd = &cobra.Command{
 }
 
 func init() {
-	genCmd.AddCommand(githookCmd)
+	setupCmd.AddCommand(githookCmd)
 }

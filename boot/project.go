@@ -21,9 +21,9 @@ const (
 	targetDir = "target"
 )
 
-type Action func(project *Project, action string) error
+type Action func(project *Project, cmd string) error
 
-type Mapper func(action string) []Action
+type Mapper func(cmd string) []Action
 
 type Project struct {
 	*buildOption
