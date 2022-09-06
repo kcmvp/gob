@@ -59,24 +59,22 @@ var linterVersion = func(name string) (string, string) {
 }
 
 // nolint
-func (linter *Linter) scan(project *boot.Project, failOnIssue bool) error {
-	ver, err := linter.Configured(project)
-	if err != nil {
-		return fmt.Errorf("lint scan: %w", err)
+func (linter *Linter) scan(project *boot.Project) error {
+	ver := project.Config().GetString(linter.CfgVerKey())
+	if len(ver) < 1 {
+		return errors.New("lint is not setup")
 	}
-	ver, err = linter.Install(ver)
+	ver, err := linter.Install(ver)
 	if err != nil {
 		return fmt.Errorf("failed to install golangci-linter %s: %w", ver, err)
 	}
-	//os.Chdir(project.RootDir())
-	msg := "lint all source code"
-	args := []string{"run", "-v", "--out-format", "json", project.RootDir()}
-	//if len(flags) > 0 {
-	//	args = append(args, flags...)
-	//	msg = "lint changed source code"
-	//
+	os.Chdir(project.RootDir())
+	args := []string{"run", "-v", "--out-format", "json", "./..."}
+	if project.TriggeredByHook() {
+		args = append(args, "--new-from-rev", "HEAD~")
+	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
-
+	log.Printf("Scan with %s-%s", linter.Cmd(), ver)
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -138,9 +136,10 @@ func (linter *Linter) scan(project *boot.Project, failOnIssue bool) error {
 		return fmt.Errorf("failed to generate lint report: %w", err)
 	}
 	log.Printf("lint report is generated at %s", report)
+	project.SaveCtx("lint.issues", issues)
 	if issues > 0 {
-		msg = fmt.Sprintf("total %d linter issues are found", issues)
-		if failOnIssue {
+		msg := fmt.Sprintf("total %d linter issues are found", issues)
+		if project.TriggeredByHook() {
 			return errors.New(msg)
 		} else {
 			log.Println(color.YellowString(msg))
@@ -149,10 +148,4 @@ func (linter *Linter) scan(project *boot.Project, failOnIssue bool) error {
 		log.Println(color.GreenString("no linter issues are found"))
 	}
 	return nil
-}
-
-func genLinterCfg(data interface{}, trunk bool) {
-	if err := boot.GenerateFile(golangCiTmp, lintCfg, data, trunk); err != nil {
-		log.Fatalln(color.RedString("failed to generate lint config:%s", err.Error()))
-	}
 }

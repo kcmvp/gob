@@ -1,0 +1,2 @@
+toolset:
+    golangci-lint: v1.49.0

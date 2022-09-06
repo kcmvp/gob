@@ -46,22 +46,29 @@ var getHook boot.Action = func(project *boot.Project, cmd string) error {
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
-	} else if cmd == "gitHook" {
+	} else if cmd == "githook" {
 		log.Println("git hooks are setup successfully")
 	}
 	return err
 }
 
-var linter boot.Action = func(project *boot.Project, action string) error {
+var setupLinter boot.Action = func(project *boot.Project, action string) error {
 	linter := newLinter()
 	version := project.GetString("version")
-	if ver, err := linter.Configured(project); err != nil {
-		if v, err := linter.Install(version); err == nil {
-			genLinterCfg(v, false)
-		}
-	} else {
-		linter.Install(ver)
+	cfgVersion := project.GetString(linter.CfgVerKey())
+	if len(cfgVersion) > 0 {
+		version = cfgVersion
 	}
+	// to get the real version
+	version, err := linter.Install(version)
+	if err != nil {
+		return err
+	}
+	err = boot.GenerateFile(golangCiTmp, lintCfg, nil, false)
+	if err != nil {
+		return fmt.Errorf("failed to generate lint config:%w", err)
+	}
+	project.SaveConfig(linter.CfgVerKey(), version)
 	return nil
 }
 
@@ -125,7 +132,7 @@ var commitMsgAction boot.Action = func(project *boot.Project, cmd string) error 
 }
 
 var lintAction boot.Action = func(project *boot.Project, cmd string) error {
-	return newLinter().scan(project, project.IsCommitHook()) //nolint:wrapcheck
+	return newLinter().scan(project) //nolint:wrapcheck
 }
 
 var testAction boot.Action = func(builder *boot.Project, cmd string) error {

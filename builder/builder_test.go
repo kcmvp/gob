@@ -40,9 +40,9 @@ func (bs *BuilderTestSuite) TestPreCommitHook() {
 	// check lint report
 	_, err := os.Stat(filepath.Join(bs.builder.TargetDir(), "golangci-lint.html"))
 	require.NoError(bs.T(), err)
-	for s, g := range HookMap() {
-		gof := fmt.Sprintf("%s.go", g)
-		path, err := filepath.Abs(filepath.Join(bs.builder.ScriptDir(), gof))
+	for g, s := range HookMap() {
+		g = fmt.Sprintf("%s.go", g)
+		path, err := filepath.Abs(filepath.Join(bs.builder.ScriptDir(), g))
 		require.NoError(bs.T(), err)
 		_, err = os.Stat(path)
 		require.NoError(bs.T(), err)

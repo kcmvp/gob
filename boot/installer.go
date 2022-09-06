@@ -1,7 +1,6 @@
 package boot
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -10,10 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
-	"github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
 	"github.com/samber/lo"
 )
@@ -26,9 +23,8 @@ type Installer interface {
 	Install(ver string) (string, error)
 	Cmd() string
 	Versions() []string
-	//@todo code refactor: make it's a project method
-	Configured(project *Project) (string, error)
 	Version(cmd string) (string, string)
+	CfgVerKey() string
 	Format(ver string) string
 }
 
@@ -37,6 +33,10 @@ type installer struct {
 	cmd     string
 	config  string
 	version Version
+}
+
+func (ins *installer) CfgVerKey() string {
+	return fmt.Sprintf("toolSet.%s", ins.Cmd())
 }
 
 func (ins *installer) Format(ver string) string {
@@ -62,32 +62,7 @@ func NewInstallable(module, cmd, config string, version Version) Installer {
 	}
 }
 
-func (ins *installer) Configured(project *Project) (string, error) {
-	var ver string
-	var err error
-	f, err := os.Open(filepath.Join(project.root, ins.config))
-	defer f.Close()
-	if err == nil {
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if items := strings.Split(line, "version:"); len(items) == 2 {
-				ver = strings.TrimSpace(items[1])
-				log.Printf("linter is configured as %s \n", ver)
-				break
-			}
-		}
-		if ver == "" {
-			msg := color.RedString("missed version in %s", ins.config)
-			log.Println(msg)
-			err = fmt.Errorf(msg)
-		}
-	}
-	return ver, err
-}
-
 func (ins *installer) Versions() []string {
-
 	vMap := map[string]byte{}
 	ver, file := ins.version(ins.Cmd())
 	if ver == "" {
@@ -126,22 +101,24 @@ func (ins *installer) Install(ver string) (string, error) {
 			return ver, nil
 		}
 	}
-	if len(ivs) > 0 && LatestVer == ver {
-		fmt.Println("please select version number:")
-		completer := func(d prompt.Document) []prompt.Suggest {
-			var s []prompt.Suggest
-			for idx, v := range ivs {
-				s = append(s, prompt.Suggest{Text: strconv.Itoa(idx + 1), Description: fmt.Sprintf("using %s", v)})
+	/*
+		if len(ivs) > 0 && LatestVer == ver {
+			fmt.Println("please select version number:")
+			completer := func(d prompt.Document) []prompt.Suggest {
+				var s []prompt.Suggest
+				for idx, v := range ivs {
+					s = append(s, prompt.Suggest{Text: strconv.Itoa(idx + 1), Description: fmt.Sprintf("using %s", v)})
+				}
+				return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 			}
-			return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+			v := prompt.Input(">> ", completer)
+			if idx, err := strconv.Atoi(v); err == nil && idx >= 1 && idx <= len(ivs) {
+				v = ivs[idx-1]
+				fmt.Printf("Using existing %s\n", v)
+				return v, nil
+			}
 		}
-		v := prompt.Input(">> ", completer)
-		if idx, err := strconv.Atoi(v); err == nil && idx >= 1 && idx <= len(ivs) {
-			v = ivs[idx-1]
-			fmt.Printf("using existing %s\n", v)
-			return v, nil
-		}
-	}
+	*/
 
 	vm := fmt.Sprintf("%s@%s", ins.module, ver)
 	log.Printf("installing %s ...\n", vm)
@@ -152,7 +129,8 @@ func (ins *installer) Install(ver string) (string, error) {
 		log.Println(color.RedString("failed to install %s", vm))
 		log.Println(color.RedString("you can manually install it by 'go install %s'", vm))
 	} else {
-		ver, file := ins.Version(ins.Cmd())
+		var file string
+		ver, file = ins.Version(ins.Cmd())
 		vm = fmt.Sprintf("%s@%s", ins.module, ver)
 		log.Printf("%s is installed successfully\n", vm)
 		ins.tagVersion(file, ver)

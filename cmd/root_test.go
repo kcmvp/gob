@@ -2,40 +2,35 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
+	"github.com/kcmvp/gob/boot"
+	"github.com/kcmvp/gob/builder"
+	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type CmdTestSuite struct {
 	suite.Suite
-	root, current string
+	project *boot.Project
 }
 
-func (s *CmdTestSuite) SetupTest() {
-	_, file, _, ok := runtime.Caller(0)
-	s.current = filepath.Dir(file)
-	if ok {
-		s.root = filepath.Dir(file)
-		for {
-			if _, err := os.ReadFile(filepath.Join(s.root, "go.mod")); err == nil {
-				os.Chdir(s.root)
-				break
-			} else {
-				s.root = filepath.Dir(s.root)
-			}
+func (s *CmdTestSuite) SetupSuite() {
+	_, file, _, _ := runtime.Caller(0)
+	root := filepath.Dir(file)
+	for {
+		if _, err := os.ReadFile(filepath.Join(root, "go.mod")); err == nil {
+			os.Chdir(root)
+			s.project = builder.NewBuilder(root)
+			break
+		} else {
+			root = filepath.Dir(root)
 		}
-	}
-}
-
-func (s *CmdTestSuite) BeforeTest(suiteName, testName string) {
-	if strings.EqualFold(testName, "TestRootCmdNotInRoot") {
-		os.Chdir(s.current)
 	}
 }
 
@@ -43,29 +38,62 @@ func TestCmdTestSuit(t *testing.T) {
 	suite.Run(t, new(CmdTestSuite))
 }
 
-func (s *CmdTestSuite) TestRootCmdNotInRoot() {
+func (s *CmdTestSuite) TestGenBuilder() {
+	builder := filepath.Join(s.project.ScriptDir(), "builder.go")
+	os.Remove(builder)
+	require.NoFileExists(s.T(), builder)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{})
+	rootCmd.SetArgs([]string{"gen", "builder"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
+	rootCmd.SetArgs([]string{"gen", "builder"})
+	err = rootCmd.Execute()
+	require.NoError(s.T(), err)
+	require.FileExists(s.T(), builder)
 }
 
-func (s *CmdTestSuite) TestNonExists() {
+func (s *CmdTestSuite) TestGenHook() {
+
+	for k, v := range boot.HookMap() {
+		gf := filepath.Join(s.project.ScriptDir(), fmt.Sprintf("%s.go", k))
+		err := os.Remove(gf)
+		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
+		err = os.Remove(filepath.Join(s.project.GitHome(), "hooks", v))
+		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
+	}
+
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"Hello"})
+	rootCmd.SetArgs([]string{"gen", "githook"})
 	err := rootCmd.Execute()
-	require.Error(s.T(), err)
+	require.NoError(s.T(), err)
+
+	for k, v := range boot.HookMap() {
+		f := filepath.Join(s.project.ScriptDir(), fmt.Sprintf("%s.go", k))
+		require.FileExists(s.T(), f)
+		f = filepath.Join(s.project.GitHome(), "hooks", v)
+		require.FileExists(s.T(), f)
+	}
+
 }
 
-//func (s *CmdTestSuite) TestBuilderCmd() {
-//	b := bytes.NewBufferString("")
-//	rootCmd.SetOut(b)
-//	rootCmd.SetArgs([]string{"gen", "builder"})
-//	rootCmd.Execute()
-//	_, err := io.ReadAll(b)
-//	require.NoError(s.T(), err)
-//	require.FileExists(s.T(), filepath.Join("scripts", "builder.go"))
-//	require.FileExists(s.T(), ".golangci.yml")
-//}
+func (s *CmdTestSuite) TestGenLint() {
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs([]string{"gen", "linter", "-v", "v1.49.0"})
+	err := rootCmd.Execute()
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), s.project.Config().GetString("toolset.golangci-lint"), "v1.49.0")
+}
+
+func (s *CmdTestSuite) TestRunLint() {
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs([]string{"run", "lint"})
+	err := rootCmd.Execute()
+	v, _ := s.project.CtxValue("lint.issues").(int)
+	if v > 0 {
+		require.Error(s.T(), err)
+	}
+}

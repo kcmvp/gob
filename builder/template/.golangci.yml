@@ -1,5 +1,4 @@
 # Don't remove below line, it controls the version of golangci-linter at runtime.
-# version: {{.}}
 run:
   tests: false
   skip-dirs:

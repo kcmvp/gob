@@ -2,10 +2,12 @@ package boot
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
@@ -30,24 +32,30 @@ type Project struct {
 	targetDir string
 	hook      string
 	actions   Actions
+	cfg       *viper.Viper
 	*viper.Viper
 	ctx context.Context
 }
 
-func (project *Project) Run(cmds ...string) {
-	project.RunCtx(context.Background(), cmds...)
+func (project *Project) Run(cmds ...string) error {
+	return project.RunCtx(context.Background(), cmds...)
 }
 
-func (project *Project) RunCtx(ctx context.Context, cmds ...string) {
+func (project *Project) RunCtx(ctx context.Context, cmds ...string) error {
 	project.ctx = ctx
+	if len(project.hook) > 0 {
+		cmds = []string{project.hook}
+	}
 	for _, cmd := range cmds {
 		for _, action := range project.actions(cmd) {
 			err := action(project, cmd)
 			if err != nil {
-				log.Fatalln(color.RedString("faild to execute the command %s:%s", cmd, err.Error()))
+				log.Println(color.RedString("Failed to execute the command %s:%s", cmd, err.Error()))
+				return err
 			}
 		}
 	}
+	return nil
 }
 
 func (project *Project) GitHome() string {
@@ -84,6 +92,7 @@ func NewProject(root string, actions Actions) *Project {
 		"",
 		actions,
 		viper.New(),
+		viper.New(),
 		context.Background(),
 	}
 
@@ -92,30 +101,68 @@ func NewProject(root string, actions Actions) *Project {
 	frames := runtime.CallersFrames(pc[:n])
 	var frame runtime.Frame
 	more := true
+	hooks := lo.MapKeys(HookMap(), func(_ string, k string) string {
+		return fmt.Sprintf("%s.go", k)
+	})
 	for more {
 		frame, more = frames.Next()
 		hook := filepath.Base(frame.File)
-		if lo.Contains(hooks(), hook) {
+		if lo.Contains(lo.Keys(hooks), hook) {
 			project.hook = hook
 			break
 		}
 	}
-
 	return project
 }
 
-func (project *Project) IsCommitHook() bool {
-	return project.hook == "pre_commit.go" || project.hook == "pre_push.go"
+func (project *Project) Config() *viper.Viper {
+	project.cfg.SetConfigName("application")
+	project.cfg.SetConfigType("yml")
+	project.cfg.AddConfigPath(project.RootDir())
+	if err := project.cfg.ReadInConfig(); err != nil {
+		// application.yml does not exist at very beginning
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			log.Fatalln(color.RedString("Failed to read configuration %s", err.Error()))
+		}
+	}
+	return project.cfg
+}
+
+func (project *Project) SaveConfig(key, value string) {
+	project.cfg.Set(key, value)
+	err := project.cfg.WriteConfigAs(filepath.Join(project.RootDir(), "application.yml"))
+	if err != nil {
+		log.Println(color.RedString("Failed to save the configuration %s", err.Error()))
+	}
+}
+
+func (project *Project) SaveCtx(k string, v interface{}) {
+	project.ctx = context.WithValue(project.ctx, k, v)
+}
+
+func (project *Project) CtxValue(key string) interface{} {
+	return project.ctx.Value(key)
+}
+
+func (project *Project) TriggeredByHook() bool {
+	return true
 }
 
 func (project *Project) ToolVersion(cmd string) string {
+	// @todo why there is a method
 	return ""
 }
 
-func hooks() []string {
-	return []string{
-		"pre_commit.go",
-		"commit_msg.go",
-		"pre_push.go",
-	}
+func HookMap() map[string]string {
+	return lo.KeyBy([]string{"pre-commit", "commit-msg", "pre-push"}, func(v string) string {
+		return strings.ReplaceAll(v, "-", "_")
+	})
 }
+
+// func hooks() []string {
+//	return []string{
+//		"pre_commit.go",
+//		"commit_msg.go",
+//		"pre_push.go",
+//	}
+//}

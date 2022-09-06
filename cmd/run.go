@@ -10,13 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	cleanCache bool
-	testcache  bool
-	modcache   bool
-	fuzzcache  bool
-)
-
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:       "run",
@@ -29,7 +22,7 @@ var runCmd = &cobra.Command{
 		}
 		return err
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
 		ctx := cmd.Context()
 		builder := builder.NewBuilder(root)
@@ -37,15 +30,22 @@ var runCmd = &cobra.Command{
 		builder.BindPFlag("clean.-testcache", cmd.Flags().Lookup("testcache"))
 		builder.BindPFlag("clean.-modcache", cmd.Flags().Lookup("modcache"))
 		builder.BindPFlag("clean.-fuzzcache", cmd.Flags().Lookup("fuzzcache"))
-		builder.RunCtx(ctx, args...)
+		// builder.BindPFlag("lint.new-from-rev", cmd.Flags().Lookup("new-from-rev"))
+		// builder.BindPFlag("lint.fix", cmd.Flags().Lookup("fix"))
+		return builder.RunCtx(ctx, args...)
 	},
 }
 
 func init() {
-	runCmd.Flags().BoolVarP(&cleanCache, "cache", "c", false, "remove the entire go build cache")
-	runCmd.Flags().BoolVarP(&testcache, "testcache", "t", false, "expire all test results")
-	runCmd.Flags().BoolVarP(&modcache, "modcache", "m", false, "remove the entire module download cache")
-	runCmd.Flags().BoolVarP(&fuzzcache, "fuzzcache", "f", false, "remove the entire module download cache")
+	var boolValue bool
+	// var stringValue string
+	runCmd.Flags().BoolVarP(&boolValue, "cache", "c", false, "remove the entire go build cache")
+	runCmd.Flags().BoolVarP(&boolValue, "testcache", "t", false, "expire all test results")
+	runCmd.Flags().BoolVarP(&boolValue, "modcache", "m", false, "remove the entire module download cache")
+	runCmd.Flags().BoolVarP(&boolValue, "fuzzcache", "f", false, "remove the entire module download cache")
+
+	// runCmd.Flags().StringVarP(&stringValue, "new-from-head", "n", true, "only scan issues from new code(changed code)")
+	// runCmd.Flags().StringVar(&fuzzcache, "fix", "x", true, "only scan issues from new code(changed code)")
 
 	rootCmd.AddCommand(runCmd)
 }

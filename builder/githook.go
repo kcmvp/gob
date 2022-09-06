@@ -3,28 +3,11 @@ package builder
 import (
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gob/boot"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
-
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
 )
-
-func hooks() []string {
-	return []string{"pre-commit", "commit-msg", "pre-push"}
-}
-
-func HookMap() map[string]string {
-	m := map[string]string{}
-	for _, h := range hooks() {
-		m[h] = strings.Replace(h, "-", "_", 1)
-	}
-	return m
-}
 
 type hookData struct {
 	Target string
@@ -37,16 +20,20 @@ func genGitHooks(gitHome, scriptDir string) error {
 	if _, err = git.PlainOpen(gitHome); err != nil {
 		return errors.New("project is not at version control")
 	}
-	for s, g := range HookMap() {
-		gof := fmt.Sprintf("%s.go", g)
-		abs, _ := filepath.Abs(filepath.Join(scriptDir, gof))
+	for k, v := range boot.HookMap() {
+		g := fmt.Sprintf("%s.go", k)
+		abs, _ := filepath.Abs(filepath.Join(scriptDir, g))
 		if _, err = os.Stat(abs); err != nil {
-			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", g))); err == nil {
+			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", k))); err == nil {
 				err = boot.GenerateFile(string(tf), abs, nil, false)
+			} else {
+				return err
 			}
 		}
 		if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
-			err = boot.GenerateFile(string(tf), filepath.Join(gitHome, "hooks", s), hookData{abs, s}, true)
+			err = boot.GenerateFile(string(tf), filepath.Join(gitHome, "hooks", v), hookData{abs, v}, true)
+		} else {
+			return err
 		}
 	}
 	return err

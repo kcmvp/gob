@@ -3,9 +3,12 @@ package boot
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/fatih/color"
 )
 
 func GenerateFile(tmpl string, targetName string, data interface{}, trunk bool) error {
@@ -25,8 +28,9 @@ func GenerateFile(tmpl string, targetName string, data interface{}, trunk bool) 
 				err = fmt.Errorf("failed to create file %v: %w", filepath.Base(targetName), err)
 			}
 		}
-	} else if !errors.Is(err, os.ErrExist) {
-		err = fmt.Errorf("failed to create file %v: %w", filepath.Base(targetName), err)
+	} else if errors.Is(err, os.ErrExist) {
+		log.Println(color.YellowString("%s exists", filepath.Base(targetName)))
+		return nil
 	}
 	return err
 }
