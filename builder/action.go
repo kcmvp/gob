@@ -16,7 +16,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/boot"
-	"github.com/samber/lo"
 )
 
 const (
@@ -28,7 +27,7 @@ const (
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var genBuilder boot.Action = func(project *boot.Project, cmd string) error {
+var genBuilder boot.Action = func(project boot.Project, cmd string, flags ...string) error {
 	log.Println("Creating project build file")
 	var err error
 	var tf []byte
@@ -42,7 +41,7 @@ var genBuilder boot.Action = func(project *boot.Project, cmd string) error {
 	return err
 }
 
-var getHook boot.Action = func(project *boot.Project, cmd string) error {
+var getHook boot.Action = func(project boot.Project, cmd string, flags ...string) error {
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
@@ -52,12 +51,17 @@ var getHook boot.Action = func(project *boot.Project, cmd string) error {
 	return err
 }
 
-var setupLinter boot.Action = func(project *boot.Project, action string) error {
+var setupLinter boot.Action = func(project boot.Project, action string, flags ...string) error {
 	linter := newLinter()
-	version := project.GetString("version")
-	cfgVersion := project.GetString(linter.CfgVerKey())
+
+	//@todo
+	version := ""
+	cfgVersion := project.Config().GetString(linter.CfgVerKey())
 	if len(cfgVersion) > 0 {
 		version = cfgVersion
+	} else if len(flags) == 0 {
+		log.Println(color.YellowString("Don't specified version for golangci-linter, use latest version."))
+		version = boot.LatestVer
 	}
 	// to get the real version
 	version, err := linter.Install(version)
@@ -72,7 +76,7 @@ var setupLinter boot.Action = func(project *boot.Project, action string) error {
 	return nil
 }
 
-var createDirAction boot.Action = func(project *boot.Project, cmd string) error {
+var createDirAction boot.Action = func(project boot.Project, cmd string, flags ...string) error {
 	var dir string
 	// todo fix the bug
 	switch cmd {
@@ -91,17 +95,10 @@ var createDirAction boot.Action = func(project *boot.Project, cmd string) error 
 	return err
 }
 
-var cleanAction boot.Action = func(project *boot.Project, _ string) error {
-	keys := project.AllKeys()
-	args := lo.FilterMap(keys, func(k string, _ int) (string, bool) {
-		if strings.HasPrefix(k, "clean.") && project.GetBool(k) {
-			return strings.Split(k, ".")[1], true
-		} else {
-			return "", false
-		}
-	})
-	log.Printf("Cleaning project with flags: %s\n", strings.Join(args, ","))
-	args = append([]string{"clean"}, args...)
+var cleanAction boot.Action = func(project boot.Project, _ string, flags ...string) error {
+
+	log.Printf("Cleaning project with flags: %s\n", strings.Join(flags, ","))
+	args := append([]string{"clean"}, flags...)
 	output, err := exec.Command("go", args...).CombinedOutput()
 	msg := string(output)
 	if err != nil {
@@ -127,15 +124,17 @@ var cleanAction boot.Action = func(project *boot.Project, _ string) error {
 	return err //nolint:wrapcheck
 }
 
-var commitMsgAction boot.Action = func(project *boot.Project, cmd string) error {
-	return validateCommitMsg(string(project.MsgPattern)) //nolint:wrapcheck
+var commitMsgAction boot.Action = func(project boot.Project, cmd string, flags ...string) error {
+	builder := project.(*Builder)
+	return validateCommitMsg(string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
-var lintAction boot.Action = func(project *boot.Project, cmd string) error {
-	return newLinter().scan(project) //nolint:wrapcheck
+var lintAction boot.Action = func(project boot.Project, cmd string, flags ...string) error {
+	builder := project.(*Builder)
+	return newLinter().scan(builder, flags...) //nolint:wrapcheck
 }
 
-var testAction boot.Action = func(builder *boot.Project, cmd string) error {
+var testAction boot.Action = func(builder boot.Project, cmd string, flags ...string) error {
 	err := os.Chdir(builder.RootDir())
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
@@ -204,7 +203,7 @@ var testAction boot.Action = func(builder *boot.Project, cmd string) error {
 	return err //nolint:wrapcheck
 }
 
-var buildAction boot.Action = func(builder *boot.Project, cmd string) error {
+var buildAction boot.Action = func(builder boot.Project, cmd string, flags ...string) error {
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")

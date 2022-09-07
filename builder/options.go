@@ -1,4 +1,4 @@
-package boot
+package builder
 
 // DefaultHookMsg default git commit message format, which contains 3 parts
 // 1: first part is a '#' and follow with a number and its length range is [1,7].
@@ -7,6 +7,7 @@ package boot
 // you can do the necessary changes according your requirements.
 const DefaultHookMsg = `#[0-9]{1,7}:\s?(\S+\s?){10,}`
 
+// HookMsgPattern @todo multiple ticket support.
 type HookMsgPattern string
 
 type buildOption struct {

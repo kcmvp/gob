@@ -101,25 +101,6 @@ func (ins *installer) Install(ver string) (string, error) {
 			return ver, nil
 		}
 	}
-	/*
-		if len(ivs) > 0 && LatestVer == ver {
-			fmt.Println("please select version number:")
-			completer := func(d prompt.Document) []prompt.Suggest {
-				var s []prompt.Suggest
-				for idx, v := range ivs {
-					s = append(s, prompt.Suggest{Text: strconv.Itoa(idx + 1), Description: fmt.Sprintf("using %s", v)})
-				}
-				return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
-			}
-			v := prompt.Input(">> ", completer)
-			if idx, err := strconv.Atoi(v); err == nil && idx >= 1 && idx <= len(ivs) {
-				v = ivs[idx-1]
-				fmt.Printf("Using existing %s\n", v)
-				return v, nil
-			}
-		}
-	*/
-
 	vm := fmt.Sprintf("%s@%s", ins.module, ver)
 	log.Printf("installing %s ...\n", vm)
 	cmd := exec.Command("go", "install", vm)

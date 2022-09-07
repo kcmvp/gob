@@ -59,8 +59,8 @@ var linterVersion = func(name string) (string, string) {
 }
 
 // nolint
-func (linter *Linter) scan(project *boot.Project) error {
-	ver := project.Config().GetString(linter.CfgVerKey())
+func (linter *Linter) scan(builder *Builder, flags ...string) error {
+	ver := builder.Config().GetString(linter.CfgVerKey())
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
 	}
@@ -68,9 +68,11 @@ func (linter *Linter) scan(project *boot.Project) error {
 	if err != nil {
 		return fmt.Errorf("failed to install golangci-linter %s: %w", ver, err)
 	}
-	os.Chdir(project.RootDir())
+	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
-	if project.TriggeredByHook() {
+	//@todo add the flags at the first place
+	hasStarter := len(builder.Starter()) > 0
+	if hasStarter {
 		args = append(args, "--new-from-rev", "HEAD~")
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
@@ -88,9 +90,9 @@ func (linter *Linter) scan(project *boot.Project) error {
 	if err != nil {
 		return fmt.Errorf("failed to execute linter command: %w", err)
 	}
-	report := filepath.Join(project.TargetDir(), linter.report)
+	report := filepath.Join(builder.TargetDir(), linter.report)
 	sc := bufio.NewScanner(stderr)
-	output, err := os.OpenFile(filepath.Join(project.TargetDir(), linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
+	output, err := os.OpenFile(filepath.Join(builder.TargetDir(), linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
 	defer output.Close()                                                                                                            //nolint                                                                                    //nolint
 	if err != nil {
 		return fmt.Errorf("failed to create linter output file: %w", err)
@@ -136,10 +138,9 @@ func (linter *Linter) scan(project *boot.Project) error {
 		return fmt.Errorf("failed to generate lint report: %w", err)
 	}
 	log.Printf("lint report is generated at %s", report)
-	project.SaveCtx("lint.issues", issues)
 	if issues > 0 {
 		msg := fmt.Sprintf("total %d linter issues are found", issues)
-		if project.TriggeredByHook() {
+		if hasStarter {
 			return errors.New(msg)
 		} else {
 			log.Println(color.YellowString(msg))

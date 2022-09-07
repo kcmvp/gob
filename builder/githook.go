@@ -23,7 +23,7 @@ func genGitHooks(gitHome, scriptDir string) error {
 	if _, err = git.PlainOpen(gitHome); err != nil {
 		return errors.New("project is not at version control")
 	}
-	for k, v := range boot.HookMap() {
+	for k, v := range HookMap() {
 		g := fmt.Sprintf("%s.go", k)
 		abs, _ := filepath.Abs(filepath.Join(scriptDir, g))
 		if _, err = os.Stat(abs); err != nil {

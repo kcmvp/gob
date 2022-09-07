@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -17,7 +16,7 @@ import (
 
 type CmdTestSuite struct {
 	suite.Suite
-	project *boot.Project
+	builder *builder.Builder
 }
 
 func (s *CmdTestSuite) SetupSuite() {
@@ -26,7 +25,7 @@ func (s *CmdTestSuite) SetupSuite() {
 	for {
 		if _, err := os.ReadFile(filepath.Join(root, "go.mod")); err == nil {
 			os.Chdir(root)
-			s.project = builder.NewBuilder(root)
+			s.builder = builder.NewBuilder(root)
 			break
 		} else {
 			root = filepath.Dir(root)
@@ -43,7 +42,7 @@ func TestCmdTestSuit(t *testing.T) {
 }
 
 func (s *CmdTestSuite) TestSetupBuilder() {
-	builder := filepath.Join(s.project.ScriptDir(), "builder.go")
+	builder := filepath.Join(s.builder.ScriptDir(), "builder.go")
 	os.Remove(builder)
 	require.NoFileExists(s.T(), builder)
 	b := bytes.NewBufferString("")
@@ -59,11 +58,11 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 
 func (s *CmdTestSuite) TestSetupHook() {
 
-	for k, v := range boot.HookMap() {
-		gf := filepath.Join(s.project.ScriptDir(), fmt.Sprintf("%s.go", k))
+	for k, v := range builder.HookMap() {
+		gf := filepath.Join(s.builder.ScriptDir(), fmt.Sprintf("%s.go", k))
 		err := os.Remove(gf)
 		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
-		err = os.Remove(filepath.Join(s.project.GitHome(), "hooks", v))
+		err = os.Remove(filepath.Join(s.builder.GitHome(), "hooks", v))
 		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
 	}
 
@@ -73,10 +72,10 @@ func (s *CmdTestSuite) TestSetupHook() {
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 
-	for k, v := range boot.HookMap() {
-		f := filepath.Join(s.project.ScriptDir(), fmt.Sprintf("%s.go", k))
+	for k, v := range builder.HookMap() {
+		f := filepath.Join(s.builder.ScriptDir(), fmt.Sprintf("%s.go", k))
 		require.FileExists(s.T(), f)
-		f = filepath.Join(s.project.GitHome(), "hooks", v)
+		f = filepath.Join(s.builder.GitHome(), "hooks", v)
 		require.FileExists(s.T(), f)
 	}
 
@@ -88,7 +87,7 @@ func (s *CmdTestSuite) TestSetupLint() {
 	rootCmd.SetArgs([]string{"setup", "linter", "-v", "v1.49.0"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
-	require.Equal(s.T(), s.project.Config().GetString("toolset.golangci-lint"), "v1.49.0")
+	require.Equal(s.T(), s.builder.Config().GetString("toolset.golangci-lint"), "v1.49.0")
 }
 
 func (s *CmdTestSuite) TestRunLint() {
@@ -96,8 +95,14 @@ func (s *CmdTestSuite) TestRunLint() {
 	rootCmd.SetOut(b)
 	rootCmd.SetArgs([]string{"run", "lint"})
 	err := rootCmd.Execute()
-	v, _ := s.project.CtxValue("lint.issues").(int)
-	if v > 0 {
-		require.Error(s.T(), err)
-	}
+	require.Error(s.T(), err)
+
+	// @todo flags
 }
+
+func (s *CmdTestSuite) TestDummy() {
+	require.Equal(s.T(), 1, 2)
+}
+
+//@todo test case with flags
+//@todo lint test with flags

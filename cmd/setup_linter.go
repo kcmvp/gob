@@ -18,11 +18,11 @@ var version string
 var linterCmd = &cobra.Command{
 	Use:   "linter",
 	Short: "setup linter for the project",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		project := builder.NewBuilder(root)
-		project.BindPFlag("version", cmd.Flags().Lookup("version"))
-		project.Run(cmd.Name())
+		executor := boot.NewExecutor()
+		return executor.Run(builder.NewBuilder(root), cmd.Name())
+
 	},
 }
 

@@ -4,6 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"github.com/kcmvp/gob/boot"
 	"os"
 
 	"github.com/kcmvp/gob/builder"
@@ -24,15 +25,12 @@ var runCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		ctx := cmd.Context()
 		builder := builder.NewBuilder(root)
-		builder.BindPFlag("clean.-cache", cmd.Flags().Lookup("cache"))
-		builder.BindPFlag("clean.-testcache", cmd.Flags().Lookup("testcache"))
-		builder.BindPFlag("clean.-modcache", cmd.Flags().Lookup("modcache"))
-		builder.BindPFlag("clean.-fuzzcache", cmd.Flags().Lookup("fuzzcache"))
-		// builder.BindPFlag("lint.new-from-rev", cmd.Flags().Lookup("new-from-rev"))
-		// builder.BindPFlag("lint.fix", cmd.Flags().Lookup("fix"))
-		return builder.RunCtx(ctx, args...)
+		//builder.BindPFlag("clean.-cache", cmd.Flags().Lookup("cache"))
+		//builder.BindPFlag("clean.-testcache", cmd.Flags().Lookup("testcache"))
+		//builder.BindPFlag("clean.-modcache", cmd.Flags().Lookup("modcache"))
+		//builder.BindPFlag("clean.-fuzzcache", cmd.Flags().Lookup("fuzzcache"))
+		return boot.NewExecutor().Run(builder, args...)
 	},
 }
 

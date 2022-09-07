@@ -1,19 +1,14 @@
 package boot
 
 import (
-	"context"
-	"fmt"
+	"github.com/fatih/color"
+	"github.com/go-git/go-git/v5"
+	"github.com/spf13/viper"
+	"golang.org/x/mod/modfile"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
-
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
-	"github.com/samber/lo"
-	"github.com/spf13/viper"
-	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -21,61 +16,61 @@ const (
 	targetDir = "target"
 )
 
-type Action func(project *Project, cmd string) error
+type Action func(project Project, command string, flags ...string) error
+type Mapper func(command string) []Action
 
-type Mapper func(cmd string) []Action
+var _ Project = (*DefaultProject)(nil)
 
-type Project struct {
-	*buildOption
-	root      string
-	scriptDir string
-	targetDir string
-	hook      string
-	mapper    Mapper
-	cfg       *viper.Viper
-	*viper.Viper
-	ctx context.Context
+type Project interface {
+	GitHome() string
+	ScriptDir() string
+	TargetDir() string
+	RootDir() string
+	Config() *viper.Viper
+	SaveConfig(key, value string)
+	Mapper(cmd string) []Action
+	Starter() string
 }
 
-func (project *Project) Run(cmds ...string) error {
-	return project.RunCtx(context.Background(), cmds...)
+type DefaultProject struct {
+	root       string
+	mapper     Mapper
+	cfg        *viper.Viper
+	initStacks []string
 }
 
-func (project *Project) RunCtx(ctx context.Context, cmds ...string) error {
-	project.ctx = ctx
-	if len(project.hook) > 0 {
-		cmds = []string{project.hook}
-	}
-	for _, cmd := range cmds {
-		for _, action := range project.mapper(cmd) {
-			err := action(project, cmd)
-			if err != nil {
-				log.Println(color.RedString("Failed to execute the command %s:%s", cmd, err.Error()))
-				return err
-			}
+func (project *DefaultProject) Starter() string {
+	for _, stack := range project.initStacks {
+		actions := project.mapper(stack)
+		if len(actions) > 0 {
+			return stack
 		}
 	}
-	return nil
+	return ""
 }
 
-func (project *Project) GitHome() string {
+func (project *DefaultProject) Mapper(cmd string) []Action {
+	return project.mapper(cmd)
+}
+
+func (project *DefaultProject) GitHome() string {
 	dir := filepath.Join(project.RootDir(), git.GitDirName)
 	return dir
 }
 
-func (project *Project) ScriptDir() string {
-	return project.scriptDir
+func (project *DefaultProject) ScriptDir() string {
+	return filepath.Join(project.RootDir(), scriptDir)
 }
 
-func (project *Project) TargetDir() string {
-	return project.targetDir
+func (project *DefaultProject) TargetDir() string {
+	return filepath.Join(project.RootDir(), targetDir)
 }
 
-func (project *Project) RootDir() string {
+func (project *DefaultProject) RootDir() string {
 	return project.root
 }
 
-func NewProject(root string, mapper Mapper) *Project {
+func NewProject(root string, mapper Mapper) DefaultProject {
 	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		log.Fatalln(color.RedString("can not find go.mod in %s", root))
@@ -84,38 +79,25 @@ func NewProject(root string, mapper Mapper) *Project {
 			log.Fatalln(color.RedString("invalid mod file %v", err))
 		}
 	}
-	project := &Project{
-		defaultOption(),
+	project := DefaultProject{
 		root,
-		filepath.Join(root, scriptDir),
-		filepath.Join(root, targetDir),
-		"",
 		mapper,
 		viper.New(),
-		viper.New(),
-		context.Background(),
+		[]string{},
 	}
-
 	pc := make([]uintptr, 15)   //nolint
 	n := runtime.Callers(2, pc) //nolint
 	frames := runtime.CallersFrames(pc[:n])
 	var frame runtime.Frame
 	more := true
-	hooks := lo.MapKeys(HookMap(), func(_ string, k string) string {
-		return fmt.Sprintf("%s.go", k)
-	})
 	for more {
 		frame, more = frames.Next()
-		hook := filepath.Base(frame.File)
-		if lo.Contains(lo.Keys(hooks), hook) {
-			project.hook = hook
-			break
-		}
+		project.initStacks = append(project.initStacks, filepath.Base(frame.File))
 	}
 	return project
 }
 
-func (project *Project) Config() *viper.Viper {
+func (project *DefaultProject) Config() *viper.Viper {
 	project.cfg.SetConfigName("application")
 	project.cfg.SetConfigType("yml")
 	project.cfg.AddConfigPath(project.RootDir())
@@ -128,28 +110,10 @@ func (project *Project) Config() *viper.Viper {
 	return project.cfg
 }
 
-func (project *Project) SaveConfig(key, value string) {
+func (project *DefaultProject) SaveConfig(key, value string) {
 	project.cfg.Set(key, value)
 	err := project.cfg.WriteConfigAs(filepath.Join(project.RootDir(), "application.yml"))
 	if err != nil {
 		log.Println(color.RedString("Failed to save the configuration %s", err.Error()))
 	}
-}
-
-func (project *Project) SaveCtx(k string, v interface{}) {
-	project.ctx = context.WithValue(project.ctx, k, v)
-}
-
-func (project *Project) CtxValue(key string) interface{} {
-	return project.ctx.Value(key)
-}
-
-func (project *Project) TriggeredByHook() bool {
-	return true
-}
-
-func HookMap() map[string]string {
-	return lo.KeyBy([]string{"pre-commit", "commit-msg", "pre-push"}, func(v string) string {
-		return strings.ReplaceAll(v, "-", "_")
-	})
 }

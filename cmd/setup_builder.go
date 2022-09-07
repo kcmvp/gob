@@ -5,6 +5,7 @@ package cmd
 
 import (
 	_ "embed"
+	"github.com/kcmvp/gob/boot"
 	"os"
 
 	"github.com/kcmvp/gob/builder"
@@ -18,7 +19,8 @@ var builderCmd = &cobra.Command{
 	Long:  `Includes mostly used build actions: Clean, Test, Code scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		return builder.NewBuilder(root).Run(cmd.Name())
+		executor := boot.NewExecutor()
+		return executor.Run(builder.NewBuilder(root), cmd.Name())
 	},
 }
 

@@ -4,6 +4,7 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
+	"github.com/kcmvp/gob/boot"
 	"os"
 
 	"github.com/kcmvp/gob/builder"
@@ -17,7 +18,8 @@ var githookCmd = &cobra.Command{
 	Long:  `Setup git hooks for project, which include: commit_message, pre_push`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		return builder.NewBuilder(root).Run(cmd.Name())
+		executor := boot.NewExecutor()
+		return executor.Run(builder.NewBuilder(root), cmd.Name())
 	},
 }
 
