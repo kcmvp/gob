@@ -33,7 +33,7 @@ func (executor *Executor) Run(project Project, commands ...string) error {
 		log.Println(color.YellowString("Flag should follow {command code}.{flag} format"))
 	}
 	var cc []string
-	starter := project.Starter()
+	starter := project.Initializer()
 	if len(starter) > 0 {
 		cc = append(cc, starter)
 	} else {

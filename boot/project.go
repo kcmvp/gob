@@ -29,7 +29,7 @@ type Project interface {
 	Config() *viper.Viper
 	SaveConfig(key, value string)
 	Mapper(cmd string) []Action
-	Starter() string
+	Initializer() string
 }
 
 type DefaultProject struct {
@@ -39,11 +39,11 @@ type DefaultProject struct {
 	initStacks []string
 }
 
-func (project *DefaultProject) Starter() string {
-	for _, stack := range project.initStacks {
-		actions := project.mapper(stack)
+func (project *DefaultProject) Initializer() string {
+	for _, initializer := range project.initStacks {
+		actions := project.mapper(initializer)
 		if len(actions) > 0 {
-			return stack
+			return initializer
 		}
 	}
 	return ""

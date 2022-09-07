@@ -71,7 +71,7 @@ func (linter *Linter) scan(builder *Builder, flags ...string) error {
 	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
 	//@todo add the flags at the first place
-	hasStarter := len(builder.Starter()) > 0
+	hasStarter := len(builder.Initializer()) > 0
 	if hasStarter {
 		args = append(args, "--new-from-rev", "HEAD~")
 	}
