@@ -19,7 +19,7 @@ var builderCmd = &cobra.Command{
 	Long:  `Includes mostly used build actions: Clean, Test, Code scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		return builder.NewBuilder(root).Run(boot.SetupBuilder)
+		return boot.Run(builder.NewBuilder(root), boot.SetupBuilder)
 	},
 }
 

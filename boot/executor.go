@@ -5,58 +5,21 @@ import (
 	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"log"
+	"strings"
 )
-
-type Command string
-
-const (
-	none         Command = "_"
-	Clean        Command = "clean"
-	Build        Command = "build"
-	Test         Command = "test"
-	Lint         Command = "lint"
-	SetupBuilder Command = "builder"
-	SetupLinter  Command = "linter"
-	SetupHook    Command = "githook"
-	PreCommit    Command = "pre_commit.go"
-	CommitMsg    Command = "commit_msg.go"
-	PrePush      Command = "pre_push.go"
-)
-
-func (command Command) Name() string {
-	return string(command)
-}
-
-func ToCommand(commands ...string) []Command {
-
-	return nil
-}
-
-func (command Command) ValidFlags() []string {
-	flagMap := map[Command][]string{
-		SetupBuilder: []string{},
-		SetupHook:    []string{},
-		SetupLinter:  []string{"version"},
-		Clean:        []string{"-cache", "-testcache", "-modcache", "-fuzzcache"},
-		Lint:         []string{},
-		Test:         []string{},
-		Build:        []string{},
-	}
-	return flagMap[command]
-}
 
 type (
 	Action func(project Project, command Command) error
 )
 
-var executor *ExecutorContext
+var executor *Executor
 
-type ExecutorContext struct {
+type Executor struct {
 	flags map[string]interface{}
 }
 
 func init() {
-	executor = &ExecutorContext{
+	executor = &Executor{
 		map[string]interface{}{},
 	}
 }
@@ -64,6 +27,12 @@ func init() {
 func AllKeys() []string {
 	//@todo don't expose this method
 	return lo.Keys(executor.flags)
+}
+
+func AllFlags(command Command) []string {
+	return lo.FilterMap(lo.Keys(executor.flags), func(flag string, _ int) (string, bool) {
+		return flag, strings.HasPrefix(flag, fmt.Sprintf("%s.", command.Name()))
+	})
 }
 
 func flagName(command Command, flag string) string {
@@ -77,15 +46,15 @@ func GetFlag[T any](command Command, flag string) T {
 
 func BindFlag(command Command, flag string, value interface{}) {
 	if !lo.Contains(command.ValidFlags(), flag) {
-		log.Fatalln(color.RedString("Invalid flag: %s for command: %s", flag, command))
+		log.Fatalln(color.RedString("Invalid flag '%s' for command: %s", flag, command))
 	}
 	executor.flags[flagName(command, flag)] = value
 }
 
-func run(project Project, commands ...Command) error {
+func Run(project Project, commands ...Command) error {
 
 	var ccs []Command
-	if project.Initializer() != none {
+	if project.Initializer() != None {
 		ccs = append(ccs, project.Initializer())
 	} else {
 		ccs = commands
@@ -101,13 +70,13 @@ func run(project Project, commands ...Command) error {
 		return lo.EveryBy(project.Mapper()[command], func(action Action) bool {
 			err = action(project, command)
 			if err != nil {
-				err = fmt.Errorf("failed to execute the command %s:%w", command, err)
+				err = fmt.Errorf("[%s]:%w", command, err)
 			}
 			return err == nil
 		})
 	})
 	if err == nil {
-		log.Println("Commands run successfully")
+		log.Println("Run commands successfully")
 	}
 	return err
 }

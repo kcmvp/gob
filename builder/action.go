@@ -28,7 +28,7 @@ const (
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var GenBuilder boot.Action = func(project boot.Project, command boot.Command) error {
+var genBuilder boot.Action = func(project boot.Project, command boot.Command) error {
 	log.Println("Creating project build file")
 	var err error
 	var tf []byte
@@ -42,7 +42,7 @@ var GenBuilder boot.Action = func(project boot.Project, command boot.Command) er
 	return err
 }
 
-var GenHook boot.Action = func(project boot.Project, command boot.Command) error {
+var genHook boot.Action = func(project boot.Project, command boot.Command) error {
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
@@ -52,7 +52,7 @@ var GenHook boot.Action = func(project boot.Project, command boot.Command) error
 	return err
 }
 
-var SetupLinter boot.Action = func(project boot.Project, command boot.Command) error {
+var setupLinter boot.Action = func(project boot.Project, command boot.Command) error {
 	linter := newLinter()
 
 	version := boot.GetFlag[string](command, "version")
@@ -73,7 +73,7 @@ var SetupLinter boot.Action = func(project boot.Project, command boot.Command) e
 	return nil
 }
 
-var CreateDirAction boot.Action = func(project boot.Project, command boot.Command) error {
+var createDirAction boot.Action = func(project boot.Project, command boot.Command) error {
 	var dir string
 	// todo fix the bug
 	switch command.Name() {
@@ -92,7 +92,7 @@ var CreateDirAction boot.Action = func(project boot.Project, command boot.Comman
 	return err
 }
 
-var CleanAction boot.Action = func(project boot.Project, command boot.Command) error {
+var cleanAction boot.Action = func(project boot.Project, command boot.Command) error {
 	flags := lo.FilterMap(command.ValidFlags(), func(flag string, i int) (string, bool) {
 		return flag, boot.GetFlag[bool](command, flag)
 	})
@@ -123,17 +123,17 @@ var CleanAction boot.Action = func(project boot.Project, command boot.Command) e
 	return err //nolint:wrapcheck
 }
 
-var CommitMsgAction boot.Action = func(project boot.Project, command boot.Command) error {
+var commitMsgAction boot.Action = func(project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
 	return validateCommitMsg(string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
-var LintAction boot.Action = func(project boot.Project, command boot.Command) error {
+var lintAction boot.Action = func(project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
 	return newLinter().scan(builder, command) //nolint:wrapcheck
 }
 
-var TestAction boot.Action = func(builder boot.Project, command boot.Command) error {
+var testAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	err := os.Chdir(builder.RootDir())
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
@@ -198,7 +198,7 @@ var TestAction boot.Action = func(builder boot.Project, command boot.Command) er
 	return err //nolint:wrapcheck
 }
 
-var BuildAction boot.Action = func(builder boot.Project, command boot.Command) error {
+var buildAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")

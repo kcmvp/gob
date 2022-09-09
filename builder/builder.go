@@ -38,15 +38,15 @@ func NewBuilder(root string) *Builder {
 
 var mapper = func() map[boot.Command][]boot.Action {
 	return map[boot.Command][]boot.Action{
-		boot.PreCommit:    {CleanAction, LintAction},
-		boot.CommitMsg:    {CommitMsgAction, TestAction},
-		boot.PrePush:      {CleanAction, TestAction},
-		boot.SetupBuilder: {CreateDirAction, GenBuilder},
-		boot.SetupHook:    {CreateDirAction, GenHook},
-		boot.SetupLinter:  {CreateDirAction, SetupLinter},
-		boot.Clean:        {CleanAction, GenHook},
-		boot.Lint:         {CreateDirAction, GenHook, LintAction},
-		boot.Test:         {CreateDirAction, GenHook, TestAction},
-		boot.Build:        {CreateDirAction, GenHook, BuildAction},
+		boot.PreCommit:    {cleanAction, lintAction},
+		boot.CommitMsg:    {commitMsgAction, testAction},
+		boot.PrePush:      {cleanAction, testAction},
+		boot.SetupBuilder: {createDirAction, genBuilder},
+		boot.SetupHook:    {createDirAction, genHook},
+		boot.SetupLinter:  {createDirAction, setupLinter},
+		boot.Clean:        {cleanAction, genHook},
+		boot.Lint:         {createDirAction, genHook, lintAction},
+		boot.Test:         {createDirAction, genHook, testAction},
+		boot.Build:        {createDirAction, genHook, buildAction},
 	}
 }

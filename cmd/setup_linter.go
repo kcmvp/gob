@@ -16,12 +16,12 @@ var version string
 
 // linterCmd represents the linter command.
 var linterCmd = &cobra.Command{
-	Use:   "linter",
+	Use:   boot.SetupLinter.Name(),
 	Short: "setup linter for the project",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		boot.BindFlag(boot.SetupLinter, "version", cmd.Flags().Lookup("version"))
-		return builder.NewBuilder(root).Run(boot.SetupLinter)
+		boot.BindFlag(boot.SetupLinter, "version", version)
+		return boot.Run(builder.NewBuilder(root), boot.SetupLinter)
 	},
 }
 

@@ -27,7 +27,7 @@ type Project interface {
 	RootDir() string
 	Config() *viper.Viper
 	SaveConfig(key, value string)
-	Run(commands ...Command) error
+	//Run(commands ...Command) error
 	Mapper() map[Command][]Action
 	Initializer() Command
 }
@@ -49,9 +49,9 @@ func (project *DefaultProject) Initializer() Command {
 	return project.initializer
 }
 
-func (project *DefaultProject) Run(commands ...Command) error {
-	return run(project, commands...)
-}
+//func (project *DefaultProject) Run(commands ...Command) error {
+//	return Run(project, commands...)
+//}
 
 func (project *DefaultProject) GitHome() string {
 	dir := filepath.Join(project.RootDir(), git.GitDirName)
@@ -83,7 +83,7 @@ func NewProject(root string, mapper Mapper) DefaultProject {
 	project := DefaultProject{
 		root,
 		viper.New(),
-		none,
+		None,
 		mapper,
 	}
 	pc := make([]uintptr, 15)   //nolint

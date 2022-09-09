@@ -71,8 +71,8 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
 	//@todo add the flags at the first place
-	hasInitializer := len(builder.Initializer()) > 0
-	if hasInitializer || !boot.GetFlag[bool](command, "all") {
+	//hasInitializer := len(builder.Initializer()) > 0
+	if builder.Initializer() != boot.None || !boot.GetFlag[bool](command, "all") {
 		args = append(args, "--new-from-rev", "HEAD~")
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
@@ -137,10 +137,10 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate lint report: %w", err)
 	}
-	log.Printf("lint report is generated at %s", report)
+	log.Printf("lint report is generated at %s\n", report)
 	if issues > 0 {
 		msg := fmt.Sprintf("total %d linter issues are found", issues)
-		if hasInitializer {
+		if builder.Initializer() != boot.None {
 			return errors.New(msg)
 		} else {
 			log.Println(color.YellowString(msg))

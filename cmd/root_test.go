@@ -43,13 +43,14 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 	_, err := os.Stat(builder)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"setup", "builder"})
+	rootCmd.SetArgs([]string{"setup", boot.SetupBuilder.Name()})
 	err = rootCmd.Execute()
 	if err == nil {
 		require.NoError(s.T(), err, "should create builder.go successfully")
 	} else {
 		require.ErrorIs(s.T(), err, os.ErrExist, "should get file exists error")
 	}
+	require.Empty(s.T(), boot.AllFlags(boot.SetupBuilder))
 }
 
 func (s *CmdTestSuite) TestSetupHook() {
@@ -61,7 +62,7 @@ func (s *CmdTestSuite) TestSetupHook() {
 
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"setup", "githook"})
+	rootCmd.SetArgs([]string{"setup", boot.SetupHook.Name()})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 
@@ -71,27 +72,28 @@ func (s *CmdTestSuite) TestSetupHook() {
 		f = filepath.Join(s.builder.GitHome(), "hooks", v)
 		require.FileExists(s.T(), f)
 	}
+	require.Empty(s.T(), boot.AllFlags(boot.SetupBuilder))
 
 }
 
 func (s *CmdTestSuite) TestSetupLint() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"setup", "linter", "-v", "v1.49.0"})
+	rootCmd.SetArgs([]string{"setup", boot.SetupLinter.Name(), "-v", "v1.49.0"})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), s.builder.Config().GetString("toolset.golangci-lint"), "v1.49.0")
-	require.Equal(s.T(), boot.GetFlag[string]("linter.version"), "v1.49.0")
+	require.Equal(s.T(), "v1.49.0", boot.GetFlag[string](boot.SetupLinter, "version"))
 }
 
 func (s *CmdTestSuite) TestSetupLintWithLatest() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"setup", "linter"})
+	rootCmd.SetArgs([]string{"setup", boot.SetupLinter.Name()})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), s.builder.Config().GetString("toolset.golangci-lint"), "v1.49.0")
-	require.Equal(s.T(), boot.GetFlag[string]("linter.version"), "latest")
+	require.Equal(s.T(), boot.LatestVer, boot.GetFlag[string](boot.SetupLinter, "version"))
 }
 
 func (s *CmdTestSuite) TestRunLint() {
@@ -102,11 +104,11 @@ func (s *CmdTestSuite) TestRunLint() {
 	}{
 		{
 			"changed",
-			[]string{"run", "lint"},
+			[]string{"run", boot.Lint.Name()},
 			false,
 		}, {
 			"all",
-			[]string{"run", "lint", "-a"},
+			[]string{"run", boot.Lint.Name(), "-a"},
 			true,
 		},
 	}
@@ -127,7 +129,7 @@ func (s *CmdTestSuite) TestRunLint() {
 			rootCmd.SetArgs(test.flags)
 			err = rootCmd.Execute()
 			require.NoError(s.T(), err)
-			require.Equal(s.T(), boot.GetFlag[bool]("lint.all"), test.result)
+			require.Equal(s.T(), boot.GetFlag[bool](boot.Lint, "all"), test.result)
 			require.Equal(t, len(boot.AllKeys()), 5)
 
 			_, err = os.Stat(html)
