@@ -13,13 +13,13 @@ import (
 
 // githookCmd represents the githook command.
 var githookCmd = &cobra.Command{
-	Use:   "githook",
+	Use:   boot.SetupHook.Name(),
 	Short: "Setup git hook for project",
 	Long:  `Setup git hooks for project, which include: commit_message, pre_push`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		executor := boot.NewExecutor()
-		return executor.Run(builder.NewBuilder(root), cmd.Name())
+		boot.BindFlag(boot.SetupHook, "version", cmd.Flags().Lookup("version"))
+		return builder.NewBuilder(root).Run(boot.SetupHook)
 	},
 }
 

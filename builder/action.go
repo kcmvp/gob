@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/samber/lo"
 	"io/fs"
 	"log"
 	"os"
@@ -27,7 +28,7 @@ const (
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var genBuilder boot.Action = func(project boot.Project, cmd string, flags ...string) error {
+var GenBuilder boot.Action = func(project boot.Project, command boot.Command) error {
 	log.Println("Creating project build file")
 	var err error
 	var tf []byte
@@ -41,27 +42,23 @@ var genBuilder boot.Action = func(project boot.Project, cmd string, flags ...str
 	return err
 }
 
-var getHook boot.Action = func(project boot.Project, cmd string, flags ...string) error {
+var GenHook boot.Action = func(project boot.Project, command boot.Command) error {
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
-	} else if cmd == "githook" {
+	} else if command.Name() == "githook" {
 		log.Println("git hooks are setup successfully")
 	}
 	return err
 }
 
-var setupLinter boot.Action = func(project boot.Project, action string, flags ...string) error {
+var SetupLinter boot.Action = func(project boot.Project, command boot.Command) error {
 	linter := newLinter()
 
-	//@todo
-	version := ""
+	version := boot.GetFlag[string](command, "version")
 	cfgVersion := project.Config().GetString(linter.CfgVerKey())
-	if len(cfgVersion) > 0 {
+	if cfgVersion != version {
 		version = cfgVersion
-	} else if len(flags) == 0 {
-		log.Println(color.YellowString("Don't specified version for golangci-linter, use latest version."))
-		version = boot.LatestVer
 	}
 	// to get the real version
 	version, err := linter.Install(version)
@@ -76,10 +73,10 @@ var setupLinter boot.Action = func(project boot.Project, action string, flags ..
 	return nil
 }
 
-var createDirAction boot.Action = func(project boot.Project, cmd string, flags ...string) error {
+var CreateDirAction boot.Action = func(project boot.Project, command boot.Command) error {
 	var dir string
 	// todo fix the bug
-	switch cmd {
+	switch command.Name() {
 	case "gitHook", "builder":
 		dir = project.ScriptDir()
 	case "lint", "test", "build":
@@ -95,10 +92,12 @@ var createDirAction boot.Action = func(project boot.Project, cmd string, flags .
 	return err
 }
 
-var cleanAction boot.Action = func(project boot.Project, _ string, flags ...string) error {
-
+var CleanAction boot.Action = func(project boot.Project, command boot.Command) error {
+	flags := lo.FilterMap(command.ValidFlags(), func(flag string, i int) (string, bool) {
+		return flag, boot.GetFlag[bool](command, flag)
+	})
 	log.Printf("Cleaning project with flags: %s\n", strings.Join(flags, ","))
-	args := append([]string{"clean"}, flags...)
+	args := append([]string{command.Name()}, flags...)
 	output, err := exec.Command("go", args...).CombinedOutput()
 	msg := string(output)
 	if err != nil {
@@ -124,26 +123,22 @@ var cleanAction boot.Action = func(project boot.Project, _ string, flags ...stri
 	return err //nolint:wrapcheck
 }
 
-var commitMsgAction boot.Action = func(project boot.Project, cmd string, flags ...string) error {
+var CommitMsgAction boot.Action = func(project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
 	return validateCommitMsg(string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
-var lintAction boot.Action = func(project boot.Project, cmd string, flags ...string) error {
+var LintAction boot.Action = func(project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
-	return newLinter().scan(builder, flags...) //nolint:wrapcheck
+	return newLinter().scan(builder, command) //nolint:wrapcheck
 }
 
-var testAction boot.Action = func(builder boot.Project, cmd string, flags ...string) error {
+var TestAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	err := os.Chdir(builder.RootDir())
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
 	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), testCoverOut), "./..."}
-	// @todo for test parameter
-	// if len(args) > 0 {
-	//	params = append(params, args...)
-	//}
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
@@ -203,7 +198,7 @@ var testAction boot.Action = func(builder boot.Project, cmd string, flags ...str
 	return err //nolint:wrapcheck
 }
 
-var buildAction boot.Action = func(builder boot.Project, cmd string, flags ...string) error {
+var BuildAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")

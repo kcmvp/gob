@@ -87,7 +87,7 @@ func (ins *installer) Versions() []string {
 		return fmt.Sprintf("%d):%s", i+1, t)
 	})
 	if len(desc) > 0 {
-		log.Printf("installed versions of %s: %s \n", ins.cmd, strings.Join(desc, ", "))
+		log.Printf("Found following versions of %s: %s \n", ins.cmd, strings.Join(desc, ", "))
 	}
 	return versions
 }

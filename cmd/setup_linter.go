@@ -20,9 +20,8 @@ var linterCmd = &cobra.Command{
 	Short: "setup linter for the project",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		executor := boot.NewExecutor()
-		return executor.Run(builder.NewBuilder(root), cmd.Name())
-
+		boot.BindFlag(boot.SetupLinter, "version", cmd.Flags().Lookup("version"))
+		return builder.NewBuilder(root).Run(boot.SetupLinter)
 	},
 }
 

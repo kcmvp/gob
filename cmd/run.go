@@ -4,9 +4,9 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/kcmvp/gob/boot"
 	"os"
 
+	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
@@ -26,24 +26,24 @@ var runCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
 		builder := builder.NewBuilder(root)
-		//builder.BindPFlag("clean.-cache", cmd.Flags().Lookup("cache"))
-		//builder.BindPFlag("clean.-testcache", cmd.Flags().Lookup("testcache"))
-		//builder.BindPFlag("clean.-modcache", cmd.Flags().Lookup("modcache"))
-		//builder.BindPFlag("clean.-fuzzcache", cmd.Flags().Lookup("fuzzcache"))
-		return boot.NewExecutor().Run(builder, args...)
+		boot.BindFlag(boot.Clean, "-cache", cmd.Flags().Lookup("cache"))
+		boot.BindFlag(boot.Clean, "-testcache", cmd.Flags().Lookup("testcache"))
+		boot.BindFlag(boot.Clean, "-modcache", cmd.Flags().Lookup("modcache"))
+		boot.BindFlag(boot.Clean, "-fuzzcache", cmd.Flags().Lookup("fuzzcache"))
+		boot.BindFlag(boot.Lint, "all", cmd.Flags().Lookup("scanAll"))
+		return builder.Run(boot.ToCommand(args...)...)
 	},
 }
 
 func init() {
 	var boolValue bool
-	// var stringValue string
+
 	runCmd.Flags().BoolVarP(&boolValue, "cache", "c", false, "remove the entire go build cache")
 	runCmd.Flags().BoolVarP(&boolValue, "testcache", "t", false, "expire all test results")
 	runCmd.Flags().BoolVarP(&boolValue, "modcache", "m", false, "remove the entire module download cache")
 	runCmd.Flags().BoolVarP(&boolValue, "fuzzcache", "f", false, "remove the entire module download cache")
 
-	// runCmd.Flags().StringVarP(&stringValue, "new-from-head", "n", true, "only scan issues from new code(changed code)")
-	// runCmd.Flags().StringVar(&fuzzcache, "fix", "x", true, "only scan issues from new code(changed code)")
+	runCmd.Flags().BoolVarP(&boolValue, "scanAll", "a", false, "Default only scan changed files, use -a to scan all files")
 
 	rootCmd.AddCommand(runCmd)
 }

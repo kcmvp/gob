@@ -3,12 +3,14 @@ package boot
 import (
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
+	"github.com/samber/lo"
 	"github.com/spf13/viper"
 	"golang.org/x/mod/modfile"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -16,10 +18,7 @@ const (
 	targetDir = "target"
 )
 
-type Action func(project Project, command string, flags ...string) error
-type Mapper func(command string) []Action
-
-var _ Project = (*DefaultProject)(nil)
+type Mapper func() map[Command][]Action
 
 type Project interface {
 	GitHome() string
@@ -28,29 +27,30 @@ type Project interface {
 	RootDir() string
 	Config() *viper.Viper
 	SaveConfig(key, value string)
-	Mapper(cmd string) []Action
-	Initializer() string
+	Run(commands ...Command) error
+	Mapper() map[Command][]Action
+	Initializer() Command
 }
+
+var _ Project = (*DefaultProject)(nil)
 
 type DefaultProject struct {
-	root       string
-	mapper     Mapper
-	cfg        *viper.Viper
-	initStacks []string
+	root        string
+	cfg         *viper.Viper
+	initializer Command
+	mapper      Mapper
 }
 
-func (project *DefaultProject) Initializer() string {
-	for _, initializer := range project.initStacks {
-		actions := project.mapper(initializer)
-		if len(actions) > 0 {
-			return initializer
-		}
-	}
-	return ""
+func (project *DefaultProject) Mapper() map[Command][]Action {
+	return project.mapper()
 }
 
-func (project *DefaultProject) Mapper(cmd string) []Action {
-	return project.mapper(cmd)
+func (project *DefaultProject) Initializer() Command {
+	return project.initializer
+}
+
+func (project *DefaultProject) Run(commands ...Command) error {
+	return run(project, commands...)
 }
 
 func (project *DefaultProject) GitHome() string {
@@ -70,6 +70,7 @@ func (project *DefaultProject) RootDir() string {
 	return project.root
 }
 
+// NewProject @todo optimize project initialization
 func NewProject(root string, mapper Mapper) DefaultProject {
 	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
@@ -81,18 +82,27 @@ func NewProject(root string, mapper Mapper) DefaultProject {
 	}
 	project := DefaultProject{
 		root,
-		mapper,
 		viper.New(),
-		[]string{},
+		none,
+		mapper,
 	}
 	pc := make([]uintptr, 15)   //nolint
 	n := runtime.Callers(2, pc) //nolint
 	frames := runtime.CallersFrames(pc[:n])
 	var frame runtime.Frame
 	more := true
+	initializers := []Command{PreCommit, CommitMsg, PrePush}
 	for more {
 		frame, more = frames.Next()
-		project.initStacks = append(project.initStacks, filepath.Base(frame.File))
+		c, ok := lo.Find(initializers, func(command Command) bool {
+			return filepath.Base(frame.File) == string(command)
+		})
+		if ok {
+			project.initializer = c
+			h := strings.TrimRight(string(c), ".go")
+			log.Printf("Hook %s is triggered \n", strings.ReplaceAll(h, "_", "-"))
+			break
+		}
 	}
 	return project
 }

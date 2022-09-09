@@ -4,6 +4,7 @@ import (
 	"github.com/kcmvp/gob/boot"
 	"github.com/samber/lo"
 	"strings"
+	"sync"
 )
 
 var _ boot.Project = (*Builder)(nil)
@@ -13,32 +14,39 @@ type Builder struct {
 	*buildOption
 }
 
-var builderActions = func(cmdName string) []boot.Action {
-	acm := map[string][]boot.Action{
-		"pre_commit.go": {cleanAction, lintAction},
-		"commit_msg.go": {commitMsgAction, testAction},
-		"pre_push.go":   {cleanAction, testAction},
-		"builder":       {createDirAction, genBuilder},
-		"githook":       {createDirAction, getHook},
-		"linter":        {createDirAction, setupLinter},
-		"clean":         {cleanAction, getHook},
-		"lint":          {createDirAction, getHook, lintAction},
-		"test":          {createDirAction, getHook, testAction},
-		"build":         {createDirAction, getHook, buildAction},
-	}
-	return acm[cmdName]
-}
-
 func HookMap() map[string]string {
 	return lo.KeyBy([]string{"pre-commit", "commit-msg", "pre-push"}, func(v string) string {
 		return strings.ReplaceAll(v, "-", "_")
 	})
 }
 
+var (
+	instance *Builder
+	once     sync.Once
+)
+
+// NewBuilder @todo refactor system can detect the root directory automatically
 func NewBuilder(root string) *Builder {
-	builder := &Builder{
-		boot.NewProject(root, builderActions),
-		defaultOption(),
+	once.Do(func() {
+		instance = &Builder{
+			boot.NewProject(root, mapper),
+			defaultOption(),
+		}
+	})
+	return instance
+}
+
+var mapper = func() map[boot.Command][]boot.Action {
+	return map[boot.Command][]boot.Action{
+		boot.PreCommit:    {CleanAction, LintAction},
+		boot.CommitMsg:    {CommitMsgAction, TestAction},
+		boot.PrePush:      {CleanAction, TestAction},
+		boot.SetupBuilder: {CreateDirAction, GenBuilder},
+		boot.SetupHook:    {CreateDirAction, GenHook},
+		boot.SetupLinter:  {CreateDirAction, SetupLinter},
+		boot.Clean:        {CleanAction, GenHook},
+		boot.Lint:         {CreateDirAction, GenHook, LintAction},
+		boot.Test:         {CreateDirAction, GenHook, TestAction},
+		boot.Build:        {CreateDirAction, GenHook, BuildAction},
 	}
-	return builder
 }

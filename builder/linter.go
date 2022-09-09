@@ -59,7 +59,7 @@ var linterVersion = func(name string) (string, string) {
 }
 
 // nolint
-func (linter *Linter) scan(builder *Builder, flags ...string) error {
+func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	ver := builder.Config().GetString(linter.CfgVerKey())
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
@@ -71,8 +71,8 @@ func (linter *Linter) scan(builder *Builder, flags ...string) error {
 	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
 	//@todo add the flags at the first place
-	hasStarter := len(builder.Initializer()) > 0
-	if hasStarter {
+	hasInitializer := len(builder.Initializer()) > 0
+	if hasInitializer || !boot.GetFlag[bool](command, "all") {
 		args = append(args, "--new-from-rev", "HEAD~")
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
@@ -140,7 +140,7 @@ func (linter *Linter) scan(builder *Builder, flags ...string) error {
 	log.Printf("lint report is generated at %s", report)
 	if issues > 0 {
 		msg := fmt.Sprintf("total %d linter issues are found", issues)
-		if hasStarter {
+		if hasInitializer {
 			return errors.New(msg)
 		} else {
 			log.Println(color.YellowString(msg))

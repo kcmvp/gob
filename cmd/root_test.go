@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -33,36 +34,28 @@ func (s *CmdTestSuite) SetupSuite() {
 	}
 }
 
-func (s *CmdTestSuite) TearDownSuite() {
-	// revert all the changes in th file
-}
-
 func TestCmdTestSuit(t *testing.T) {
 	suite.Run(t, new(CmdTestSuite))
 }
 
 func (s *CmdTestSuite) TestSetupBuilder() {
 	builder := filepath.Join(s.builder.ScriptDir(), "builder.go")
-	os.Remove(builder)
-	require.NoFileExists(s.T(), builder)
+	_, err := os.Stat(builder)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
 	rootCmd.SetArgs([]string{"setup", "builder"})
-	err := rootCmd.Execute()
-	require.NoError(s.T(), err)
-	rootCmd.SetArgs([]string{"setup", "builder"})
 	err = rootCmd.Execute()
-	require.NoError(s.T(), err)
-	require.FileExists(s.T(), builder)
+	if err == nil {
+		require.NoError(s.T(), err, "should create builder.go successfully")
+	} else {
+		require.ErrorIs(s.T(), err, os.ErrExist, "should get file exists error")
+	}
 }
 
 func (s *CmdTestSuite) TestSetupHook() {
 
-	for k, v := range builder.HookMap() {
-		gf := filepath.Join(s.builder.ScriptDir(), fmt.Sprintf("%s.go", k))
-		err := os.Remove(gf)
-		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
-		err = os.Remove(filepath.Join(s.builder.GitHome(), "hooks", v))
+	for _, v := range builder.HookMap() {
+		err := os.Remove(filepath.Join(s.builder.GitHome(), "hooks", v))
 		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
 	}
 
@@ -88,16 +81,62 @@ func (s *CmdTestSuite) TestSetupLint() {
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), s.builder.Config().GetString("toolset.golangci-lint"), "v1.49.0")
+	require.Equal(s.T(), boot.GetFlag[string]("linter.version"), "v1.49.0")
+}
+
+func (s *CmdTestSuite) TestSetupLintWithLatest() {
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs([]string{"setup", "linter"})
+	err := rootCmd.Execute()
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), s.builder.Config().GetString("toolset.golangci-lint"), "v1.49.0")
+	require.Equal(s.T(), boot.GetFlag[string]("linter.version"), "latest")
 }
 
 func (s *CmdTestSuite) TestRunLint() {
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"run", "lint"})
-	err := rootCmd.Execute()
-	require.Error(s.T(), err)
+	tests := []struct {
+		name   string
+		flags  []string
+		result bool
+	}{
+		{
+			"changed",
+			[]string{"run", "lint"},
+			false,
+		}, {
+			"all",
+			[]string{"run", "lint", "-a"},
+			true,
+		},
+	}
+	for _, test := range tests {
+		s.T().Run(test.name, func(t *testing.T) {
+			html := filepath.Join(s.builder.TargetDir(), "golangci-lint.html")
+			out := filepath.Join(s.builder.TargetDir(), "golangci-lint.out")
+			err := os.Remove(html)
+			if err != nil {
+				require.ErrorIs(s.T(), err, os.ErrNotExist)
+			}
+			err = os.Remove(out)
+			if err != nil {
+				require.ErrorIs(s.T(), err, os.ErrNotExist)
+			}
+			b := bytes.NewBufferString("")
+			rootCmd.SetOut(b)
+			rootCmd.SetArgs(test.flags)
+			err = rootCmd.Execute()
+			require.NoError(s.T(), err)
+			require.Equal(s.T(), boot.GetFlag[bool]("lint.all"), test.result)
+			require.Equal(t, len(boot.AllKeys()), 5)
 
-	// @todo flags
+			_, err = os.Stat(html)
+			require.NoError(s.T(), err)
+			_, err = os.Stat(out)
+			require.NoError(s.T(), err)
+
+		})
+	}
 }
 
 func (s *CmdTestSuite) TestDummy() {

@@ -4,74 +4,110 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/samber/lo"
-	"github.com/spf13/viper"
 	"log"
-	"math"
-	"strings"
 )
 
-type Executor struct {
-	*viper.Viper
+type Command string
+
+const (
+	none         Command = "_"
+	Clean        Command = "clean"
+	Build        Command = "build"
+	Test         Command = "test"
+	Lint         Command = "lint"
+	SetupBuilder Command = "builder"
+	SetupLinter  Command = "linter"
+	SetupHook    Command = "githook"
+	PreCommit    Command = "pre_commit.go"
+	CommitMsg    Command = "commit_msg.go"
+	PrePush      Command = "pre_push.go"
+)
+
+func (command Command) Name() string {
+	return string(command)
 }
 
-func NewExecutor() *Executor {
-	executor := &Executor{
-		viper.New(),
-	}
-	return executor
-}
-
-func (executor *Executor) Run(project Project, commands ...string) error {
-	promote := false
-	lo.ForEach(executor.AllKeys(), func(v string, _ int) {
-		if !strings.Contains(v, ".") {
-			log.Println(color.YellowString("Flag %s does not have command code as prefix", v))
-			promote = true
-		}
-	})
-	if promote {
-		log.Println(color.YellowString("Flag should follow {command code}.{flag} format"))
-	}
-	var cc []string
-	starter := project.Initializer()
-	if len(starter) > 0 {
-		cc = append(cc, starter)
-	} else {
-		cc = commands
-	}
-	for _, command := range cc {
-		for _, action := range project.Mapper(command) {
-			err := action(project, command, executor.Flags(command)...)
-			if err != nil {
-				log.Println(color.RedString("Failed to execute the command %s:%s", command, err.Error()))
-				return err
-			}
-		}
-	}
+func ToCommand(commands ...string) []Command {
 
 	return nil
 }
 
-func (executor *Executor) Flags(command string) []string {
-	prefix := fmt.Sprintf("%s.", command)
-	args := lo.FilterMap(executor.AllKeys(), func(k string, _ int) (string, bool) {
-		if strings.HasPrefix(k, prefix) {
-			switch v := executor.Get(k).(type) {
-			case bool:
-				if v {
-					return "", true
-				}
-			case string, int:
-				f1 := lo.Substring(k, len(prefix), math.MaxInt)
-				return fmt.Sprintf("%s %s", f1, v), true
-			}
-			return "", false
-		} else {
-			return "", false
+func (command Command) ValidFlags() []string {
+	flagMap := map[Command][]string{
+		SetupBuilder: []string{},
+		SetupHook:    []string{},
+		SetupLinter:  []string{"version"},
+		Clean:        []string{"-cache", "-testcache", "-modcache", "-fuzzcache"},
+		Lint:         []string{},
+		Test:         []string{},
+		Build:        []string{},
+	}
+	return flagMap[command]
+}
+
+type (
+	Action func(project Project, command Command) error
+)
+
+var executor *ExecutorContext
+
+type ExecutorContext struct {
+	flags map[string]interface{}
+}
+
+func init() {
+	executor = &ExecutorContext{
+		map[string]interface{}{},
+	}
+}
+
+func AllKeys() []string {
+	//@todo don't expose this method
+	return lo.Keys(executor.flags)
+}
+
+func flagName(command Command, flag string) string {
+	return fmt.Sprintf("%s.%s", command, flag)
+}
+
+func GetFlag[T any](command Command, flag string) T {
+	v, _ := executor.flags[flagName(command, flag)].(T)
+	return v
+}
+
+func BindFlag(command Command, flag string, value interface{}) {
+	if !lo.Contains(command.ValidFlags(), flag) {
+		log.Fatalln(color.RedString("Invalid flag: %s for command: %s", flag, command))
+	}
+	executor.flags[flagName(command, flag)] = value
+}
+
+func run(project Project, commands ...Command) error {
+
+	var ccs []Command
+	if project.Initializer() != none {
+		ccs = append(ccs, project.Initializer())
+	} else {
+		ccs = commands
+	}
+	lo.ForEach(commands, func(c Command, _ int) {
+		if !lo.Contains(lo.Keys(project.Mapper()), c) {
+			log.Fatalln(color.RedString("Invalid command: %s for %T", c, project))
 		}
 	})
-	if len(args) == 0 {
-		log.Println(color.YellowString("No flags for command: %s", command))
+
+	var err error
+	lo.EveryBy(commands, func(command Command) bool {
+		return lo.EveryBy(project.Mapper()[command], func(action Action) bool {
+			err = action(project, command)
+			if err != nil {
+				err = fmt.Errorf("failed to execute the command %s:%w", command, err)
+			}
+			return err == nil
+		})
+	})
+	if err == nil {
+		log.Println("Commands run successfully")
 	}
-	return args
+	return err
 }
