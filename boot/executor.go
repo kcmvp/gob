@@ -24,14 +24,9 @@ func init() {
 	}
 }
 
-func AllKeys() []string {
-	//@todo don't expose this method
-	return lo.Keys(executor.flags)
-}
-
 func AllFlags(command Command) []string {
 	return lo.FilterMap(lo.Keys(executor.flags), func(flag string, _ int) (string, bool) {
-		return flag, strings.HasPrefix(flag, fmt.Sprintf("%s.", command.Name()))
+		return strings.TrimLeft(flag, fmt.Sprintf("%s.", command.Name())), strings.HasPrefix(flag, fmt.Sprintf("%s.", command.Name()))
 	})
 }
 

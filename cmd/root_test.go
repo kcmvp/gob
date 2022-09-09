@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -128,9 +131,11 @@ func (s *CmdTestSuite) TestRunLint() {
 			rootCmd.SetOut(b)
 			rootCmd.SetArgs(test.flags)
 			err = rootCmd.Execute()
-			require.NoError(s.T(), err)
+			if err != nil {
+				require.True(t, strings.Contains(err.Error(), "linter issues are found"))
+			}
 			require.Equal(s.T(), boot.GetFlag[bool](boot.Lint, "all"), test.result)
-			require.Equal(t, len(boot.AllKeys()), 5)
+			require.Equal(t, boot.AllFlags(boot.Lint), []string{"all"})
 
 			_, err = os.Stat(html)
 			require.NoError(s.T(), err)
@@ -141,9 +146,84 @@ func (s *CmdTestSuite) TestRunLint() {
 	}
 }
 
-func (s *CmdTestSuite) TestDummy() {
-	require.Equal(s.T(), 1, 2)
+func (s *CmdTestSuite) TestCleanWithCache() {
+	tests := []struct {
+		name     string
+		flags    []string
+		trueFlag string
+	}{
+		{
+			"cleanCache",
+			[]string{"run", boot.Clean.Name(), "--cache"},
+			"-cache",
+		},
+		{
+			"cleanCache_short",
+			[]string{"run", boot.Clean.Name(), "-c"},
+			"-cache",
+		},
+	}
+	validFlags := []string{"-cache", "-testcache", "-modcache", "-fuzzcache"}
+	sort.Strings(validFlags)
+	for _, test := range tests {
+		s.T().Run(test.name, func(t *testing.T) {
+			b := bytes.NewBufferString("")
+			rootCmd.SetOut(b)
+			rootCmd.SetArgs(test.flags)
+			err := rootCmd.Execute()
+			require.NoError(t, err)
+			lo.ForEach([]string{"-cache", "-testcache", "-modcache", "-fuzzcache"}, func(flag string, _ int) {
+				value := boot.GetFlag[bool](boot.Clean, flag)
+				if flag == test.trueFlag {
+					require.Equal(s.T(), true, value)
+				} else {
+					require.Equal(s.T(), false, value)
+				}
+			})
+			expFlags := boot.AllFlags(boot.Clean)
+			sort.Strings(expFlags)
+			require.Equal(t, validFlags, expFlags)
+		})
+	}
 }
 
-//@todo test case with flags
-//@todo lint test with flags
+func (s *CmdTestSuite) TestCleanWithCacheAndMode() {
+	tests := []struct {
+		name      string
+		flags     []string
+		trueFlags []string
+	}{
+		{
+			"cleanCache",
+			[]string{"run", boot.Clean.Name(), "--cache", "--testcache"},
+			[]string{"-cache", "-testcache"},
+		},
+		{
+			"cleanCache_short",
+			[]string{"run", boot.Clean.Name(), "-c", "-t"},
+			[]string{"-cache", "-testcache"},
+		},
+	}
+	validFlags := []string{"-cache", "-testcache", "-modcache", "-fuzzcache"}
+	sort.Strings(validFlags)
+	for _, test := range tests {
+		s.T().Run(test.name, func(t *testing.T) {
+			b := bytes.NewBufferString("")
+			rootCmd.SetOut(b)
+			rootCmd.SetArgs(test.flags)
+			err := rootCmd.Execute()
+			require.NoError(t, err)
+			lo.ForEach([]string{"-cache", "-testcache", "-modcache", "-fuzzcache"}, func(flag string, _ int) {
+				value := boot.GetFlag[bool](boot.Clean, flag)
+				if lo.Contains(test.trueFlags, flag) {
+					require.Equal(s.T(), true, value)
+				} else {
+					require.Equal(s.T(), false, value)
+				}
+			})
+			expFlags := boot.AllFlags(boot.Clean)
+			sort.Strings(expFlags)
+			require.Equal(t, validFlags, expFlags)
+		})
+	}
+}
