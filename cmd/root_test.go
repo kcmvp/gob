@@ -151,16 +151,19 @@ func (s *CmdTestSuite) TestCleanWithCache() {
 		name     string
 		flags    []string
 		trueFlag string
+		execCtx  string
 	}{
 		{
 			"cleanCache",
 			[]string{"run", boot.Clean.Name(), "--cache"},
 			"-cache",
+			"go clean -cache",
 		},
 		{
 			"cleanCache_short",
 			[]string{"run", boot.Clean.Name(), "-c"},
 			"-cache",
+			"go clean -cache",
 		},
 	}
 	validFlags := []string{"-cache", "-testcache", "-modcache", "-fuzzcache"}
@@ -183,6 +186,7 @@ func (s *CmdTestSuite) TestCleanWithCache() {
 			expFlags := boot.AllFlags(boot.Clean)
 			sort.Strings(expFlags)
 			require.Equal(t, validFlags, expFlags)
+			require.Equal(t, test.execCtx, boot.GetExecCtx(boot.Clean))
 		})
 	}
 }
@@ -192,16 +196,19 @@ func (s *CmdTestSuite) TestCleanWithCacheAndMode() {
 		name      string
 		flags     []string
 		trueFlags []string
+		execCtx   string
 	}{
 		{
 			"cleanCache",
 			[]string{"run", boot.Clean.Name(), "--cache", "--testcache"},
 			[]string{"-cache", "-testcache"},
+			"go clean -cache -testcache",
 		},
 		{
 			"cleanCache_short",
 			[]string{"run", boot.Clean.Name(), "-c", "-t"},
 			[]string{"-cache", "-testcache"},
+			"go clean -cache -testcache",
 		},
 	}
 	validFlags := []string{"-cache", "-testcache", "-modcache", "-fuzzcache"}
@@ -224,6 +231,20 @@ func (s *CmdTestSuite) TestCleanWithCacheAndMode() {
 			expFlags := boot.AllFlags(boot.Clean)
 			sort.Strings(expFlags)
 			require.Equal(t, validFlags, expFlags)
+			require.Equal(t, test.execCtx, boot.GetExecCtx(boot.Clean))
 		})
 	}
+}
+
+func (s *CmdTestSuite) TestTestProject() {
+	if _, ok := os.LookupEnv("callFromTest"); ok {
+		return
+	}
+	os.Setenv("callFromTest", "1")
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs([]string{"run", boot.Test.Name()})
+	err := rootCmd.Execute()
+	require.NoError(s.T(), err)
+
 }

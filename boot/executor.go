@@ -1,6 +1,7 @@
 package boot
 
 import (
+	"context"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/samber/lo"
@@ -16,11 +17,20 @@ var executor *Executor
 
 type Executor struct {
 	flags map[string]interface{}
+	ctx   context.Context
+}
+
+func NewExecutor() *Executor {
+	return &Executor{
+		map[string]interface{}{},
+		context.Background(),
+	}
 }
 
 func init() {
 	executor = &Executor{
 		map[string]interface{}{},
+		context.Background(),
 	}
 }
 
@@ -44,6 +54,13 @@ func BindFlag(command Command, flag string, value interface{}) {
 		log.Fatalln(color.RedString("Invalid flag '%s' for command: %s", flag, command))
 	}
 	executor.flags[flagName(command, flag)] = value
+}
+
+func SaveExecCtx(command Command, value string) {
+	executor.ctx = context.WithValue(executor.ctx, command.CtxKey(), value)
+}
+func GetExecCtx(command Command) string {
+	return executor.ctx.Value(command.CtxKey()).(string)
 }
 
 func Run(project Project, commands ...Command) error {

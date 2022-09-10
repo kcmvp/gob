@@ -1,6 +1,9 @@
 package boot
 
-import "github.com/samber/lo"
+import (
+	"fmt"
+	"github.com/samber/lo"
+)
 
 type Command string
 
@@ -20,6 +23,9 @@ const (
 
 func (command Command) Name() string {
 	return string(command)
+}
+func (command Command) CtxKey() string {
+	return fmt.Sprintf("%s.ctx", command.Name())
 }
 
 func ToCommands(commands ...string) []Command {

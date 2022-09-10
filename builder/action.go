@@ -99,6 +99,7 @@ var cleanAction boot.Action = func(project boot.Project, command boot.Command) e
 	log.Printf("Cleaning project with flags: %s\n", strings.Join(flags, ","))
 	args := append([]string{command.Name()}, flags...)
 	output, err := exec.Command("go", args...).CombinedOutput()
+	boot.SaveExecCtx(command, fmt.Sprintf("%s %s", "go", strings.Join(args, " ")))
 	msg := string(output)
 	if err != nil {
 		msg = color.RedString(string(output))

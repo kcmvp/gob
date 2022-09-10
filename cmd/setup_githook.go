@@ -18,7 +18,7 @@ var githookCmd = &cobra.Command{
 	Long:  `Setup git hooks for project, which include: commit_message, pre_push`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root, _ := os.Getwd()
-		return boot.Run(builder.NewBuilder(root), boot.SetupBuilder)
+		return boot.Run(builder.NewBuilder(root), boot.SetupHook)
 	},
 }
 
