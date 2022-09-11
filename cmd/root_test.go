@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -21,6 +22,7 @@ import (
 type CmdTestSuite struct {
 	suite.Suite
 	builder *builder.Builder
+	l       sync.Mutex
 }
 
 func (s *CmdTestSuite) SetupSuite() {
@@ -39,6 +41,14 @@ func (s *CmdTestSuite) SetupSuite() {
 
 func TestCmdTestSuit(t *testing.T) {
 	suite.Run(t, new(CmdTestSuite))
+}
+
+func (s *CmdTestSuite) BeforeTest(suiteName, testName string) {
+	s.l.Lock()
+}
+
+func (s *CmdTestSuite) AfterTest(suiteName, testName string) {
+	s.l.Unlock()
 }
 
 func (s *CmdTestSuite) TestSetupBuilder() {
@@ -80,23 +90,34 @@ func (s *CmdTestSuite) TestSetupHook() {
 }
 
 func (s *CmdTestSuite) TestSetupLint() {
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"setup", boot.SetupLinter.Name(), "-v", "v1.49.0"})
-	err := rootCmd.Execute()
-	require.NoError(s.T(), err)
-	require.Equal(s.T(), s.builder.Config().GetString("toolset.golangci-lint"), "v1.49.0")
-	require.Equal(s.T(), "v1.49.0", boot.GetFlag[string](boot.SetupLinter, "version"))
-}
-
-func (s *CmdTestSuite) TestSetupLintWithLatest() {
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"setup", boot.SetupLinter.Name()})
-	err := rootCmd.Execute()
-	require.NoError(s.T(), err)
-	require.Equal(s.T(), s.builder.Config().GetString("toolset.golangci-lint"), "v1.49.0")
-	require.Equal(s.T(), boot.LatestVer, boot.GetFlag[string](boot.SetupLinter, "version"))
+	tests := []struct {
+		name  string
+		flags []string
+		expV  string
+	}{
+		{
+			"withVersion",
+			[]string{"setup", boot.SetupLinter.Name(), "-v", "v1.49.0"},
+			"v1.49.0",
+		},
+		/*
+			{
+				"noVersion",
+				[]string{"setup", boot.SetupLinter.Name()},
+				boot.LatestVer,
+			},
+		*/
+	}
+	for _, test := range tests {
+		s.T().Run(test.name, func(t *testing.T) {
+			b := bytes.NewBufferString("")
+			rootCmd.SetOut(b)
+			rootCmd.SetArgs(test.flags)
+			err := rootCmd.Execute()
+			require.NoError(s.T(), err)
+			require.Equal(s.T(), test.expV, boot.GetFlag[string](boot.SetupLinter, "version"))
+		})
+	}
 }
 
 func (s *CmdTestSuite) TestRunLint() {
@@ -104,15 +125,18 @@ func (s *CmdTestSuite) TestRunLint() {
 		name   string
 		flags  []string
 		result bool
+		ctx    string
 	}{
 		{
 			"changed",
 			[]string{"run", boot.Lint.Name()},
 			false,
+			"run -v --out-format json ./... --new-from-rev HEAD~ golangci-lint-v1-49-0",
 		}, {
 			"all",
 			[]string{"run", boot.Lint.Name(), "-a"},
 			true,
+			"run -v --out-format json ./... golangci-lint-v1-49-0",
 		},
 	}
 	for _, test := range tests {
@@ -134,14 +158,14 @@ func (s *CmdTestSuite) TestRunLint() {
 			if err != nil {
 				require.True(t, strings.Contains(err.Error(), "linter issues are found"))
 			}
-			require.Equal(s.T(), boot.GetFlag[bool](boot.Lint, "all"), test.result)
+			require.Equal(t, boot.GetFlag[bool](boot.Lint, "all"), test.result)
 			require.Equal(t, boot.AllFlags(boot.Lint), []string{"all"})
 
 			_, err = os.Stat(html)
-			require.NoError(s.T(), err)
+			require.NoError(t, err)
 			_, err = os.Stat(out)
-			require.NoError(s.T(), err)
-
+			require.NoError(t, err)
+			require.Equal(t, test.ctx, boot.GetExecCtx(boot.Lint))
 		})
 	}
 }
@@ -155,15 +179,15 @@ func (s *CmdTestSuite) TestCleanWithCache() {
 	}{
 		{
 			"cleanCache",
-			[]string{"run", boot.Clean.Name(), "--cache"},
-			"-cache",
-			"go clean -cache",
+			[]string{"run", boot.Clean.Name(), "--testcache"},
+			"-testcache",
+			"go clean -testcache",
 		},
 		{
 			"cleanCache_short",
-			[]string{"run", boot.Clean.Name(), "-c"},
-			"-cache",
-			"go clean -cache",
+			[]string{"run", boot.Clean.Name(), "-t"},
+			"-testcache",
+			"go clean -testcache",
 		},
 	}
 	validFlags := []string{"-cache", "-testcache", "-modcache", "-fuzzcache"}
@@ -191,51 +215,6 @@ func (s *CmdTestSuite) TestCleanWithCache() {
 	}
 }
 
-func (s *CmdTestSuite) TestCleanWithCacheAndMode() {
-	tests := []struct {
-		name      string
-		flags     []string
-		trueFlags []string
-		execCtx   string
-	}{
-		{
-			"cleanCache",
-			[]string{"run", boot.Clean.Name(), "--cache", "--testcache"},
-			[]string{"-cache", "-testcache"},
-			"go clean -cache -testcache",
-		},
-		{
-			"cleanCache_short",
-			[]string{"run", boot.Clean.Name(), "-c", "-t"},
-			[]string{"-cache", "-testcache"},
-			"go clean -cache -testcache",
-		},
-	}
-	validFlags := []string{"-cache", "-testcache", "-modcache", "-fuzzcache"}
-	sort.Strings(validFlags)
-	for _, test := range tests {
-		s.T().Run(test.name, func(t *testing.T) {
-			b := bytes.NewBufferString("")
-			rootCmd.SetOut(b)
-			rootCmd.SetArgs(test.flags)
-			err := rootCmd.Execute()
-			require.NoError(t, err)
-			lo.ForEach([]string{"-cache", "-testcache", "-modcache", "-fuzzcache"}, func(flag string, _ int) {
-				value := boot.GetFlag[bool](boot.Clean, flag)
-				if lo.Contains(test.trueFlags, flag) {
-					require.Equal(s.T(), true, value)
-				} else {
-					require.Equal(s.T(), false, value)
-				}
-			})
-			expFlags := boot.AllFlags(boot.Clean)
-			sort.Strings(expFlags)
-			require.Equal(t, validFlags, expFlags)
-			require.Equal(t, test.execCtx, boot.GetExecCtx(boot.Clean))
-		})
-	}
-}
-
 func (s *CmdTestSuite) TestTestProject() {
 	if _, ok := os.LookupEnv("callFromTest"); ok {
 		return
@@ -246,5 +225,4 @@ func (s *CmdTestSuite) TestTestProject() {
 	rootCmd.SetArgs([]string{"run", boot.Test.Name()})
 	err := rootCmd.Execute()
 	require.NoError(s.T(), err)
-
 }

@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/boot"
@@ -71,11 +72,14 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
 	changeOnly := builder.Initializer() != boot.None || !boot.GetFlag[bool](command, "all")
+	flags := boot.AllFlags(command)
+	log.Println(flags)
 	if changeOnly {
 		args = append(args, "--new-from-rev", "HEAD~")
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
 	log.Printf("Scan with %s-%s", linter.Cmd(), ver)
+	boot.SaveExecCtx(command, strings.Join(append(args, vCmd), " "))
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -89,10 +93,12 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to execute linter command: %w", err)
 	}
-	report := filepath.Join(builder.TargetDir(), linter.report)
+
+	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
+	defer rename(builder.TargetDir(), suffix)
 	sc := bufio.NewScanner(stderr)
-	output, err := os.OpenFile(filepath.Join(builder.TargetDir(), linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
-	defer output.Close()                                                                                                            //nolint                                                                                    //nolint
+	//output, err := os.OpenFile(filepath.Join(builder.TargetDir(), linter.output, suffix), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
+	output, err := os.Create(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.output, suffix)))
 	if err != nil {
 		return fmt.Errorf("failed to create linter output file: %w", err)
 	}
@@ -103,6 +109,10 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 			return fmt.Errorf("failed to create linter output: %w", err)
 		}
 		log.Println(tmpLine)
+	}
+	err = output.Close()
+	if err != nil {
+		return fmt.Errorf("failed to create linter output file: %w", err)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get lint standard out: %w", err)
@@ -127,8 +137,9 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse lint report template: %w", err)
 	}
+
+	report := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.report, suffix))
 	f, err := os.Create(report)
-	defer f.Close() //nolint
 	if err != nil {
 		return fmt.Errorf("failed to create lint report: %w", err)
 	}
@@ -147,5 +158,6 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	} else {
 		log.Println(color.GreenString("no linter issues are found"))
 	}
+	f.Close()
 	return nil
 }

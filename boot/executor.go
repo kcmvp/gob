@@ -20,17 +20,11 @@ type Executor struct {
 	ctx   context.Context
 }
 
-func NewExecutor() *Executor {
-	return &Executor{
-		map[string]interface{}{},
-		context.Background(),
-	}
-}
-
 func init() {
 	executor = &Executor{
-		map[string]interface{}{},
-		context.Background(),
+		flags: map[string]interface{}{},
+		//sync.Map{},
+		ctx: context.Background(),
 	}
 }
 

@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/boot"
@@ -108,7 +109,7 @@ var cleanAction boot.Action = func(project boot.Project, command boot.Command) e
 	}
 	log.Printf("Clean directory %s \n", project.TargetDir())
 	err = filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
-		if err == nil && !d.IsDir() {
+		if err == nil && !d.IsDir() && !strings.HasSuffix(d.Name(), ".tmp") {
 			err = os.Remove(path)
 			if err != nil {
 				log.Println(color.YellowString("failed to delete %s:%s", path, err.Error()))
@@ -139,7 +140,9 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
-	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), testCoverOut), "./..."}
+	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
+	defer rename(builder.TargetDir(), suffix)
+	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "./..."}
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
@@ -184,19 +187,34 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 	if err != nil {
 		return fmt.Errorf("failed to marshal package coverage report:%w", err)
 	}
-	err = os.WriteFile(filepath.Join(builder.TargetDir(), testPackageCover), data, os.ModePerm)
+	err = os.WriteFile(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testPackageCover, suffix)), data, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to save package coverage report:%w", err)
 	}
 	//  go tool cover -func ./targetDir/coverage.data
-	fileCover := filepath.Join(builder.TargetDir(), testCoverReport)
-	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), testCoverOut), "-o", fileCover}
+	fileCover := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverReport, suffix))
+	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "-o", fileCover}
 	out, err := exec.Command("go", params...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s:%w", string(out), err)
 	}
 	log.Printf("coverage report is generated at %s \n", fileCover)
 	return err //nolint:wrapcheck
+}
+
+func rename(dir, suffix string) {
+	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && strings.HasSuffix(d.Name(), suffix) {
+			np := strings.TrimSuffix(path, suffix)
+			err = os.Rename(path, np)
+			if err != nil {
+				log.Println(color.YellowString("failed to rename file %s to %s: ", path, np, err.Error()))
+			}
+		} else if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err //nolint:wrapcheck
+	})
 }
 
 var buildAction boot.Action = func(builder boot.Project, command boot.Command) error {
