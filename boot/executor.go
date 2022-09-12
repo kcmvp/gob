@@ -62,17 +62,19 @@ func Run(project Project, commands ...Command) error {
 	var ccs []Command
 	if project.Initializer() != None {
 		ccs = append(ccs, project.Initializer())
+		h := strings.TrimRight(project.Initializer().Name(), ".go")
+		log.Printf("Triggered by %s\n", strings.ReplaceAll(h, "_", "-"))
 	} else {
 		ccs = commands
 	}
-	lo.ForEach(commands, func(c Command, _ int) {
+	lo.ForEach(ccs, func(c Command, _ int) {
 		if !lo.Contains(lo.Keys(project.Mapper()), c) {
 			log.Fatalln(color.RedString("Invalid command: %s for %T", c, project))
 		}
 	})
 
 	var err error
-	lo.EveryBy(commands, func(command Command) bool {
+	lo.EveryBy(ccs, func(command Command) bool {
 		return lo.EveryBy(project.Mapper()[command], func(action Action) bool {
 			err = action(project, command)
 			if err != nil {

@@ -95,21 +95,23 @@ var createDirAction boot.Action = func(project boot.Project, command boot.Comman
 }
 
 var cleanAction boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Cleaning project")
 	flags := lo.FilterMap(command.ValidFlags(), func(flag string, i int) (string, bool) {
 		return flag, boot.GetFlag[bool](command, flag)
 	})
-	log.Printf("Cleaning project with flags: %s\n", strings.Join(flags, ","))
-	args := append([]string{command.Name()}, flags...)
-	output, err := exec.Command("go", args...).CombinedOutput()
-	boot.SaveExecCtx(command, fmt.Sprintf("%s %s", "go", strings.Join(args, " ")))
-	msg := string(output)
-	if err != nil {
-		msg = color.RedString(string(output))
-		log.Println(msg)
-		return err //nolint:wrapcheck
+	if len(flags) > 0 {
+		log.Printf("Flags: %s\n", strings.Join(flags, ","))
+		args := append([]string{command.Name()}, flags...)
+		output, err := exec.Command("go", args...).CombinedOutput()
+		msg := string(output)
+		if err != nil {
+			msg = color.RedString(string(output))
+			log.Println(msg)
+			return err //nolint:wrapcheck
+		}
+		boot.SaveExecCtx(command, fmt.Sprintf("%s %s", "go", strings.Join(args, " ")))
 	}
-	log.Printf("Clean directory %s \n", project.TargetDir())
-	err = filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
 		if err == nil && !d.IsDir() && !strings.HasSuffix(d.Name(), ".tmp") {
 			err = os.Remove(path)
 			if err != nil {

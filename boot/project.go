@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 )
 
 const (
@@ -94,8 +93,6 @@ func NewProject(root string, mapper Mapper) DefaultProject {
 		})
 		if ok {
 			project.initializer = c
-			h := strings.TrimRight(string(c), ".go")
-			log.Printf("Hook %s is triggered \n", strings.ReplaceAll(h, "_", "-"))
 			break
 		}
 	}
