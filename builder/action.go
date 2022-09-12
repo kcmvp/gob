@@ -44,6 +44,7 @@ var genBuilder boot.Action = func(project boot.Project, command boot.Command) er
 }
 
 var genHook boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Setup git hooks")
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
@@ -54,8 +55,8 @@ var genHook boot.Action = func(project boot.Project, command boot.Command) error
 }
 
 var setupLinter boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Setup linters")
 	linter := newLinter()
-
 	version := boot.GetFlag[string](command, "version")
 	cfgVersion := project.Config().GetString(linter.CfgVerKey())
 	if cfgVersion != version {
@@ -75,12 +76,12 @@ var setupLinter boot.Action = func(project boot.Project, command boot.Command) e
 }
 
 var createDirAction boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Creating project directories")
 	var dir string
-	// todo fix the bug
 	switch command.Name() {
-	case "gitHook", "builder":
+	case boot.SetupHook.Name(), boot.SetupBuilder.Name():
 		dir = project.ScriptDir()
-	case "lint", "test", "build":
+	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name():
 		dir = project.TargetDir()
 	}
 	if len(dir) < 1 {
@@ -127,16 +128,19 @@ var cleanAction boot.Action = func(project boot.Project, command boot.Command) e
 
 var commitMsgAction boot.Action = func(project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
+	log.Println("Validate commit message")
 	return validateCommitMsg(string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
 var lintAction boot.Action = func(project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
+	log.Println("Running linters against source code")
 	return newLinter().scan(builder, command) //nolint:wrapcheck
 }
 
 var testAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	err := os.Chdir(builder.RootDir())
+	log.Println("Running unit test")
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
