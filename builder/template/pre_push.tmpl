@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"os"
 	"path/filepath"
@@ -27,7 +28,7 @@ func main() {
 		panic("No caller information")
 	}
 	root := filepath.Dir(filepath.Dir(filename))
+	boot.Run(builder.NewBuilder(root))
 
-	builder.NewBuilder(root).Run()
 	os.Exit(0)
 }
