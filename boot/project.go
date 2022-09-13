@@ -66,7 +66,6 @@ func (project *DefaultProject) RootDir() string {
 	return project.root
 }
 
-// NewProject @todo optimize project initialization
 func NewProject(mapper Mapper) DefaultProject {
 
 	goRoot := runtime.GOROOT()

@@ -36,13 +36,13 @@ func ToCommands(commands ...string) []Command {
 
 func (command Command) ValidFlags() []string {
 	flagMap := map[Command][]string{
-		SetupBuilder: []string{},
-		SetupHook:    []string{},
-		SetupLinter:  []string{"version"},
-		Clean:        []string{"-cache", "-testcache", "-modcache", "-fuzzcache"},
-		Lint:         []string{"all"},
-		Test:         []string{},
-		Build:        []string{},
+		SetupBuilder: {},
+		SetupHook:    {},
+		SetupLinter:  {"version"},
+		Clean:        {"-cache", "-testcache", "-modcache", "-fuzzcache"},
+		Lint:         {"all"},
+		Test:         {},
+		Build:        {},
 	}
 	return flagMap[command]
 }

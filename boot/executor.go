@@ -23,8 +23,7 @@ type Executor struct {
 func init() {
 	executor = &Executor{
 		flags: map[string]interface{}{},
-		//sync.Map{},
-		ctx: context.Background(),
+		ctx:   context.Background(),
 	}
 }
 

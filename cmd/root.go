@@ -7,46 +7,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
-	"strings"
-
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
+	"os"
 )
 
 const (
 	gbt           = "github.com/kcmvp/gbt"
 	ctxModFileKey = "mod"
 )
-
-var modules = []string{"github.com/kcmvp/gbt"}
-
-func importModule(ctx context.Context, module string, update bool) {
-	f := ctx.Value(ctxModFileKey).(*modfile.File)
-	if strings.EqualFold(gbt, f.Module.Mod.Path) {
-		return
-	}
-	has := false
-	for _, require := range f.Require {
-		if has = require.Mod.Path == module; has {
-			break
-		}
-	}
-	if !has || update {
-		action := "installing"
-		if has {
-			action = "updating"
-		}
-		fmt.Printf("%s %s \n", action, module)
-		if out, err := exec.Command("go", "get", module).CombinedOutput(); err != nil {
-			fmt.Printf("failed to install module %s \n", module)
-		} else {
-			fmt.Println(string(out))
-		}
-	}
-}
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
