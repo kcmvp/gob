@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	gbt           = "github.com/kcmvp/gbt"
 	ctxModFileKey = "mod"
 )
 
