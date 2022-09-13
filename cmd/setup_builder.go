@@ -16,7 +16,7 @@ var builderCmd = &cobra.Command{
 	Short: "Setup build script for go current project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return boot.Run(builder.NewBuilder(), boot.SetupBuilder)
+		return boot.Run(builder.NewBuilder(), boot.SetupBuilder) //nolint
 	},
 }
 

@@ -18,7 +18,7 @@ var linterCmd = &cobra.Command{
 	Short: "setup linter for the project",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		boot.BindFlag(boot.SetupLinter, "version", version)
-		return boot.Run(builder.NewBuilder(), boot.SetupLinter)
+		return boot.Run(builder.NewBuilder(), boot.SetupLinter) //nolint
 	},
 }
 

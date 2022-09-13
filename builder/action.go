@@ -147,7 +147,6 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
 	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
-	defer rename(builder.TargetDir(), suffix)
 	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "./..."}
 
 	testCmd := exec.Command("go", params...)
@@ -204,7 +203,8 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 	if err != nil {
 		return fmt.Errorf("%s:%w", string(out), err)
 	}
-	log.Printf("coverage report is generated at %s \n", fileCover)
+	log.Printf("coverage report is generated at %s \n", strings.TrimSuffix(fileCover, suffix))
+	rename(builder.TargetDir(), suffix)
 	return err //nolint:wrapcheck
 }
 

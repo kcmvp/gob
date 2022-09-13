@@ -21,7 +21,8 @@ func main() {
 	}
 	fmt.Println(refs)
 
-	boot.Run(builder.NewBuilder())
-
+	if err := boot.Run(builder.NewBuilder()); err != nil {
+		os.Exit(1)
+	}
 	os.Exit(0)
 }

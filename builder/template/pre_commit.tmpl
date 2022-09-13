@@ -11,6 +11,8 @@ import (
 func main() {
 	//input, _ := os.ReadFile(os.Args[1])
 
-	boot.Run(builder.NewBuilder())
+	if err := boot.Run(builder.NewBuilder()); err != nil {
+		os.Exit(1)
+	}
 	os.Exit(0)
 }

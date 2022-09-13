@@ -86,7 +86,7 @@ func NewProject(mapper Mapper) DefaultProject {
 	initializers := []Command{PreCommit, CommitMsg, PrePush}
 	root := ""
 	initializer := None
-	for more {
+	for more { //nolint
 		frame, more = frames.Next()
 		found := lo.ContainsBy(path, func(p string) bool {
 			return strings.HasPrefix(frame.File, p)
