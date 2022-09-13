@@ -5,10 +5,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -22,12 +21,8 @@ func main() {
 	}
 	fmt.Println(refs)
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("No caller information")
+	if err := boot.Run(builder.NewBuilder()); err != nil {
+		os.Exit(1)
 	}
-	root := filepath.Dir(filepath.Dir(filename))
-
-	builder.NewBuilder(root).Run()
 	os.Exit(0)
 }

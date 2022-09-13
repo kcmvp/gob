@@ -5,8 +5,6 @@ package cmd
 
 import (
 	_ "embed"
-	"os"
-
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
@@ -16,17 +14,15 @@ var version string
 
 // linterCmd represents the linter command.
 var linterCmd = &cobra.Command{
-	Use:   "linter",
+	Use:   boot.SetupLinter.Name(),
 	Short: "setup linter for the project",
-	Run: func(cmd *cobra.Command, args []string) {
-		root, _ := os.Getwd()
-		project := builder.NewBuilder(root)
-		project.BindPFlag("version", cmd.Flags().Lookup("version"))
-		project.Run(cmd.Name())
+	RunE: func(cmd *cobra.Command, args []string) error {
+		boot.BindFlag(boot.SetupLinter, "version", version)
+		return boot.Run(builder.NewBuilder(), boot.SetupLinter) //nolint
 	},
 }
 
 func init() {
-	setupCmd.AddCommand(linterCmd)
 	linterCmd.Flags().StringVarP(&version, "version", "v", boot.LatestVer, "golangci-lint version")
+	setupCmd.AddCommand(linterCmd)
 }

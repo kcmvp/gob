@@ -11,6 +11,9 @@ import (
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "setup builder, git hook and other framework scaffold",
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
 }
 
 func init() {

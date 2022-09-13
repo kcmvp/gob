@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/samber/lo"
 	"io/fs"
 	"log"
 	"os"
@@ -13,10 +14,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/boot"
-	"github.com/samber/lo"
 )
 
 const (
@@ -28,7 +29,7 @@ const (
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var genBuilder boot.Action = func(project *boot.Project, cmd string) error {
+var genBuilder boot.Action = func(project boot.Project, command boot.Command) error {
 	log.Println("Creating project build file")
 	var err error
 	var tf []byte
@@ -42,21 +43,23 @@ var genBuilder boot.Action = func(project *boot.Project, cmd string) error {
 	return err
 }
 
-var getHook boot.Action = func(project *boot.Project, cmd string) error {
+var genHook boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Setup git hooks")
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
-	} else if cmd == "githook" {
+	} else if command.Name() == "githook" {
 		log.Println("git hooks are setup successfully")
 	}
 	return err
 }
 
-var setupLinter boot.Action = func(project *boot.Project, action string) error {
+var setupLinter boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Setup linters")
 	linter := newLinter()
-	version := project.GetString("version")
-	cfgVersion := project.GetString(linter.CfgVerKey())
-	if len(cfgVersion) > 0 {
+	version := boot.GetFlag[string](command, "version")
+	cfgVersion := project.Config().GetString(linter.CfgVerKey())
+	if cfgVersion != version {
 		version = cfgVersion
 	}
 	// to get the real version
@@ -72,13 +75,13 @@ var setupLinter boot.Action = func(project *boot.Project, action string) error {
 	return nil
 }
 
-var createDirAction boot.Action = func(project *boot.Project, cmd string) error {
+var createDirAction boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Creating project directories")
 	var dir string
-	// todo fix the bug
-	switch cmd {
-	case "gitHook", "builder":
+	switch command.Name() {
+	case boot.SetupHook.Name(), boot.SetupBuilder.Name():
 		dir = project.ScriptDir()
-	case "lint", "test", "build":
+	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name():
 		dir = project.TargetDir()
 	}
 	if len(dir) < 1 {
@@ -91,27 +94,25 @@ var createDirAction boot.Action = func(project *boot.Project, cmd string) error 
 	return err
 }
 
-var cleanAction boot.Action = func(project *boot.Project, _ string) error {
-	keys := project.AllKeys()
-	args := lo.FilterMap(keys, func(k string, _ int) (string, bool) {
-		if strings.HasPrefix(k, "clean.") && project.GetBool(k) {
-			return strings.Split(k, ".")[1], true
-		} else {
-			return "", false
-		}
+var cleanAction boot.Action = func(project boot.Project, command boot.Command) error {
+	log.Println("Cleaning project")
+	flags := lo.FilterMap(command.ValidFlags(), func(flag string, i int) (string, bool) {
+		return flag, boot.GetFlag[bool](command, flag)
 	})
-	log.Printf("Cleaning project with flags: %s\n", strings.Join(args, ","))
-	args = append([]string{"clean"}, args...)
-	output, err := exec.Command("go", args...).CombinedOutput()
-	msg := string(output)
-	if err != nil {
-		msg = color.RedString(string(output))
-		log.Println(msg)
-		return err //nolint:wrapcheck
+	if len(flags) > 0 {
+		log.Printf("Flags: %s\n", strings.Join(flags, ","))
+		args := append([]string{command.Name()}, flags...)
+		output, err := exec.Command("go", args...).CombinedOutput()
+		msg := string(output)
+		if err != nil {
+			msg = color.RedString(string(output))
+			log.Println(msg)
+			return err //nolint:wrapcheck
+		}
+		boot.SaveExecCtx(command, fmt.Sprintf("%s %s", "go", strings.Join(args, " ")))
 	}
-	log.Printf("Clean directory %s \n", project.TargetDir())
-	err = filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
-		if err == nil && !d.IsDir() {
+	err := filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && !strings.HasSuffix(d.Name(), ".tmp") {
 			err = os.Remove(path)
 			if err != nil {
 				log.Println(color.YellowString("failed to delete %s:%s", path, err.Error()))
@@ -127,24 +128,26 @@ var cleanAction boot.Action = func(project *boot.Project, _ string) error {
 	return err //nolint:wrapcheck
 }
 
-var commitMsgAction boot.Action = func(project *boot.Project, cmd string) error {
-	return validateCommitMsg(string(project.MsgPattern)) //nolint:wrapcheck
+var commitMsgAction boot.Action = func(project boot.Project, command boot.Command) error {
+	builder := project.(*Builder)
+	log.Println("Validate commit message")
+	return validateCommitMsg(string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
-var lintAction boot.Action = func(project *boot.Project, cmd string) error {
-	return newLinter().scan(project) //nolint:wrapcheck
+var lintAction boot.Action = func(project boot.Project, command boot.Command) error {
+	builder := project.(*Builder)
+	log.Println("Running linters against source code")
+	return newLinter().scan(builder, command) //nolint:wrapcheck
 }
 
-var testAction boot.Action = func(builder *boot.Project, cmd string) error {
+var testAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	err := os.Chdir(builder.RootDir())
+	log.Println("Running unit test")
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
-	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), testCoverOut), "./..."}
-	// @todo for test parameter
-	// if len(args) > 0 {
-	//	params = append(params, args...)
-	//}
+	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
+	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "./..."}
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
@@ -189,22 +192,38 @@ var testAction boot.Action = func(builder *boot.Project, cmd string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal package coverage report:%w", err)
 	}
-	err = os.WriteFile(filepath.Join(builder.TargetDir(), testPackageCover), data, os.ModePerm)
+	err = os.WriteFile(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testPackageCover, suffix)), data, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to save package coverage report:%w", err)
 	}
 	//  go tool cover -func ./targetDir/coverage.data
-	fileCover := filepath.Join(builder.TargetDir(), testCoverReport)
-	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), testCoverOut), "-o", fileCover}
+	fileCover := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverReport, suffix))
+	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "-o", fileCover}
 	out, err := exec.Command("go", params...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s:%w", string(out), err)
 	}
-	log.Printf("coverage report is generated at %s \n", fileCover)
+	log.Printf("coverage report is generated at %s \n", strings.TrimSuffix(fileCover, suffix))
+	rename(builder.TargetDir(), suffix)
 	return err //nolint:wrapcheck
 }
 
-var buildAction boot.Action = func(builder *boot.Project, cmd string) error {
+func rename(dir, suffix string) {
+	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && strings.HasSuffix(d.Name(), suffix) {
+			np := strings.TrimSuffix(path, suffix)
+			err = os.Rename(path, np)
+			if err != nil {
+				log.Println(color.YellowString("failed to rename file %s to %s: ", path, np, err.Error()))
+			}
+		} else if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err //nolint:wrapcheck
+	})
+}
+
+var buildAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")

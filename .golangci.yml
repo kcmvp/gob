@@ -27,7 +27,7 @@ linters:
     - complexity
     - error
     - format
-    - import
+#    - import // goimports would cause some issues when in Golang
     - metalinter
     - module
     - performance
@@ -36,4 +36,4 @@ linters:
     #    - test
     - unused
 issues:
-  fix: true
+  fix: false

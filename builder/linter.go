@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/boot"
@@ -59,8 +60,8 @@ var linterVersion = func(name string) (string, string) {
 }
 
 // nolint
-func (linter *Linter) scan(project *boot.Project) error {
-	ver := project.Config().GetString(linter.CfgVerKey())
+func (linter *Linter) scan(builder *Builder, command boot.Command) error {
+	ver := builder.Config().GetString(linter.CfgVerKey())
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
 	}
@@ -68,13 +69,15 @@ func (linter *Linter) scan(project *boot.Project) error {
 	if err != nil {
 		return fmt.Errorf("failed to install golangci-linter %s: %w", ver, err)
 	}
-	os.Chdir(project.RootDir())
+	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
-	if project.TriggeredByHook() {
+	changeOnly := builder.Initializer() != boot.None || !boot.GetFlag[bool](command, "all")
+	if changeOnly {
 		args = append(args, "--new-from-rev", "HEAD~")
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
 	log.Printf("Scan with %s-%s", linter.Cmd(), ver)
+	boot.SaveExecCtx(command, strings.Join(append(args, vCmd), " "))
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -88,10 +91,12 @@ func (linter *Linter) scan(project *boot.Project) error {
 	if err != nil {
 		return fmt.Errorf("failed to execute linter command: %w", err)
 	}
-	report := filepath.Join(project.TargetDir(), linter.report)
+
+	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
+	defer rename(builder.TargetDir(), suffix)
 	sc := bufio.NewScanner(stderr)
-	output, err := os.OpenFile(filepath.Join(project.TargetDir(), linter.output), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
-	defer output.Close()                                                                                                            //nolint                                                                                    //nolint
+	//output, err := os.OpenFile(filepath.Join(builder.TargetDir(), linter.output, suffix), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
+	output, err := os.Create(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.output, suffix)))
 	if err != nil {
 		return fmt.Errorf("failed to create linter output file: %w", err)
 	}
@@ -102,6 +107,10 @@ func (linter *Linter) scan(project *boot.Project) error {
 			return fmt.Errorf("failed to create linter output: %w", err)
 		}
 		log.Println(tmpLine)
+	}
+	err = output.Close()
+	if err != nil {
+		return fmt.Errorf("failed to create linter output file: %w", err)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get lint standard out: %w", err)
@@ -126,8 +135,9 @@ func (linter *Linter) scan(project *boot.Project) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse lint report template: %w", err)
 	}
+
+	report := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.report, suffix))
 	f, err := os.Create(report)
-	defer f.Close() //nolint
 	if err != nil {
 		return fmt.Errorf("failed to create lint report: %w", err)
 	}
@@ -135,17 +145,16 @@ func (linter *Linter) scan(project *boot.Project) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate lint report: %w", err)
 	}
-	log.Printf("lint report is generated at %s", report)
-	project.SaveCtx("lint.issues", issues)
+	log.Printf("lint report is generated at %s\n", strings.TrimSuffix(report, suffix))
 	if issues > 0 {
 		msg := fmt.Sprintf("total %d linter issues are found", issues)
-		if project.TriggeredByHook() {
+		log.Println(color.RedString(msg))
+		if changeOnly {
 			return errors.New(msg)
-		} else {
-			log.Println(color.YellowString(msg))
 		}
 	} else {
 		log.Println(color.GreenString("no linter issues are found"))
 	}
+	f.Close()
 	return nil
 }

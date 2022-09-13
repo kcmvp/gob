@@ -2,24 +2,50 @@ package builder
 
 import (
 	"github.com/kcmvp/gob/boot"
+	"github.com/samber/lo"
+	"strings"
+	"sync"
 )
 
-var builderActions = func(cmdName string) []boot.Action {
-	acm := map[string][]boot.Action{
-		"pre_commit.go": {cleanAction, lintAction},
-		"commit_msg.go": {commitMsgAction, testAction},
-		"pre_push.go":   {cleanAction, testAction},
-		"builder":       {createDirAction, genBuilder},
-		"githook":       {createDirAction, getHook},
-		"linter":        {createDirAction, setupLinter},
-		"clean":         {cleanAction, getHook},
-		"lint":          {createDirAction, getHook, lintAction},
-		"test":          {createDirAction, getHook, testAction},
-		"build":         {createDirAction, getHook, buildAction},
-	}
-	return acm[cmdName]
+var _ boot.Project = (*Builder)(nil)
+
+type Builder struct {
+	boot.DefaultProject
+	*buildOption
 }
 
-func NewBuilder(root string) *boot.Project {
-	return boot.NewProject(root, builderActions)
+func HookMap() map[string]string {
+	return lo.KeyBy([]string{"pre-commit", "commit-msg", "pre-push"}, func(v string) string {
+		return strings.ReplaceAll(v, "-", "_")
+	})
+}
+
+var (
+	instance *Builder
+	once     sync.Once
+)
+
+func NewBuilder() *Builder {
+	once.Do(func() {
+		instance = &Builder{
+			boot.NewProject(mapper),
+			defaultOption(),
+		}
+	})
+	return instance
+}
+
+var mapper = func() map[boot.Command][]boot.Action {
+	return map[boot.Command][]boot.Action{
+		boot.PreCommit:    {cleanAction, lintAction},
+		boot.CommitMsg:    {commitMsgAction, testAction},
+		boot.PrePush:      {cleanAction, testAction},
+		boot.SetupBuilder: {createDirAction, genBuilder},
+		boot.SetupHook:    {createDirAction, genHook},
+		boot.SetupLinter:  {createDirAction, setupLinter},
+		boot.Clean:        {cleanAction, genHook},
+		boot.Lint:         {createDirAction, genHook, lintAction},
+		boot.Test:         {createDirAction, genHook, testAction},
+		boot.Build:        {createDirAction, genHook, buildAction},
+	}
 }

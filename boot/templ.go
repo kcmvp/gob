@@ -28,9 +28,10 @@ func GenerateFile(tmpl string, targetName string, data interface{}, trunk bool) 
 				err = fmt.Errorf("failed to create file %v: %w", filepath.Base(targetName), err)
 			}
 		}
-	} else if errors.Is(err, os.ErrExist) {
-		log.Println(color.YellowString("%s exists", filepath.Base(targetName)))
-		return nil
+	} else if !trunk && errors.Is(err, os.ErrExist) {
+		// it's normal get os.ErrExist when don't trunk existing file
+		log.Println(color.YellowString("File %s exists", filepath.Base(targetName)))
+		err = nil
 	}
 	return err
 }

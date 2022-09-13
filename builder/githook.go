@@ -3,13 +3,14 @@ package builder
 import (
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gob/boot"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/fatih/color"
+	"github.com/go-git/go-git/v5"
+	"github.com/kcmvp/gob/boot"
 )
 
 type hookData struct {
@@ -23,9 +24,10 @@ func genGitHooks(gitHome, scriptDir string) error {
 	if _, err = git.PlainOpen(gitHome); err != nil {
 		return errors.New("project is not at version control")
 	}
-	for k, v := range boot.HookMap() {
+	for k, v := range HookMap() {
 		g := fmt.Sprintf("%s.go", k)
 		abs, _ := filepath.Abs(filepath.Join(scriptDir, g))
+		// @todo code refactor for unit test
 		if _, err = os.Stat(abs); err != nil {
 			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", k))); err == nil {
 				err = boot.GenerateFile(string(tf), abs, nil, false)

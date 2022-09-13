@@ -5,20 +5,18 @@ package cmd
 
 import (
 	_ "embed"
-	"os"
-
+	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
 
 // builderCmd represents the builder command.
 var builderCmd = &cobra.Command{
-	Use:   "builder",
+	Use:   boot.SetupBuilder.Name(),
 	Short: "Setup build script for go current project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, _ := os.Getwd()
-		return builder.NewBuilder(root).Run(cmd.Name())
+		return boot.Run(builder.NewBuilder(), boot.SetupBuilder) //nolint
 	},
 }
 

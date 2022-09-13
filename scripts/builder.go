@@ -3,16 +3,10 @@
 package main
 
 import (
+	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
-	"path/filepath"
-	"runtime"
 )
 
 func main() {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("No caller information")
-	}
-	root := filepath.Dir(filepath.Dir(filename))
-	builder.NewBuilder(root).Run("clean","test")
+	boot.Run(builder.NewBuilder(), boot.Clean, boot.Build)
 }
