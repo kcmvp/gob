@@ -31,7 +31,7 @@ func (s *CmdTestSuite) SetupSuite() {
 	for {
 		if _, err := os.ReadFile(filepath.Join(root, "go.mod")); err == nil {
 			os.Chdir(root)
-			s.builder = builder.NewBuilder(root)
+			s.builder = builder.NewBuilder()
 			break
 		} else {
 			root = filepath.Dir(root)

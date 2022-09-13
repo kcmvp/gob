@@ -5,8 +5,6 @@ package cmd
 
 import (
 	"github.com/kcmvp/gob/boot"
-	"os"
-
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
@@ -17,8 +15,7 @@ var githookCmd = &cobra.Command{
 	Short: "Setup git hook for project",
 	Long:  `Setup git hooks for project, which include: commit_message, pre_push`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, _ := os.Getwd()
-		return boot.Run(builder.NewBuilder(root), boot.SetupHook)
+		return boot.Run(builder.NewBuilder(), boot.SetupHook)
 	},
 }
 

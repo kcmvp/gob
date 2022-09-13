@@ -4,8 +4,6 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"os"
-
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
@@ -30,8 +28,7 @@ var runCmd = &cobra.Command{
 		return err
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, _ := os.Getwd()
-		builder := builder.NewBuilder(root)
+		builder := builder.NewBuilder()
 		boot.BindFlag(boot.Clean, "-cache", cleanCache)
 		boot.BindFlag(boot.Clean, "-testcache", cleanTestCache)
 		boot.BindFlag(boot.Clean, "-modcache", cleanModCache)

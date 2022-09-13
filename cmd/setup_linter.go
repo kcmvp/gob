@@ -5,8 +5,6 @@ package cmd
 
 import (
 	_ "embed"
-	"os"
-
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
@@ -19,9 +17,8 @@ var linterCmd = &cobra.Command{
 	Use:   boot.SetupLinter.Name(),
 	Short: "setup linter for the project",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, _ := os.Getwd()
 		boot.BindFlag(boot.SetupLinter, "version", version)
-		return boot.Run(builder.NewBuilder(root), boot.SetupLinter)
+		return boot.Run(builder.NewBuilder(), boot.SetupLinter)
 	},
 }
 

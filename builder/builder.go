@@ -25,11 +25,10 @@ var (
 	once     sync.Once
 )
 
-// NewBuilder @todo refactor system can detect the root directory automatically
-func NewBuilder(root string) *Builder {
+func NewBuilder() *Builder {
 	once.Do(func() {
 		instance = &Builder{
-			boot.NewProject(root, mapper),
+			boot.NewProject(mapper),
 			defaultOption(),
 		}
 	})

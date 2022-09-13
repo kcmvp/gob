@@ -8,8 +8,6 @@ import (
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -23,12 +21,7 @@ func main() {
 	}
 	fmt.Println(refs)
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("No caller information")
-	}
-	root := filepath.Dir(filepath.Dir(filename))
-	boot.Run(builder.NewBuilder(root))
+	boot.Run(builder.NewBuilder())
 
 	os.Exit(0)
 }

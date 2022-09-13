@@ -5,11 +5,13 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
+	"go/build"
 	"golang.org/x/mod/modfile"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -65,36 +67,63 @@ func (project *DefaultProject) RootDir() string {
 }
 
 // NewProject @todo optimize project initialization
-func NewProject(root string, mapper Mapper) DefaultProject {
-	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
-	if err != nil {
-		log.Fatalln(color.RedString("can not find go.mod in %s", root))
-	} else {
-		if _, err := modfile.Parse("go.mod", data, nil); err != nil {
-			log.Fatalln(color.RedString("invalid mod file %v", err))
-		}
+func NewProject(mapper Mapper) DefaultProject {
+
+	goRoot := runtime.GOROOT()
+	log.Printf("GOROOT: %s\n", goRoot)
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = build.Default.GOPATH
 	}
-	project := DefaultProject{
-		root,
-		viper.New(),
-		None,
-		mapper,
-	}
+	log.Printf("GOPATH: %s\n", goPath)
+	path := []string{goRoot, goPath}
+
 	pc := make([]uintptr, 15)   //nolint
-	n := runtime.Callers(2, pc) //nolint
+	n := runtime.Callers(1, pc) //nolint
 	frames := runtime.CallersFrames(pc[:n])
 	var frame runtime.Frame
 	more := true
 	initializers := []Command{PreCommit, CommitMsg, PrePush}
+	root := ""
+	initializer := None
 	for more {
 		frame, more = frames.Next()
-		c, ok := lo.Find(initializers, func(command Command) bool {
-			return filepath.Base(frame.File) == string(command)
+		found := lo.ContainsBy(path, func(p string) bool {
+			return strings.HasPrefix(frame.File, p)
 		})
-		if ok {
-			project.initializer = c
-			break
+		if !found {
+			// 1: get root dir
+			dir := filepath.Dir(frame.File)
+			for len(root) == 0 && dir != "/" {
+				if data, err := os.ReadFile(filepath.Join(dir, "go.mod")); err == nil {
+					if _, err = modfile.Parse("go.mod", data, nil); err != nil {
+						log.Fatalln(color.RedString("invalid mod file %v", err))
+					}
+					root = dir
+					log.Printf("Project root directory is %s\n", root)
+				} else {
+					dir = filepath.Dir(dir)
+				}
+			}
+			if len(root) == 0 {
+				log.Fatalln(color.RedString("can't find project root directory"))
+			}
+			// 2: get initializer
+			c, ok := lo.Find(initializers, func(command Command) bool {
+				return filepath.Base(frame.File) == string(command)
+			})
+			if ok {
+				initializer = c
+				break
+			}
 		}
+	}
+
+	project := DefaultProject{
+		root,
+		viper.New(),
+		initializer,
+		mapper,
 	}
 	return project
 }
