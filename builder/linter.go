@@ -2,10 +2,13 @@ package builder
 
 import (
 	"bufio"
+	"bytes"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -37,13 +40,15 @@ type Linter struct {
 	boot.Installer
 	report string
 	output string
+	json   string
 }
 
 func newLinter() *Linter {
 	return &Linter{
 		boot.NewInstallable(lintModule, lintCmd, lintCfg, linterVersion),
-		fmt.Sprintf("%s.html", lintCmd),
-		fmt.Sprintf("%s.out", lintCmd),
+		fmt.Sprintf("%s.html", "lint"),
+		fmt.Sprintf("%s.out", "lint"),
+		fmt.Sprintf("%s.json", "lint"),
 	}
 }
 
@@ -115,7 +120,21 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to get lint standard out: %w", err)
 	}
-	jq := gojsonq.New().Reader(stdout).From(IssueNode)
+
+	// write data to json
+	jsonData, _ := io.ReadAll(stdout)
+	var prettyJSON bytes.Buffer
+	err = json.Indent(&prettyJSON, jsonData, "", "\t")
+	if err != nil {
+		return fmt.Errorf("failed to save lint json report: %w", err)
+	}
+	jsonReport := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.json, suffix))
+	jf, _ := os.Create(jsonReport)
+	jf.Write(prettyJSON.Bytes())
+	jf.Close()
+
+	// html report
+	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issues := jq.Count()
 	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
 	data := jq.Get()

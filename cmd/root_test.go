@@ -141,8 +141,8 @@ func (s *CmdTestSuite) TestRunLint() {
 	}
 	for _, test := range tests {
 		s.T().Run(test.name, func(t *testing.T) {
-			html := filepath.Join(s.builder.TargetDir(), "golangci-lint.html")
-			out := filepath.Join(s.builder.TargetDir(), "golangci-lint.out")
+			html := filepath.Join(s.builder.TargetDir(), "lint.html")
+			out := filepath.Join(s.builder.TargetDir(), "lint.out")
 			err := os.Remove(html)
 			if err != nil {
 				require.ErrorIs(s.T(), err, os.ErrNotExist)

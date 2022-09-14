@@ -14,11 +14,10 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-#    - typecheck
     - unused
     - varcheck
     - gosec
-#    - gofumpt
+    - gofumpt
     - nosnakecase
     - goconst
   presets:
@@ -26,14 +25,10 @@ linters:
     - comment
     - complexity
     - error
-    - format
-#    - import // goimports would cause some issues when in Golang
     - metalinter
     - module
     - performance
     - sql
-    #    - style
-    #    - test
     - unused
 issues:
   fix: false

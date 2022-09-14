@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/samber/lo"
 	"io/fs"
 	"log"
 	"os"
@@ -15,6 +14,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/samber/lo"
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/boot"
@@ -25,6 +27,17 @@ const (
 	testCoverReport  = "cover.html"
 	testPackageCover = "cover.json"
 )
+
+type PkgReport struct {
+	Name     string
+	Coverage string
+	Files    []FileReport
+}
+
+type FileReport struct {
+	Name     string
+	Coverage string
+}
 
 //go:embed template/*.tmpl
 var templateDir embed.FS
@@ -186,14 +199,6 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 		return fmt.Errorf("test failed:%w", err)
 	}
 
-	data, err := json.MarshalIndent(&pkgCoverage, "", " ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal package coverage report:%w", err)
-	}
-	err = os.WriteFile(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testPackageCover, suffix)), data, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to save package coverage report:%w", err)
-	}
 	//  go tool cover -func ./targetDir/coverage.data
 	fileCover := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverReport, suffix))
 	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "-o", fileCover}
@@ -201,6 +206,43 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 	if err != nil {
 		return fmt.Errorf("%s:%w", string(out), err)
 	}
+	// generate file coverage report
+	pkgReports := lo.MapToSlice(pkgCoverage, func(k string, v string) *PkgReport {
+		return &PkgReport{
+			Name:     k,
+			Coverage: v,
+			Files:    []FileReport{},
+		}
+	})
+	reader, err := os.Open(fileCover)
+	if err != nil {
+		return fmt.Errorf("failed to open coverage report:%w", err)
+	}
+	doc, _ := goquery.NewDocumentFromReader(reader)
+	doc.Find("#files option").Each(func(i int, s *goquery.Selection) {
+		fc := strings.Fields(s.Text())
+		if len(fc) == 2 {
+			c := FileReport{
+				Name:     fc[0],
+				Coverage: strings.ReplaceAll(strings.ReplaceAll(fc[1], "(", ""), ")", ""),
+			}
+			for _, pkg := range pkgReports {
+				if pkg.Coverage != "-" && strings.Contains(c.Name, pkg.Name) {
+					pkg.Files = append(pkg.Files, c)
+				}
+			}
+		}
+	})
+
+	data, err := json.MarshalIndent(&pkgReports, "", " ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal package coverage report:%w", err)
+	}
+	err = os.WriteFile(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testPackageCover, suffix)), data, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to save package coverage report:%w", err)
+	}
+
 	log.Printf("coverage report is generated at %s \n", strings.TrimSuffix(fileCover, suffix))
 	rename(builder.TargetDir(), suffix)
 	return err //nolint:wrapcheck
