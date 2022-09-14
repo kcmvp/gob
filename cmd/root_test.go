@@ -190,7 +190,7 @@ func (s *CmdTestSuite) TestCleanWithCache() {
 			"go clean -testcache",
 		},
 	}
-	validFlags := []string{"-cache", "-testcache", "-modcache", "-fuzzcache"}
+	validFlags := []string{"-cache", "-fuzzcache", "-modcache", "-testcache", "all"}
 	sort.Strings(validFlags)
 	for _, test := range tests {
 		s.T().Run(test.name, func(t *testing.T) {

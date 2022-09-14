@@ -13,6 +13,7 @@ var cleanCache bool
 var cleanTestCache bool
 var cleanModCache bool
 var clanFuzzCache bool
+var clanAllOver bool
 var lintScanAll bool
 
 // runCmd represents the run command.
@@ -33,6 +34,7 @@ var runCmd = &cobra.Command{
 		boot.BindFlag(boot.Clean, "-testcache", cleanTestCache)
 		boot.BindFlag(boot.Clean, "-modcache", cleanModCache)
 		boot.BindFlag(boot.Clean, "-fuzzcache", clanFuzzCache)
+		boot.BindFlag(boot.Clean, "all", clanAllOver)
 		boot.BindFlag(boot.Lint, "all", lintScanAll)
 		return boot.Run(builder, boot.ToCommands(args...)...)
 	},
@@ -44,6 +46,7 @@ func init() {
 	runCmd.Flags().BoolVarP(&cleanTestCache, "testcache", "t", false, "expire all test results")
 	runCmd.Flags().BoolVarP(&cleanModCache, "modcache", "m", false, "remove the entire module download cache")
 	runCmd.Flags().BoolVarP(&clanFuzzCache, "fuzzcache", "f", false, "remove the entire module download cache")
+	runCmd.Flags().BoolVarP(&clanAllOver, "cleanAll", "o", false, "delete all the files in the target folder")
 	runCmd.Flags().BoolVarP(&lintScanAll, "scanAll", "a", false, "Default only scan changed files, use -a to scan all files")
 
 	rootCmd.AddCommand(runCmd)
