@@ -44,10 +44,9 @@ func genGitHooks(gitHome, scriptDir string) error {
 	return err
 }
 
-func validateCommitMsg(pattern string) error {
-	input, _ := os.ReadFile(os.Args[1])
+func validateCommitMsg(msg, pattern string) error {
 	rep := regexp.MustCompile(`\r?\n`)
-	commitMsg := rep.ReplaceAllString(string(input), "")
+	commitMsg := rep.ReplaceAllString(msg, "")
 	reg, err := regexp.Compile(pattern)
 	if err != nil {
 		return err //nolint:wrapcheck

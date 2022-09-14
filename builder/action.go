@@ -131,7 +131,8 @@ var cleanAction boot.Action = func(project boot.Project, command boot.Command) e
 var commitMsgAction boot.Action = func(project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
 	log.Println("Validate commit message")
-	return validateCommitMsg(string(builder.MsgPattern)) //nolint:wrapcheck
+	input, _ := os.ReadFile(os.Args[1])
+	return validateCommitMsg(string(input), string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
 var lintAction boot.Action = func(project boot.Project, command boot.Command) error {
