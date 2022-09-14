@@ -5,6 +5,7 @@ package builder
 // 2: second part is a separator ':'
 // 3: third part is the message body, which minimize length is 10 characters
 // you can do the necessary changes according your requirements.
+
 const DefaultHookMsg = `((^|[\s])(#[0-9]{1,7}))+:\s?(\S+\s?){10,}`
 
 // HookMsgPattern @todo multiple ticket support.
