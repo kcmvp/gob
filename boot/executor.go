@@ -3,10 +3,11 @@ package boot
 import (
 	"context"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/samber/lo"
 	"log"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/samber/lo"
 )
 
 type (
@@ -28,8 +29,12 @@ func init() {
 }
 
 func AllFlags(command Command) []string {
+	prefix := fmt.Sprintf("%s.", command.Name())
 	return lo.FilterMap(lo.Keys(executor.flags), func(flag string, _ int) (string, bool) {
-		return strings.TrimLeft(flag, fmt.Sprintf("%s.", command.Name())), strings.HasPrefix(flag, fmt.Sprintf("%s.", command.Name()))
+		if strings.HasPrefix(flag, prefix) {
+			return strings.Split(flag, prefix)[1], true
+		}
+		return flag, false
 	})
 }
 
@@ -52,12 +57,12 @@ func BindFlag(command Command, flag string, value interface{}) {
 func SaveExecCtx(command Command, value string) {
 	executor.ctx = context.WithValue(executor.ctx, command.CtxKey(), value)
 }
+
 func GetExecCtx(command Command) string {
 	return executor.ctx.Value(command.CtxKey()).(string)
 }
 
 func Run(project Project, commands ...Command) error {
-
 	var ccs []Command
 	if project.Initializer() != None {
 		ccs = append(ccs, project.Initializer())

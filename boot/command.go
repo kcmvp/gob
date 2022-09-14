@@ -39,7 +39,7 @@ func (command Command) ValidFlags() []string {
 		SetupBuilder: {},
 		SetupHook:    {},
 		SetupLinter:  {"version"},
-		Clean:        {"-cache", "-testcache", "-modcache", "-fuzzcache"},
+		Clean:        {"-cache", "-testcache", "-modcache", "-fuzzcache", "all"},
 		Lint:         {"all"},
 		Test:         {},
 		Build:        {},
