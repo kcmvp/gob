@@ -9,18 +9,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cleanCache bool
-var cleanTestCache bool
-var cleanModCache bool
-var clanFuzzCache bool
-var clanAllOver bool
-var lintScanAll bool
+var (
+	cleanCache     bool
+	cleanTestCache bool
+	cleanModCache  bool
+	clanFuzzCache  bool
+	clanAllOver    bool
+	lintFullScan   bool
+)
 
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:       "run",
-	Short:     "Run 'clean', 'test', 'lint', 'build' commands against current project",
-	ValidArgs: []string{"clean", "test", "lint", "build"},
+	Short:     "Run 'clean', 'test', 'lint', 'build' and 'report' commands against current project",
+	ValidArgs: []string{"clean", "test", "lint", "build", "report"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := cobra.MinimumNArgs(1)(cmd, args)
 		if err == nil {
@@ -35,19 +37,18 @@ var runCmd = &cobra.Command{
 		boot.BindFlag(boot.Clean, "-modcache", cleanModCache)
 		boot.BindFlag(boot.Clean, "-fuzzcache", clanFuzzCache)
 		boot.BindFlag(boot.Clean, "all", clanAllOver)
-		boot.BindFlag(boot.Lint, "all", lintScanAll)
+		boot.BindFlag(boot.Lint, "all", lintFullScan)
 		return boot.Run(builder, boot.ToCommands(args...)...)
 	},
 }
 
 func init() {
-
 	runCmd.Flags().BoolVarP(&cleanCache, "cache", "c", false, "remove the entire go build cache")
 	runCmd.Flags().BoolVarP(&cleanTestCache, "testcache", "t", false, "expire all test results")
 	runCmd.Flags().BoolVarP(&cleanModCache, "modcache", "m", false, "remove the entire module download cache")
 	runCmd.Flags().BoolVarP(&clanFuzzCache, "fuzzcache", "f", false, "remove the entire module download cache")
 	runCmd.Flags().BoolVarP(&clanAllOver, "cleanAll", "o", false, "delete all the files in the target folder")
-	runCmd.Flags().BoolVarP(&lintScanAll, "scanAll", "a", false, "Default only scan changed files, use -a to scan all files")
+	runCmd.Flags().BoolVarP(&lintFullScan, "fullScan", "a", false, "Default only scan changed files, use -a to scan all files")
 
 	rootCmd.AddCommand(runCmd)
 }

@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/thedevsaddam/gojsonq/v2"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/samber/lo"
 
@@ -23,21 +25,10 @@ import (
 )
 
 const (
-	testCoverOut     = "cover.out"
-	testCoverReport  = "cover.html"
-	testPackageCover = "cover.json"
+	testCoverOut    = "cover.out"
+	testCoverReport = "cover.html"
+	reportJSON      = "report.json"
 )
-
-type PkgReport struct {
-	Name     string
-	Coverage string
-	Files    []FileReport
-}
-
-type FileReport struct {
-	Name     string
-	Coverage string
-}
 
 //go:embed template/*.tmpl
 var templateDir embed.FS
@@ -94,7 +85,7 @@ var createDirAction boot.Action = func(project boot.Project, command boot.Comman
 	switch command.Name() {
 	case boot.SetupHook.Name(), boot.SetupBuilder.Name():
 		dir = project.ScriptDir()
-	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name():
+	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name(), boot.Report.Name():
 		dir = project.TargetDir()
 	}
 	if len(dir) < 1 {
@@ -151,6 +142,7 @@ var lintAction boot.Action = func(project boot.Project, command boot.Command) er
 	return newLinter().scan(builder, command) //nolint:wrapcheck
 }
 
+// @todo optimize in the commit-msg hook, only test the change file.
 var testAction boot.Action = func(builder boot.Project, command boot.Command) error {
 	err := os.Chdir(builder.RootDir())
 	log.Println("Running unit test")
@@ -207,7 +199,8 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 		return fmt.Errorf("%s:%w", string(out), err)
 	}
 	// generate file coverage report
-	pkgReports := lo.MapToSlice(pkgCoverage, func(k string, v string) *PkgReport {
+	report := Report{}
+	report.Pkgs = lo.MapToSlice(pkgCoverage, func(k string, v string) *PkgReport {
 		return &PkgReport{
 			Name:     k,
 			Coverage: v,
@@ -226,7 +219,7 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 				Name:     fc[0],
 				Coverage: strings.ReplaceAll(strings.ReplaceAll(fc[1], "(", ""), ")", ""),
 			}
-			for _, pkg := range pkgReports {
+			for _, pkg := range report.Pkgs {
 				if pkg.Coverage != "-" && strings.Contains(c.Name, pkg.Name) {
 					pkg.Files = append(pkg.Files, c)
 				}
@@ -234,18 +227,64 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 		}
 	})
 
-	data, err := json.MarshalIndent(&pkgReports, "", " ")
+	err = saveReport(builder.TargetDir(), suffix, &report)
 	if err != nil {
-		return fmt.Errorf("failed to marshal package coverage report:%w", err)
+		return err
 	}
-	err = os.WriteFile(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testPackageCover, suffix)), data, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to save package coverage report:%w", err)
-	}
-
 	log.Printf("coverage report is generated at %s \n", strings.TrimSuffix(fileCover, suffix))
 	rename(builder.TargetDir(), suffix)
 	return err //nolint:wrapcheck
+}
+
+func saveReport(dir, suffix string, report *Report) error {
+	data, err := json.MarshalIndent(&report, "", " ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal package coverage report:%w", err)
+	}
+	err = os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s%s", reportJSON, suffix)), data, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to save package coverage report:%w", err)
+	}
+	return nil
+}
+
+var reportAction boot.Action = func(project boot.Project, command boot.Command) error {
+	report := Report{}
+	data, err := os.ReadFile(filepath.Join(project.TargetDir(), "report.json"))
+	if err != nil {
+		return fmt.Errorf("failed to create project report:%w", err)
+	}
+	err = json.Unmarshal(data, &report)
+	if err != nil {
+		return fmt.Errorf("failed to create project report:%w", err)
+	}
+	jq := gojsonq.New().File(filepath.Join(project.TargetDir(), "lint.json")).From(IssueNode)
+	count := jq.Count()
+	report.Issues = &Issue{
+		Category: map[string]int{},
+	}
+	report.Issues.Count = count
+	if count == 0 {
+		return nil
+	}
+	projectIssues := jq.GroupBy("FromLinter")
+	if v, ok := projectIssues.Get().(map[string][]interface{}); ok {
+		for k, v1 := range v {
+			report.Issues.Category[k] = len(v1)
+		}
+	}
+
+	// @todo pkg level issues
+
+	// @todo file level issues
+
+	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
+	err = saveReport(project.TargetDir(), suffix, &report)
+	if err != nil {
+		return err
+	}
+	rename(project.TargetDir(), suffix)
+	return nil
 }
 
 func rename(dir, suffix string) {

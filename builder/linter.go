@@ -76,9 +76,12 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	}
 	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
-	changeOnly := builder.Initializer() != boot.None || !boot.GetFlag[bool](command, "all")
-	if changeOnly {
+	changedOnly := (builder.Initializer() != boot.None || !boot.GetFlag[bool](command, "all")) && command != boot.Report
+	if changedOnly {
 		args = append(args, "--new-from-rev", "HEAD~")
+	} else {
+		// if '--fix' is set in the command line then keep it, otherwise it should be always false
+		args = append(args, "--fix", "false")
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
 	log.Printf("Scan with %s-%s", linter.Cmd(), ver)
@@ -168,7 +171,7 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	if issues > 0 {
 		msg := fmt.Sprintf("total %d linter issues are found", issues)
 		log.Println(color.RedString(msg))
-		if changeOnly {
+		if changedOnly {
 			return errors.New(msg)
 		}
 	} else {

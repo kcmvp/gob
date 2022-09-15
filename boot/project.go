@@ -1,17 +1,19 @@
 package boot
 
 import (
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
-	"github.com/samber/lo"
-	"github.com/spf13/viper"
 	"go/build"
-	"golang.org/x/mod/modfile"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/go-git/go-git/v5"
+	"github.com/samber/lo"
+	"github.com/spf13/viper"
+
+	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -67,7 +69,6 @@ func (project *DefaultProject) RootDir() string {
 }
 
 func NewProject(mapper Mapper) DefaultProject {
-
 	goRoot := runtime.GOROOT()
 	log.Printf("GOROOT: %s\n", goRoot)
 	goPath := os.Getenv("GOPATH")

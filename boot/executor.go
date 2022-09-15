@@ -58,7 +58,7 @@ func SaveExecCtx(command Command, value string) {
 	executor.ctx = context.WithValue(executor.ctx, command.CtxKey(), value)
 }
 
-func GetExecCtx(command Command) string {
+func ExecCtx(command Command) string {
 	return executor.ctx.Value(command.CtxKey()).(string)
 }
 
