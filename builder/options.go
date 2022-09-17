@@ -8,7 +8,7 @@ package builder
 
 const DefaultHookMsg = `((^|[\s])(#[0-9]{1,7}))+:\s?(\S+\s?){10,}`
 
-// HookMsgPattern @todo multiple ticket support.
+// HookMsgPattern @todo should simplify.
 type HookMsgPattern string
 
 type buildOption struct {

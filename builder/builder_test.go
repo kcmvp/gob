@@ -71,16 +71,19 @@ func (b *BuilderTestSuite) TestClean() {
 		name     string
 		flag     string
 		ctxValue string
+		empty    bool
 	}{
 		{
 			"normal",
 			"",
-			"go clean",
+			"go clean delete=false",
+			false,
 		},
 		{
 			"clean cache",
 			"-testcache",
-			"go clean -testcache",
+			"go clean -testcache delete=false",
+			false,
 		},
 	}
 	for _, test := range tests {

@@ -96,7 +96,7 @@ var createDirAction boot.Action = func(session *boot.Session, project boot.Proje
 var cleanAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Cleaning project")
 	flags := lo.FilterMap(command.ValidFlags(), func(flag string, i int) (string, bool) {
-		return flag, session.GetFlagBool(command, flag) && flag != "all"
+		return flag, session.GetFlagBool(command, flag) && flag != "delete"
 	})
 	args := append([]string{"clean"}, flags...)
 	log.Printf("Flags: %s\n", strings.Join(flags, ","))
@@ -105,12 +105,11 @@ var cleanAction boot.Action = func(session *boot.Session, project boot.Project, 
 		log.Println(color.RedString(string(output)))
 		return err //nolint:wrapcheck
 	}
-	session.SaveCtxValue(command, fmt.Sprintf("%s %s", "go", strings.Join(args, " ")))
-	// @todo remove the flag
-	// delAll := session.GetFlagBool(command, "all")
+	delAll := session.GetFlagBool(command, "delete")
+	session.SaveCtxValue(command, fmt.Sprintf("%s %s delete=%v", "go", strings.Join(args, " "), delAll))
 	err = filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
 		// @todo revisit the logic is correct or not
-		if err == nil && !d.IsDir() && strings.HasSuffix(d.Name(), session.ID()) {
+		if err == nil && !d.IsDir() && (delAll || strings.HasSuffix(d.Name(), session.ID())) {
 			err = os.Remove(path)
 			if err != nil {
 				log.Println(color.YellowString("failed to delete %s:%s", path, err.Error()))

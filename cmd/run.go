@@ -13,8 +13,8 @@ var (
 	cleanCache     bool
 	cleanTestCache bool
 	cleanModCache  bool
-	clanFuzzCache  bool
-	clanAllOver    bool
+	cleanFuzzCache bool
+	cleanDeleteAll bool
 	lintFullScan   bool
 )
 
@@ -35,8 +35,8 @@ var runCmd = &cobra.Command{
 		session.BindFlag(boot.Clean, "-cache", cleanCache)
 		session.BindFlag(boot.Clean, "-testcache", cleanTestCache)
 		session.BindFlag(boot.Clean, "-modcache", cleanModCache)
-		session.BindFlag(boot.Clean, "-fuzzcache", clanFuzzCache)
-		session.BindFlag(boot.Clean, "all", clanAllOver)
+		session.BindFlag(boot.Clean, "-fuzzcache", cleanFuzzCache)
+		session.BindFlag(boot.Clean, "delete", cleanDeleteAll)
 		session.BindFlag(boot.Lint, "all", lintFullScan)
 		return session.Run(builder.NewBuilder(), boot.ToCommands(args...)...) //nolint
 	},
@@ -46,8 +46,8 @@ func init() {
 	runCmd.Flags().BoolVarP(&cleanCache, "cache", "c", false, "remove the entire go build cache")
 	runCmd.Flags().BoolVarP(&cleanTestCache, "testcache", "t", false, "expire all test results")
 	runCmd.Flags().BoolVarP(&cleanModCache, "modcache", "m", false, "remove the entire module download cache")
-	runCmd.Flags().BoolVarP(&clanFuzzCache, "fuzzcache", "f", false, "remove the entire module download cache")
-	runCmd.Flags().BoolVarP(&clanAllOver, "cleanAll", "o", false, "delete all the files in the target folder")
+	runCmd.Flags().BoolVarP(&cleanFuzzCache, "fuzzcache", "f", false, "remove the entire module download cache")
+	runCmd.Flags().BoolVarP(&cleanDeleteAll, "delete", "d", false, "delete all the files in the target folder")
 	runCmd.Flags().BoolVarP(&lintFullScan, "fullScan", "a", false, "Default only scan changed files, use -a to scan all files")
 
 	rootCmd.AddCommand(runCmd)
