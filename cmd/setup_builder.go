@@ -4,8 +4,6 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
-	_ "embed"
-
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
@@ -17,7 +15,8 @@ var builderCmd = &cobra.Command{
 	Short: "Setup build script for go current project",
 	Long:  `Includes mostly used build actions: Clean, Test, Code scan and Build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return boot.Run(builder.NewBuilder(), boot.SetupBuilder) //nolint
+		session := cmd.Context().Value(CurrentSession).(*boot.Session)
+		return session.Run(builder.NewBuilder(), boot.SetupBuilder) //nolint
 	},
 }
 

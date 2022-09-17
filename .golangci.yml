@@ -31,4 +31,4 @@ linters:
     - sql
     - unused
 issues:
-  fix: false
+  fix: true

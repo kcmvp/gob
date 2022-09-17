@@ -31,14 +31,14 @@ var runCmd = &cobra.Command{
 		return err
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		builder := builder.NewBuilder()
-		boot.BindFlag(boot.Clean, "-cache", cleanCache)
-		boot.BindFlag(boot.Clean, "-testcache", cleanTestCache)
-		boot.BindFlag(boot.Clean, "-modcache", cleanModCache)
-		boot.BindFlag(boot.Clean, "-fuzzcache", clanFuzzCache)
-		boot.BindFlag(boot.Clean, "all", clanAllOver)
-		boot.BindFlag(boot.Lint, "all", lintFullScan)
-		return boot.Run(builder, boot.ToCommands(args...)...)
+		session := cmd.Context().Value(CurrentSession).(*boot.Session)
+		session.BindFlag(boot.Clean, "-cache", cleanCache)
+		session.BindFlag(boot.Clean, "-testcache", cleanTestCache)
+		session.BindFlag(boot.Clean, "-modcache", cleanModCache)
+		session.BindFlag(boot.Clean, "-fuzzcache", clanFuzzCache)
+		session.BindFlag(boot.Clean, "all", clanAllOver)
+		session.BindFlag(boot.Lint, "all", lintFullScan)
+		return session.Run(builder.NewBuilder(), boot.ToCommands(args...)...) //nolint
 	},
 }
 

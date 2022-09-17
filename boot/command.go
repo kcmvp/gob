@@ -28,7 +28,11 @@ func (command Command) Name() string {
 }
 
 func (command Command) CtxKey() string {
-	return fmt.Sprintf("%s.ctx", command.Name())
+	return fmt.Sprintf("ctx.%s", command.Name())
+}
+
+func (command Command) ErrKey() string {
+	return fmt.Sprintf("Err.%s", command.Name())
 }
 
 func ToCommands(commands ...string) []Command {

@@ -3,7 +3,6 @@ package builder
 import (
 	"bufio"
 	"embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -13,9 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
-
-	"github.com/thedevsaddam/gojsonq/v2"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/samber/lo"
@@ -25,15 +21,14 @@ import (
 )
 
 const (
-	testCoverOut    = "cover.out"
-	testCoverReport = "cover.html"
-	reportJSON      = "report.json"
+	testCoverOut  = "cover.out"
+	testCoverHTML = "cover.html"
 )
 
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var genBuilder boot.Action = func(project boot.Project, command boot.Command) error {
+var genBuilder boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Creating project build file")
 	var err error
 	var tf []byte
@@ -47,7 +42,7 @@ var genBuilder boot.Action = func(project boot.Project, command boot.Command) er
 	return err
 }
 
-var genHook boot.Action = func(project boot.Project, command boot.Command) error {
+var genHook boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Setup git hooks")
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
 	if err != nil {
@@ -58,10 +53,10 @@ var genHook boot.Action = func(project boot.Project, command boot.Command) error
 	return err
 }
 
-var setupLinter boot.Action = func(project boot.Project, command boot.Command) error {
+var setupLinter boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Setup linters")
 	linter := newLinter()
-	version := boot.GetFlag[string](command, "version")
+	version := session.GetFlagString(command, "version")
 	cfgVersion := project.Config().GetString(linter.CfgVerKey())
 	if cfgVersion != version {
 		version = cfgVersion
@@ -71,7 +66,7 @@ var setupLinter boot.Action = func(project boot.Project, command boot.Command) e
 	if err != nil {
 		return err
 	}
-	err = boot.GenerateFile(golangCiTmp, lintCfg, nil, false)
+	err = boot.GenerateFile(golangCiTmp, filepath.Join(project.RootDir(), lintCfg), nil, false)
 	if err != nil {
 		return fmt.Errorf("failed to generate lint config:%w", err)
 	}
@@ -79,7 +74,7 @@ var setupLinter boot.Action = func(project boot.Project, command boot.Command) e
 	return nil
 }
 
-var createDirAction boot.Action = func(project boot.Project, command boot.Command) error {
+var createDirAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Creating project directories")
 	var dir string
 	switch command.Name() {
@@ -98,10 +93,10 @@ var createDirAction boot.Action = func(project boot.Project, command boot.Comman
 	return err
 }
 
-var cleanAction boot.Action = func(project boot.Project, command boot.Command) error {
+var cleanAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Cleaning project")
 	flags := lo.FilterMap(command.ValidFlags(), func(flag string, i int) (string, bool) {
-		return flag, boot.GetFlag[bool](command, flag) && flag != "all"
+		return flag, session.GetFlagBool(command, flag) && flag != "all"
 	})
 	args := append([]string{"clean"}, flags...)
 	log.Printf("Flags: %s\n", strings.Join(flags, ","))
@@ -110,10 +105,12 @@ var cleanAction boot.Action = func(project boot.Project, command boot.Command) e
 		log.Println(color.RedString(string(output)))
 		return err //nolint:wrapcheck
 	}
-	boot.SaveExecCtx(command, fmt.Sprintf("%s %s", "go", strings.Join(args, " ")))
-	delAll := boot.GetFlag[bool](command, "all")
+	session.SaveCtxValue(command, fmt.Sprintf("%s %s", "go", strings.Join(args, " ")))
+	// @todo remove the flag
+	// delAll := session.GetFlagBool(command, "all")
 	err = filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
-		if err == nil && !d.IsDir() && (delAll || !strings.HasSuffix(d.Name(), ".tmp")) {
+		// @todo revisit the logic is correct or not
+		if err == nil && !d.IsDir() && strings.HasSuffix(d.Name(), session.ID()) {
 			err = os.Remove(path)
 			if err != nil {
 				log.Println(color.YellowString("failed to delete %s:%s", path, err.Error()))
@@ -129,28 +126,27 @@ var cleanAction boot.Action = func(project boot.Project, command boot.Command) e
 	return err //nolint:wrapcheck
 }
 
-var commitMsgAction boot.Action = func(project boot.Project, command boot.Command) error {
+var commitMsgAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
 	log.Println("Validate commit message")
 	input, _ := os.ReadFile(os.Args[1])
 	return validateCommitMsg(string(input), string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
-var lintAction boot.Action = func(project boot.Project, command boot.Command) error {
+var lintAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	builder := project.(*Builder)
 	log.Println("Running linters against source code")
-	return newLinter().scan(builder, command) //nolint:wrapcheck
+	return newLinter().scan(session, builder, command) //nolint:wrapcheck
 }
 
 // @todo optimize in the commit-msg hook, only test the change file.
-var testAction boot.Action = func(builder boot.Project, command boot.Command) error {
+var testAction boot.Action = func(session *boot.Session, builder boot.Project, command boot.Command) error {
 	err := os.Chdir(builder.RootDir())
 	log.Println("Running unit test")
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
-	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
-	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "./..."}
+	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut)), "./..."}
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
@@ -192,8 +188,8 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 	}
 
 	//  go tool cover -func ./targetDir/coverage.data
-	fileCover := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverReport, suffix))
-	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", testCoverOut, suffix)), "-o", fileCover}
+	htmlReport := filepath.Join(builder.TargetDir(), session.Specified(testCoverHTML))
+	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut)), "-o", htmlReport}
 	out, err := exec.Command("go", params...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s:%w", string(out), err)
@@ -204,10 +200,10 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 		return &PkgReport{
 			Name:     k,
 			Coverage: v,
-			Files:    []FileReport{},
+			Files:    []*FileReport{},
 		}
 	})
-	reader, err := os.Open(fileCover)
+	reader, err := os.Open(htmlReport)
 	if err != nil {
 		return fmt.Errorf("failed to open coverage report:%w", err)
 	}
@@ -215,94 +211,27 @@ var testAction boot.Action = func(builder boot.Project, command boot.Command) er
 	doc.Find("#files option").Each(func(i int, s *goquery.Selection) {
 		fc := strings.Fields(s.Text())
 		if len(fc) == 2 {
-			c := FileReport{
+			file := &FileReport{
 				Name:     fc[0],
 				Coverage: strings.ReplaceAll(strings.ReplaceAll(fc[1], "(", ""), ")", ""),
 			}
 			for _, pkg := range report.Pkgs {
-				if pkg.Coverage != "-" && strings.Contains(c.Name, pkg.Name) {
-					pkg.Files = append(pkg.Files, c)
+				if pkg.Coverage != "-" && strings.Contains(file.Name, pkg.Name) {
+					pkg.Files = append(pkg.Files, file)
 				}
 			}
 		}
 	})
 
-	err = saveReport(builder.TargetDir(), suffix, &report)
+	err = report.Save(builder.TargetDir(), session)
 	if err != nil {
-		return err
+		return err //nolint
 	}
-	log.Printf("coverage report is generated at %s \n", strings.TrimSuffix(fileCover, suffix))
-	rename(builder.TargetDir(), suffix)
+	log.Printf("coverage report is generated at %s \n", filepath.Join(builder.TargetDir(), testCoverHTML))
 	return err //nolint:wrapcheck
 }
 
-func saveReport(dir, suffix string, report *Report) error {
-	data, err := json.MarshalIndent(&report, "", " ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal package coverage report:%w", err)
-	}
-	err = os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s%s", reportJSON, suffix)), data, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to save package coverage report:%w", err)
-	}
-	return nil
-}
-
-var reportAction boot.Action = func(project boot.Project, command boot.Command) error {
-	report := Report{}
-	data, err := os.ReadFile(filepath.Join(project.TargetDir(), "report.json"))
-	if err != nil {
-		return fmt.Errorf("failed to create project report:%w", err)
-	}
-	err = json.Unmarshal(data, &report)
-	if err != nil {
-		return fmt.Errorf("failed to create project report:%w", err)
-	}
-	jq := gojsonq.New().File(filepath.Join(project.TargetDir(), "lint.json")).From(IssueNode)
-	count := jq.Count()
-	report.Issues = &Issue{
-		Category: map[string]int{},
-	}
-	report.Issues.Count = count
-	if count == 0 {
-		return nil
-	}
-	projectIssues := jq.GroupBy("FromLinter")
-	if v, ok := projectIssues.Get().(map[string][]interface{}); ok {
-		for k, v1 := range v {
-			report.Issues.Category[k] = len(v1)
-		}
-	}
-
-	// @todo pkg level issues
-
-	// @todo file level issues
-
-	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
-	err = saveReport(project.TargetDir(), suffix, &report)
-	if err != nil {
-		return err
-	}
-	rename(project.TargetDir(), suffix)
-	return nil
-}
-
-func rename(dir, suffix string) {
-	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err == nil && !d.IsDir() && strings.HasSuffix(d.Name(), suffix) {
-			np := strings.TrimSuffix(path, suffix)
-			err = os.Rename(path, np)
-			if err != nil {
-				log.Println(color.YellowString("failed to rename file %s to %s: ", path, np, err.Error()))
-			}
-		} else if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		return err //nolint:wrapcheck
-	})
-}
-
-var buildAction boot.Action = func(builder boot.Project, command boot.Command) error {
+var buildAction boot.Action = func(session *boot.Session, builder boot.Project, command boot.Command) error {
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")

@@ -2,16 +2,15 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -57,13 +56,15 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
 	rootCmd.SetArgs([]string{"setup", boot.SetupBuilder.Name()})
-	err = rootCmd.Execute()
+	ctx := context.WithValue(context.Background(), CurrentSession, boot.NewSession())
+	err = rootCmd.ExecuteContext(ctx)
 	if err == nil {
 		require.NoError(s.T(), err, "should create builder.go successfully")
 	} else {
 		require.ErrorIs(s.T(), err, os.ErrExist, "should get file exists error")
 	}
-	require.Empty(s.T(), boot.AllFlags(boot.SetupBuilder))
+	session := rootCmd.Context().Value(CurrentSession).(*boot.Session)
+	require.Empty(s.T(), session.AllFlags(boot.SetupBuilder))
 }
 
 func (s *CmdTestSuite) TestSetupHook() {
@@ -76,7 +77,8 @@ func (s *CmdTestSuite) TestSetupHook() {
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
 	rootCmd.SetArgs([]string{"setup", boot.SetupHook.Name()})
-	err := rootCmd.Execute()
+	ctx := context.WithValue(context.Background(), CurrentSession, boot.NewSession())
+	err := rootCmd.ExecuteContext(ctx)
 	require.NoError(s.T(), err)
 
 	for k, v := range builder.HookMap() {
@@ -85,157 +87,55 @@ func (s *CmdTestSuite) TestSetupHook() {
 		f = filepath.Join(s.builder.GitHome(), "hooks", v)
 		require.FileExists(s.T(), f)
 	}
-	require.Empty(s.T(), boot.AllFlags(boot.SetupBuilder))
+	session := rootCmd.Context().Value(CurrentSession).(*boot.Session)
+	require.Empty(s.T(), session.AllFlags(boot.SetupBuilder))
 
 }
-
 func (s *CmdTestSuite) TestSetupLint() {
-	tests := []struct {
+	test := struct {
 		name  string
 		flags []string
 		expV  string
 	}{
-		{
-			"withVersion",
-			[]string{"setup", boot.SetupLinter.Name(), "-v", "v1.49.0"},
-			"v1.49.0",
-		},
-		/*
-			{
-				"noVersion",
-				[]string{"setup", boot.SetupLinter.Name()},
-				boot.LatestVer,
-			},
-		*/
+		"withVersion",
+		[]string{"setup", boot.SetupLinter.Name(), "-v", "v1.49.0"},
+		"v1.49.0",
 	}
-	for _, test := range tests {
-		s.T().Run(test.name, func(t *testing.T) {
-			b := bytes.NewBufferString("")
-			rootCmd.SetOut(b)
-			rootCmd.SetArgs(test.flags)
-			err := rootCmd.Execute()
-			require.NoError(s.T(), err)
-			require.Equal(s.T(), test.expV, boot.GetFlag[string](boot.SetupLinter, "version"))
-		})
-	}
+	session := boot.NewSession()
+	ctx := context.WithValue(context.Background(), CurrentSession, session)
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs(test.flags)
+	err := rootCmd.ExecuteContext(ctx)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), test.expV, session.GetFlagString(boot.SetupLinter, "version"))
 }
 
-func (s *CmdTestSuite) TestRunLint() {
-	tests := []struct {
+func (s *CmdTestSuite) TestRunLintAll() {
+	test := struct {
 		name   string
 		flags  []string
 		result bool
 		ctx    string
 	}{
-		{
-			"changed",
-			[]string{"run", boot.Lint.Name()},
-			false,
-			"run -v --out-format json ./... --new-from-rev HEAD~ golangci-lint-v1-49-0",
-		}, {
-			"all",
-			[]string{"run", boot.Lint.Name(), "-a"},
-			true,
-			"run -v --out-format json ./... --fix false golangci-lint-v1-49-0",
-		},
+		"all",
+		[]string{"run", boot.Lint.Name(), "-a"},
+		true,
+		"run -v --out-format json ./... --fix false golangci-lint-v1-49-0",
 	}
-	for _, test := range tests {
-		s.T().Run(test.name, func(t *testing.T) {
-			html := filepath.Join(s.builder.TargetDir(), "lint.html")
-			out := filepath.Join(s.builder.TargetDir(), "lint.out")
-			err := os.Remove(html)
-			if err != nil {
-				require.ErrorIs(s.T(), err, os.ErrNotExist)
-			}
-			err = os.Remove(out)
-			if err != nil {
-				require.ErrorIs(s.T(), err, os.ErrNotExist)
-			}
-			b := bytes.NewBufferString("")
-			rootCmd.SetOut(b)
-			rootCmd.SetArgs(test.flags)
-			err = rootCmd.Execute()
-			if err != nil {
-				require.True(t, strings.Contains(err.Error(), "linter issues are found"))
-			}
-			require.Equal(t, boot.GetFlag[bool](boot.Lint, "all"), test.result)
-			require.Equal(t, boot.AllFlags(boot.Lint), []string{"all"})
 
-			_, err = os.Stat(html)
-			require.NoError(t, err)
-			_, err = os.Stat(out)
-			require.NoError(t, err)
-			require.Equal(t, test.ctx, boot.ExecCtx(boot.Lint))
-		})
-	}
-}
-
-func (s *CmdTestSuite) TestCleanWithCache() {
-	tests := []struct {
-		name     string
-		flags    []string
-		trueFlag string
-		execCtx  string
-	}{
-		{
-			"cleanCache",
-			[]string{"run", boot.Clean.Name(), "--testcache"},
-			"-testcache",
-			"go clean -testcache",
-		},
-		{
-			"cleanCache_short",
-			[]string{"run", boot.Clean.Name(), "-t"},
-			"-testcache",
-			"go clean -testcache",
-		},
-	}
-	validFlags := []string{"-cache", "-fuzzcache", "-modcache", "-testcache", "all"}
-	sort.Strings(validFlags)
-	for _, test := range tests {
-		s.T().Run(test.name, func(t *testing.T) {
-			b := bytes.NewBufferString("")
-			rootCmd.SetOut(b)
-			rootCmd.SetArgs(test.flags)
-			err := rootCmd.Execute()
-			require.NoError(t, err)
-			lo.ForEach([]string{"-cache", "-testcache", "-modcache", "-fuzzcache"}, func(flag string, _ int) {
-				value := boot.GetFlag[bool](boot.Clean, flag)
-				if flag == test.trueFlag {
-					require.Equal(s.T(), true, value)
-				} else {
-					require.Equal(s.T(), false, value)
-				}
-			})
-			expFlags := boot.AllFlags(boot.Clean)
-			sort.Strings(expFlags)
-			require.Equal(t, validFlags, expFlags)
-			require.Equal(t, test.execCtx, boot.ExecCtx(boot.Clean))
-		})
-	}
-}
-
-func (s *CmdTestSuite) TestGenerateReport() {
-	if _, ok := os.LookupEnv("callFromTest"); ok {
-		return
-	}
-	os.Setenv("callFromTest", "1")
+	session := boot.NewSession()
+	ctx := context.WithValue(context.Background(), CurrentSession, session)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"run", boot.Report.Name()})
-	err := rootCmd.Execute()
-	require.NoError(s.T(), err)
-}
+	rootCmd.SetArgs(test.flags)
+	err := rootCmd.ExecuteContext(ctx)
 
-func (s *CmdTestSuite) TestTestProject() {
-	s.T().Skip("skip for now")
-	if _, ok := os.LookupEnv("callFromTest"); ok {
-		return
+	if err != nil {
+		require.True(s.T(), strings.Contains(err.Error(), "linter issues are found"))
 	}
-	os.Setenv("callFromTest", "1")
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{"run", boot.Test.Name()})
-	err := rootCmd.Execute()
-	require.NoError(s.T(), err)
+	require.Equal(s.T(), session.GetFlagBool(boot.Lint, "all"), test.result)
+	require.Equal(s.T(), session.AllFlags(boot.Lint), []string{"all"})
+	require.Equal(s.T(), test.ctx, session.CtxValue(boot.Lint))
+
 }

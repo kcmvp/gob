@@ -10,6 +10,11 @@ import (
 
 var _ boot.Project = (*Builder)(nil)
 
+var (
+	instance *Builder
+	once     sync.Once
+)
+
 type Builder struct {
 	boot.DefaultProject
 	*buildOption
@@ -20,11 +25,6 @@ func HookMap() map[string]string {
 		return strings.ReplaceAll(v, "-", "_")
 	})
 }
-
-var (
-	instance *Builder
-	once     sync.Once
-)
 
 func NewBuilder() *Builder {
 	once.Do(func() {

@@ -5,10 +5,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/kcmvp/gob/boot"
-	"github.com/kcmvp/gob/builder"
 	"os"
 	"strings"
+
+	"github.com/kcmvp/gob/boot"
+	"github.com/kcmvp/gob/builder"
 )
 
 func main() {
@@ -21,7 +22,7 @@ func main() {
 	}
 	fmt.Println(refs)
 
-	if err := boot.Run(builder.NewBuilder()); err != nil {
+	if err := boot.NewSession().Run(builder.NewBuilder()); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)

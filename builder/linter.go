@@ -14,7 +14,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/boot"
@@ -22,10 +21,13 @@ import (
 )
 
 const (
-	IssueNode  = "Issues"
-	lintCfg    = ".golangci.yml"
-	lintCmd    = "golangci-lint"
-	lintModule = "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	IssueNode        = "Issues"
+	lintCfg          = ".golangci.yml"
+	lintCmd          = "golangci-lint"
+	lintModule       = "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	LintHTMLReport   = "lint.html"
+	LintJSONReport   = "lint.json"
+	LintOutputReport = "lint.out"
 )
 
 var _ boot.Installer = (*Linter)(nil)
@@ -38,17 +40,11 @@ var reportTpl string
 
 type Linter struct {
 	boot.Installer
-	report string
-	output string
-	json   string
 }
 
 func newLinter() *Linter {
 	return &Linter{
 		boot.NewInstallable(lintModule, lintCmd, lintCfg, linterVersion),
-		fmt.Sprintf("%s.html", "lint"),
-		fmt.Sprintf("%s.out", "lint"),
-		fmt.Sprintf("%s.json", "lint"),
 	}
 }
 
@@ -65,7 +61,7 @@ var linterVersion = func(name string) (string, string) {
 }
 
 // nolint
-func (linter *Linter) scan(builder *Builder, command boot.Command) error {
+func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot.Command) error {
 	ver := builder.Config().GetString(linter.CfgVerKey())
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
@@ -76,7 +72,7 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	}
 	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
-	changedOnly := (builder.Initializer() != boot.None || !boot.GetFlag[bool](command, "all")) && command != boot.Report
+	changedOnly := (builder.Initializer() != boot.None || !session.GetFlagBool(command, "all")) && command != boot.Report
 	if changedOnly {
 		args = append(args, "--new-from-rev", "HEAD~")
 	} else {
@@ -85,7 +81,7 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
 	log.Printf("Scan with %s-%s", linter.Cmd(), ver)
-	boot.SaveExecCtx(command, strings.Join(append(args, vCmd), " "))
+	session.SaveCtxValue(command, strings.Join(append(args, vCmd), " "))
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -100,11 +96,9 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 		return fmt.Errorf("failed to execute linter command: %w", err)
 	}
 
-	suffix := fmt.Sprintf(".%d.tmp", time.Now().UnixMilli())
-	defer rename(builder.TargetDir(), suffix)
 	sc := bufio.NewScanner(stderr)
-	//output, err := os.OpenFile(filepath.Join(builder.TargetDir(), linter.output, suffix), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm) //nolint
-	output, err := os.Create(filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.output, suffix)))
+	output, err := os.Create(filepath.Join(builder.TargetDir(), session.Specified(LintOutputReport)))
+	defer output.Close()
 	if err != nil {
 		return fmt.Errorf("failed to create linter output file: %w", err)
 	}
@@ -116,13 +110,6 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 		}
 		log.Println(tmpLine)
 	}
-	err = output.Close()
-	if err != nil {
-		return fmt.Errorf("failed to create linter output file: %w", err)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to get lint standard out: %w", err)
-	}
 
 	// write data to json
 	jsonData, _ := io.ReadAll(stdout)
@@ -131,10 +118,10 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to save lint json report: %w", err)
 	}
-	jsonReport := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.json, suffix))
+	jsonReport := filepath.Join(builder.TargetDir(), session.Specified(LintJSONReport))
 	jf, _ := os.Create(jsonReport)
+	defer jf.Close()
 	jf.Write(prettyJSON.Bytes())
-	jf.Close()
 
 	// html report
 	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
@@ -158,16 +145,17 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 		return fmt.Errorf("failed to parse lint report template: %w", err)
 	}
 
-	report := filepath.Join(builder.TargetDir(), fmt.Sprintf("%s%s", linter.report, suffix))
-	f, err := os.Create(report)
+	report := filepath.Join(builder.TargetDir(), session.Specified(LintHTMLReport))
+	html, err := os.Create(report)
+	defer html.Close()
 	if err != nil {
 		return fmt.Errorf("failed to create lint report: %w", err)
 	}
-	err = t.Execute(f, data)
+	err = t.Execute(html, data)
 	if err != nil {
 		return fmt.Errorf("failed to generate lint report: %w", err)
 	}
-	log.Printf("lint report is generated at %s\n", strings.TrimSuffix(report, suffix))
+	log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 	if issues > 0 {
 		msg := fmt.Sprintf("total %d linter issues are found", issues)
 		log.Println(color.RedString(msg))
@@ -177,6 +165,5 @@ func (linter *Linter) scan(builder *Builder, command boot.Command) error {
 	} else {
 		log.Println(color.GreenString("no linter issues are found"))
 	}
-	f.Close()
 	return nil
 }
