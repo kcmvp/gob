@@ -6,16 +6,17 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
+	"os"
+
+	"github.com/kcmvp/gob/boot"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"golang.org/x/mod/modfile"
-	"os"
 )
 
-const (
-	ctxModFileKey = "mod"
-)
+type ContextKey string
+
+var CurrentSession ContextKey = "session"
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
@@ -23,16 +24,9 @@ var rootCmd = &cobra.Command{
 	Short: "Generate project scaffold",
 	Long:  `Generate project scaffolds (builder, hook)`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		data, err := os.ReadFile("go.mod")
+		_, err := os.ReadFile("go.mod")
 		if err != nil {
 			err = errors.New(color.RedString("please run the command in the module root directory"))
-		} else {
-			if f, err := modfile.Parse("go.mod", data, nil); err != nil {
-				return fmt.Errorf("invalid go.mod file")
-			} else {
-				ctx := context.WithValue(cmd.Context(), ctxModFileKey, f) //nolint
-				cmd.SetContext(ctx)
-			}
 		}
 		return err
 	},
@@ -41,7 +35,8 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	ctx := context.WithValue(context.Background(), CurrentSession, boot.NewSession())
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 }

@@ -2,6 +2,7 @@ package boot
 
 import (
 	"fmt"
+
 	"github.com/samber/lo"
 )
 
@@ -11,6 +12,7 @@ const (
 	None         Command = "_"
 	Clean        Command = "clean"
 	Build        Command = "build"
+	Report       Command = "report"
 	Test         Command = "test"
 	Lint         Command = "lint"
 	SetupBuilder Command = "builder"
@@ -24,8 +26,13 @@ const (
 func (command Command) Name() string {
 	return string(command)
 }
+
 func (command Command) CtxKey() string {
-	return fmt.Sprintf("%s.ctx", command.Name())
+	return fmt.Sprintf("ctx.%s", command.Name())
+}
+
+func (command Command) ErrKey() string {
+	return fmt.Sprintf("Err.%s", command.Name())
 }
 
 func ToCommands(commands ...string) []Command {

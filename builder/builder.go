@@ -1,13 +1,19 @@
 package builder
 
 import (
-	"github.com/kcmvp/gob/boot"
-	"github.com/samber/lo"
 	"strings"
 	"sync"
+
+	"github.com/kcmvp/gob/boot"
+	"github.com/samber/lo"
 )
 
 var _ boot.Project = (*Builder)(nil)
+
+var (
+	instance *Builder
+	once     sync.Once
+)
 
 type Builder struct {
 	boot.DefaultProject
@@ -19,11 +25,6 @@ func HookMap() map[string]string {
 		return strings.ReplaceAll(v, "-", "_")
 	})
 }
-
-var (
-	instance *Builder
-	once     sync.Once
-)
 
 func NewBuilder() *Builder {
 	once.Do(func() {
@@ -47,5 +48,6 @@ var mapper = func() map[boot.Command][]boot.Action {
 		boot.Lint:         {createDirAction, genHook, lintAction},
 		boot.Test:         {createDirAction, genHook, testAction},
 		boot.Build:        {createDirAction, genHook, buildAction},
+		boot.Report:       {createDirAction, genHook, lintAction, testAction, reportAction},
 	}
 }

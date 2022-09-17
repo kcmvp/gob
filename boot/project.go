@@ -1,17 +1,19 @@
 package boot
 
 import (
-	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
-	"github.com/samber/lo"
-	"github.com/spf13/viper"
 	"go/build"
-	"golang.org/x/mod/modfile"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/go-git/go-git/v5"
+	"github.com/samber/lo"
+	"github.com/spf13/viper"
+
+	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -30,6 +32,7 @@ type Project interface {
 	SaveConfig(key, value string)
 	Mapper() map[Command][]Action
 	Initializer() Command
+	Mod() *modfile.File
 }
 
 var _ Project = (*DefaultProject)(nil)
@@ -39,6 +42,11 @@ type DefaultProject struct {
 	cfg         *viper.Viper
 	initializer Command
 	mapper      Mapper
+	mod         *modfile.File
+}
+
+func (project *DefaultProject) Mod() *modfile.File {
+	return project.mod
 }
 
 func (project *DefaultProject) Mapper() map[Command][]Action {
@@ -67,7 +75,6 @@ func (project *DefaultProject) RootDir() string {
 }
 
 func NewProject(mapper Mapper) DefaultProject {
-
 	goRoot := runtime.GOROOT()
 	log.Printf("GOROOT: %s\n", goRoot)
 	goPath := os.Getenv("GOPATH")
@@ -85,6 +92,7 @@ func NewProject(mapper Mapper) DefaultProject {
 	initializers := []Command{PreCommit, CommitMsg, PrePush}
 	root := ""
 	initializer := None
+	var mod *modfile.File
 	for more { //nolint
 		frame, more = frames.Next()
 		found := lo.ContainsBy(path, func(p string) bool {
@@ -95,7 +103,7 @@ func NewProject(mapper Mapper) DefaultProject {
 			dir := filepath.Dir(frame.File)
 			for len(root) == 0 && dir != "/" {
 				if data, err := os.ReadFile(filepath.Join(dir, "go.mod")); err == nil {
-					if _, err = modfile.Parse("go.mod", data, nil); err != nil {
+					if mod, err = modfile.Parse("go.mod", data, nil); err != nil {
 						log.Fatalln(color.RedString("invalid mod file %v", err))
 					}
 					root = dir
@@ -123,6 +131,7 @@ func NewProject(mapper Mapper) DefaultProject {
 		viper.New(),
 		initializer,
 		mapper,
+		mod,
 	}
 	return project
 }

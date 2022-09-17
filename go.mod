@@ -3,9 +3,10 @@ module github.com/kcmvp/gob
 go 1.18
 
 require (
+	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/fatih/color v1.13.0
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/samber/lo v1.27.1
+	github.com/samber/lo v1.28.2
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0
@@ -17,6 +18,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect

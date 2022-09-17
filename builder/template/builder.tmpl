@@ -8,5 +8,5 @@ import (
 )
 
 func main() {
-	boot.Run(builder.NewBuilder(), boot.Clean, boot.Build)
+	boot.NewSession().Run(builder.NewBuilder(), boot.Clean, boot.Build)
 }

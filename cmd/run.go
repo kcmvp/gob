@@ -9,18 +9,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cleanCache bool
-var cleanTestCache bool
-var cleanModCache bool
-var clanFuzzCache bool
-var clanAllOver bool
-var lintScanAll bool
+var (
+	cleanCache     bool
+	cleanTestCache bool
+	cleanModCache  bool
+	clanFuzzCache  bool
+	clanAllOver    bool
+	lintFullScan   bool
+)
 
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
 	Use:       "run",
-	Short:     "Run 'clean', 'test', 'lint', 'build' commands against current project",
-	ValidArgs: []string{"clean", "test", "lint", "build"},
+	Short:     "Run 'clean', 'test', 'lint', 'build' and 'report' commands against current project",
+	ValidArgs: []string{"clean", "test", "lint", "build", "report"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := cobra.MinimumNArgs(1)(cmd, args)
 		if err == nil {
@@ -29,25 +31,24 @@ var runCmd = &cobra.Command{
 		return err
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		builder := builder.NewBuilder()
-		boot.BindFlag(boot.Clean, "-cache", cleanCache)
-		boot.BindFlag(boot.Clean, "-testcache", cleanTestCache)
-		boot.BindFlag(boot.Clean, "-modcache", cleanModCache)
-		boot.BindFlag(boot.Clean, "-fuzzcache", clanFuzzCache)
-		boot.BindFlag(boot.Clean, "all", clanAllOver)
-		boot.BindFlag(boot.Lint, "all", lintScanAll)
-		return boot.Run(builder, boot.ToCommands(args...)...)
+		session := cmd.Context().Value(CurrentSession).(*boot.Session)
+		session.BindFlag(boot.Clean, "-cache", cleanCache)
+		session.BindFlag(boot.Clean, "-testcache", cleanTestCache)
+		session.BindFlag(boot.Clean, "-modcache", cleanModCache)
+		session.BindFlag(boot.Clean, "-fuzzcache", clanFuzzCache)
+		session.BindFlag(boot.Clean, "all", clanAllOver)
+		session.BindFlag(boot.Lint, "all", lintFullScan)
+		return session.Run(builder.NewBuilder(), boot.ToCommands(args...)...) //nolint
 	},
 }
 
 func init() {
-
 	runCmd.Flags().BoolVarP(&cleanCache, "cache", "c", false, "remove the entire go build cache")
 	runCmd.Flags().BoolVarP(&cleanTestCache, "testcache", "t", false, "expire all test results")
 	runCmd.Flags().BoolVarP(&cleanModCache, "modcache", "m", false, "remove the entire module download cache")
 	runCmd.Flags().BoolVarP(&clanFuzzCache, "fuzzcache", "f", false, "remove the entire module download cache")
 	runCmd.Flags().BoolVarP(&clanAllOver, "cleanAll", "o", false, "delete all the files in the target folder")
-	runCmd.Flags().BoolVarP(&lintScanAll, "scanAll", "a", false, "Default only scan changed files, use -a to scan all files")
+	runCmd.Flags().BoolVarP(&lintFullScan, "fullScan", "a", false, "Default only scan changed files, use -a to scan all files")
 
 	rootCmd.AddCommand(runCmd)
 }

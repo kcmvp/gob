@@ -15,7 +15,8 @@ var githookCmd = &cobra.Command{
 	Short: "Setup git hook for project",
 	Long:  `Setup git hooks for project, which include: commit_message, pre_push`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return boot.Run(builder.NewBuilder(), boot.SetupHook) //nolint
+		session := cmd.Context().Value(CurrentSession).(*boot.Session)
+		return session.Run(builder.NewBuilder(), boot.SetupHook) //nolint
 	},
 }
 

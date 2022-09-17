@@ -3,15 +3,16 @@
 package main
 
 import (
+	"os"
+
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/builder"
-	"os"
 )
 
 func main() {
-	//input, _ := os.ReadFile(os.Args[1])
+	// input, _ := os.ReadFile(os.Args[1])
 
-	if err := boot.Run(builder.NewBuilder()); err != nil {
+	if err := boot.NewSession().Run(builder.NewBuilder()); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)
