@@ -145,7 +145,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
-	params := []string{"test", "-v", "-coverprofile", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut)), "./..."}
+	params := []string{"test", "-v", "-coverpkg", "./...", "-coverprofile", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut)), "./..."}
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
@@ -185,21 +185,35 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	if err != nil {
 		return fmt.Errorf("test failed:%w", err)
 	}
-
-	//  go tool cover -func ./targetDir/coverage.data
+	// run 'go tool cover -func ./targetDir/coverage.data' to get project level coverage
+	params = []string{"tool", "cover", "-func", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut))}
+	out, err := exec.Command("go", params...).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to get coverage report:%w", err)
+	}
+	lines := strings.Split(strings.ReplaceAll(string(out), "\r\n", "\n"), "\n")
+	totalRep := regexp.MustCompile(`total:\s+\(statements\)\s+\S+`)
+	report := Report{}
+	for _, line := range lines {
+		if totalRep.MatchString(line) {
+			report.Coverage = strings.Fields(line)[2]
+		}
+	}
+	//  go tool cover -html ./targetDir/coverage.data to get detail coverage html report
 	htmlReport := filepath.Join(builder.TargetDir(), session.Specified(testCoverHTML))
 	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut)), "-o", htmlReport}
-	out, err := exec.Command("go", params...).CombinedOutput()
+	out, err = exec.Command("go", params...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s:%w", string(out), err)
 	}
 	// generate file coverage report
-	report := Report{}
 	report.Pkgs = lo.MapToSlice(pkgCoverage, func(k string, v string) *PkgReport {
 		return &PkgReport{
-			Name:     k,
-			Coverage: v,
-			Files:    []*FileReport{},
+			Name: k,
+			Metrics: Metrics{
+				Coverage: v,
+			},
+			Files: []*FileReport{},
 		}
 	})
 	reader, err := os.Open(htmlReport)
@@ -211,8 +225,10 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 		fc := strings.Fields(s.Text())
 		if len(fc) == 2 {
 			file := &FileReport{
-				Name:     fc[0],
-				Coverage: strings.ReplaceAll(strings.ReplaceAll(fc[1], "(", ""), ")", ""),
+				Name: fc[0],
+				Metrics: Metrics{
+					Coverage: strings.ReplaceAll(strings.ReplaceAll(fc[1], "(", ""), ")", ""),
+				},
 			}
 			for _, pkg := range report.Pkgs {
 				if pkg.Coverage != "-" && strings.Contains(file.Name, pkg.Name) {

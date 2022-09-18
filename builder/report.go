@@ -11,27 +11,33 @@ import (
 
 const reportJSON = "report.json"
 
-type PkgReport struct {
-	Name     string
-	Coverage string
-	Issues   *Issue `json:"Issues,omitempty"`
-	Files    []*FileReport
-}
-
-type FileReport struct {
-	Name     string
-	Coverage string
-	Issues   *Issue `json:"Issues,omitempty"`
-}
-
 type Issue struct {
 	Total   int            `json:"Total,omitempty"`
 	TypeMap map[string]int `json:"Linter,omitempty"`
 }
 
+type Metrics struct {
+	Coverage string
+	Issues   *Issue `json:"Issues,omitempty"`
+}
+
+// Report over all.
 type Report struct {
-	Issues *Issue       `json:"Issues,omitempty"`
-	Pkgs   []*PkgReport `json:"Packages,omitempty"`
+	Metrics
+	Pkgs []*PkgReport `json:"Packages,omitempty"`
+}
+
+// PkgReport package dimension.
+type PkgReport struct {
+	Name string
+	Metrics
+	Files []*FileReport
+}
+
+// FileReport file dimension.
+type FileReport struct {
+	Name string
+	Metrics
 }
 
 func (report *Report) Save(dir string, session *boot.Session) error {

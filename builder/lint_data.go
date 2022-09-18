@@ -63,8 +63,10 @@ var reportAction boot.Action = func(session *boot.Session, project boot.Project,
 		})
 		if !ok {
 			pkg = &PkgReport{
-				Name:     pkgName,
-				Coverage: "-",
+				Name: pkgName,
+				Metrics: Metrics{
+					Coverage: "-",
+				},
 			}
 			report.Pkgs = append(report.Pkgs, pkg)
 		}
@@ -81,9 +83,9 @@ var reportAction boot.Action = func(session *boot.Session, project boot.Project,
 			})
 			if !ok {
 				fileReport = &FileReport{
-					Name:     fileName,
-					Coverage: "-",
+					Name: fileName,
 				}
+				fileReport.Coverage = "-"
 				pkg.Files = append(pkg.Files, fileReport)
 			}
 			fileReport.Issues = fileIssue
