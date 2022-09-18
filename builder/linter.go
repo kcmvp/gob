@@ -126,37 +126,37 @@ func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot
 	// html report
 	jq := gojsonq.New().FromString(prettyJSON.String()).From(IssueNode)
 	issues := jq.Count()
-	jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
-	data := jq.Get()
-	funcMap := template.FuncMap{
-		"add": func(i int) int {
-			return i + 1
-		},
-		"concat": func(s []interface{}) string {
-			var s1 []string
-			for _, i := range s {
-				s1 = append(s1, fmt.Sprintf("%v", i))
-			}
-			return strings.TrimSpace(strings.Join(s1, "\n"))
-		},
-	}
-	t, err := template.New("report").Funcs(funcMap).Parse(reportTpl)
-	if err != nil {
-		return fmt.Errorf("failed to parse lint report template: %w", err)
-	}
-
-	report := filepath.Join(builder.TargetDir(), session.Specified(LintHTMLReport))
-	html, err := os.Create(report)
-	defer html.Close()
-	if err != nil {
-		return fmt.Errorf("failed to create lint report: %w", err)
-	}
-	err = t.Execute(html, data)
-	if err != nil {
-		return fmt.Errorf("failed to generate lint report: %w", err)
-	}
-	log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 	if issues > 0 {
+		jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
+		data := jq.Get()
+		funcMap := template.FuncMap{
+			"add": func(i int) int {
+				return i + 1
+			},
+			"concat": func(s []interface{}) string {
+				var s1 []string
+				for _, i := range s {
+					s1 = append(s1, fmt.Sprintf("%v", i))
+				}
+				return strings.TrimSpace(strings.Join(s1, "\n"))
+			},
+		}
+		t, err := template.New("report").Funcs(funcMap).Parse(reportTpl)
+		if err != nil {
+			return fmt.Errorf("failed to parse lint report template: %w", err)
+		}
+
+		report := filepath.Join(builder.TargetDir(), session.Specified(LintHTMLReport))
+		html, err := os.Create(report)
+		defer html.Close()
+		if err != nil {
+			return fmt.Errorf("failed to create lint report: %w", err)
+		}
+		err = t.Execute(html, data)
+		if err != nil {
+			return fmt.Errorf("failed to generate lint report: %w", err)
+		}
+		log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 		msg := fmt.Sprintf("total %d linter issues are found", issues)
 		log.Println(color.RedString(msg))
 		if changedOnly {
