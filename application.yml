@@ -1,5 +1,3 @@
 gob:
-  toolset:
-    golangci-lint: v1.49.0
-
-
+    toolset:
+        golangci-lint: v1.49.0
