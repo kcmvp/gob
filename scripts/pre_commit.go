@@ -3,6 +3,8 @@
 package main
 
 import (
+	"github.com/fatih/color"
+	"log"
 	"os"
 
 	"github.com/kcmvp/gob/boot"
@@ -13,6 +15,7 @@ func main() {
 	// input, _ := os.ReadFile(os.Args[1])
 
 	if err := boot.NewSession().Run(builder.NewBuilder()); err != nil {
+		log.Println(color.RedString(err.Error()))
 		os.Exit(1)
 	}
 	os.Exit(0)

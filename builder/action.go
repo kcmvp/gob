@@ -60,7 +60,7 @@ var setupLinter boot.Action = func(session *boot.Session, project boot.Project, 
 	log.Println("Setup linters")
 	linter := newLinter()
 	version := session.GetFlagString(command, "version")
-	cfgVersion := project.Config().GetString(linter.CfgVerKey())
+	cfgVersion := project.Config().GetString(fmt.Sprintf("%s.%s", boot.CfgPrefix, linter.CfgVerKey()))
 	if cfgVersion != version {
 		version = cfgVersion
 	}
@@ -148,7 +148,24 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
-	params := []string{"test", "-v", "-coverpkg", "./...", "-coverprofile", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut)), "./..."}
+	params := []string{"test", "-v", "-coverpkg", "./...", "-coverprofile", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut))}
+	// selective test scope in commit-msg hook, default are all packages
+	scope := []string{"./..."}
+	// @todo add test for this configuration
+	scanAll := builder.Config().GetBool(fmt.Sprintf("%s.hooks.%s.testall", boot.CfgPrefix, command.Hook()))
+	if command == boot.CommitMsg && !scanAll {
+		changes, _ := changeSet(builder.RootDir())
+		paths := lo.Map(changes, func(t string, _ int) string {
+			return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator))
+		})
+		paths = lo.Uniq[string](paths)
+		if len(paths) > 0 {
+			log.Println(color.GreenString("selective test with folders: %s", strings.Join(paths, " ")))
+			log.Println(color.GreenString("you can change the behavior by setting gob.hooks.commit-msg.testall: true"))
+			scope = paths
+		}
+	}
+	params = append(params, scope...)
 
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()

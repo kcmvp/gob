@@ -65,7 +65,7 @@ var linterVersion = func(name string) (string, string) {
 
 // nolint
 func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot.Command) error {
-	ver := builder.Config().GetString(linter.CfgVerKey())
+	ver := builder.Config().GetString(fmt.Sprintf("%s.%s", boot.CfgPrefix, linter.CfgVerKey()))
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
 	}
@@ -165,8 +165,8 @@ func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot
 		log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 		msg := fmt.Sprintf("Total %d linter issues are found", issues)
 		log.Println(color.RedString(msg))
-		tableReport(builder.TargetDir(), data)
 		if changedOnly {
+			tableReport(builder.TargetDir(), data)
 			return errors.New(msg)
 		}
 	} else {

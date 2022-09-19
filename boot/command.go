@@ -2,6 +2,7 @@ package boot
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/samber/lo"
 )
@@ -25,6 +26,17 @@ const (
 
 func (command Command) Name() string {
 	return string(command)
+}
+
+func (command Command) Hook() string {
+	var hook string
+	switch command { //nolint:exhaustive
+	case PreCommit, CommitMsg, PrePush:
+		hook = strings.TrimRight(strings.ReplaceAll(command.Name(), "_", "-"), ".go")
+	default:
+		hook = ""
+	}
+	return hook
 }
 
 func (command Command) CtxKey() string {
