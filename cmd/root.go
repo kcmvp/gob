@@ -21,8 +21,9 @@ var CurrentSession ContextKey = "session"
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "gob",
-	Short: "Generate project scaffold",
-	Long:  `Generate project scaffolds (builder, hook)`,
+	Short: "Golang project booter",
+	Long: `Generate project scaffolds, including build script, github hook and other project setup.
+	Please visit https://github.com/kcmvp/gob/wiki for details`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := os.ReadFile("go.mod")
 		if err != nil {
