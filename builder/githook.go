@@ -70,6 +70,30 @@ func validateCommitMsg(msg, pattern string) error {
 	return err //nolint
 }
 
+func changeSet(projectRoot string) ([]string, error) {
+	changes := []string{}
+	repo, err := git.PlainOpen(projectRoot)
+	if err != nil {
+		return changes, &GitErr{fmt.Sprintf("project is not at version control:%s", err.Error())}
+	}
+	wt, err := repo.Worktree()
+	if err != nil {
+		return changes, &GitErr{fmt.Sprintf("project is not at version control:%s", err.Error())}
+	}
+	st, err := wt.Status()
+	if err != nil {
+		return changes, &GitErr{fmt.Sprintf("project is not at version control:%s", err.Error())}
+	}
+
+	status := map[string]*git.FileStatus(st)
+	for s, fileStatus := range status {
+		if fileStatus.Staging != git.Unmodified {
+			changes = append(changes, s)
+		}
+	}
+	return changes, nil
+}
+
 /*
 func GitCheckout(files ...string) {
 	w, _ := gitHooker.repo.Worktree()
