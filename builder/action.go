@@ -155,8 +155,12 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	scanAll := builder.Config().GetBool(fmt.Sprintf("%s.%s.testall", boot.CfgPrefix, command.Hook()))
 	if command == boot.CommitMsg && !scanAll {
 		changes, _ := changeSet(builder.RootDir())
-		paths := lo.Map(changes, func(t string, _ int) string {
-			return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator))
+		paths := lo.FilterMap(changes, func(t string, _ int) (string, bool) {
+			valid := strings.HasSuffix(t, ".go") && filepath.Dir(file) != "scripts"
+			if valid {
+				return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator)), true
+			}
+			return "", false
 		})
 		paths = lo.Uniq[string](paths)
 		if len(paths) > 0 {
