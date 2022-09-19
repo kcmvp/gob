@@ -165,8 +165,8 @@ func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot
 		log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 		msg := fmt.Sprintf("Total %d linter issues are found", issues)
 		log.Println(color.RedString(msg))
+		tableReport(session, builder.TargetDir(), data, changedOnly)
 		if changedOnly {
-			tableReport(builder.TargetDir(), data)
 			return errors.New(msg)
 		}
 	} else {
@@ -192,51 +192,55 @@ func splitIntoGroup(msg string, size int) []string {
 	return subs
 }
 
-func tableReport(dir string, data interface{}) error {
+func tableReport(session *boot.Session, dir string, data interface{}, consoleOutput bool) error {
 	ct := table.Table{}
 	ct.SetTitle("Lint Issues Report")
+	ct.AppendHeader(table.Row{"#", "File", "Line", "Linter", "Code", "Message"})
 	style := table.StyleDefault
 	style.Options.DrawBorder = true
 	style.Options.SeparateRows = true
 	style.Options.SeparateColumns = true
 	style.HTML.CSSClass = table.DefaultHTMLCSSClass
 	ct.SetStyle(style)
-	consoleRows := lo.Map(data.([]interface{}), func(t interface{}, i int) table.Row {
-		tm := t.(map[string]interface{})
-		filePath := tm["File"].(string)
-		if len(filePath) > 30 {
-			strings.Split(filePath, string(os.PathSeparator))
-			filePath = strings.Join(strings.Split(filePath, string(os.PathSeparator)), fmt.Sprintf("%s%s", string(os.PathSeparator), "\n"))
+	var err error
+	if consoleOutput {
+		consoleRows := lo.Map(data.([]interface{}), func(t interface{}, i int) table.Row {
+			tm := t.(map[string]interface{})
+			filePath := tm["File"].(string)
+			if len(filePath) > 30 {
+				strings.Split(filePath, string(os.PathSeparator))
+				filePath = strings.Join(strings.Split(filePath, string(os.PathSeparator)), fmt.Sprintf("%s%s", string(os.PathSeparator), "\n"))
+			}
+			code := tm["Code"].([]interface{})[0].(string)
+			code = strings.TrimSpace(code)
+			msg := tm["Message"].(string)
+			msg = strings.TrimSpace(msg)
+			return table.Row{i + 1, filePath, strings.TrimSpace(fmt.Sprintf("%v:%v", tm["Line"], tm["Column"])), tm["Linter"], strings.Join(lo.Slice(splitIntoGroup(code, 40), 0, 2), "\n"), strings.Join(splitIntoGroup(msg, 70), "\n")}
+		})
+		ct.AppendRows(consoleRows)
+		fmt.Println(ct.Render())
+	} else {
+		tableRows := lo.Map(data.([]interface{}), func(t interface{}, i int) table.Row {
+			tm := t.(map[string]interface{})
+			filePath := tm["File"].(string)
+			code := tm["Code"].([]interface{})[0].(string)
+			code = strings.TrimSpace(code)
+			msg := tm["Message"].(string)
+			msg = strings.TrimSpace(msg)
+			return table.Row{i + 1, filePath, strings.TrimSpace(fmt.Sprintf("%v:%v", tm["Line"], tm["Column"])), tm["Linter"], code, msg}
+		})
+		ct.AppendRows(tableRows)
+		html := ct.RenderHTML()
+		var htmlReport *os.File
+		htmlReport, err = os.Create(filepath.Join(dir, session.Specified(LintHTMLReport)))
+		if err != nil {
+			return err //nolint
 		}
-		code := tm["Code"].([]interface{})[0].(string)
-		code = strings.TrimSpace(code)
-		msg := tm["Message"].(string)
-		msg = strings.TrimSpace(msg)
-		return table.Row{i + 1, filePath, strings.TrimSpace(fmt.Sprintf("%v:%v", tm["Line"], tm["Column"])), tm["Linter"], strings.Join(lo.Slice(splitIntoGroup(code, 40), 0, 2), "\n"), strings.Join(splitIntoGroup(msg, 70), "\n")}
-	})
-	ct.AppendHeader(table.Row{"#", "File", "Line", "Linter", "Code", "Message"})
-	ct.AppendRows(consoleRows)
-	fmt.Println(ct.Render())
-	tableRows := lo.Map(data.([]interface{}), func(t interface{}, i int) table.Row {
-		tm := t.(map[string]interface{})
-		filePath := tm["File"].(string)
-		code := tm["Code"].([]interface{})[0].(string)
-		code = strings.TrimSpace(code)
-		msg := tm["Message"].(string)
-		msg = strings.TrimSpace(msg)
-		return table.Row{i + 1, filePath, strings.TrimSpace(fmt.Sprintf("%v:%v", tm["Line"], tm["Column"])), tm["Linter"], code, msg}
-	})
-	ct.ResetRows()
-	ct.AppendRows(tableRows)
-	html := ct.RenderHTML()
-	htmlReport, err := os.Create(filepath.Join(dir, LintHTMLReport))
-	if err != nil {
-		return err //nolint
+		_, err = htmlReport.WriteString(html)
+		if err != nil {
+			return err //nolint
+		}
+		err = htmlReport.Close()
 	}
-	_, err = htmlReport.WriteString(html)
-	if err != nil {
-		return err //nolint
-	}
-	err = htmlReport.Close()
 	return err //nolint
 }
