@@ -165,8 +165,8 @@ func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot
 		log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 		msg := fmt.Sprintf("Total %d linter issues are found", issues)
 		log.Println(color.RedString(msg))
-		tableReport(builder.TargetDir(), data)
 		if changedOnly {
+			tableReport(builder.TargetDir(), data)
 			return errors.New(msg)
 		}
 	} else {
