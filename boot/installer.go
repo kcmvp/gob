@@ -36,7 +36,7 @@ type installer struct {
 }
 
 func (ins *installer) CfgVerKey() string {
-	return fmt.Sprintf("toolset.%s", ins.Cmd())
+	return fmt.Sprintf("%s.toolset.%s", CfgPrefix, ins.Cmd())
 }
 
 func (ins *installer) Format(ver string) string {

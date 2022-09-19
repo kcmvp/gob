@@ -10,9 +10,7 @@ import (
 // setupCmd represents the setup command.
 var setupCmd = &cobra.Command{
 	Use:   "setup",
-	Short: "setup builder, git hook and other framework scaffold",
-	Run: func(cmd *cobra.Command, args []string) {
-	},
+	Short: "setup 'builder', 'githook', 'linter' and other framework scaffold",
 }
 
 func init() {

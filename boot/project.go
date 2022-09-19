@@ -1,7 +1,6 @@
 package boot
 
 import (
-	"fmt"
 	"go/build"
 	"log"
 	"os"
@@ -152,7 +151,7 @@ func (project *DefaultProject) Config() *viper.Viper {
 }
 
 func (project *DefaultProject) SaveConfig(key, value string) {
-	project.cfg.Set(fmt.Sprintf("%s.%s", CfgPrefix, key), value)
+	project.cfg.Set(key, value)
 	err := project.cfg.WriteConfigAs(filepath.Join(project.RootDir(), "application.yml"))
 	if err != nil {
 		log.Println(color.RedString("Failed to save the configuration %s", err.Error()))

@@ -87,7 +87,7 @@ func changeSet(projectRoot string) ([]string, error) {
 
 	status := map[string]*git.FileStatus(st)
 	for s, fileStatus := range status {
-		if fileStatus.Staging != git.Unmodified {
+		if fileStatus.Staging != git.Unmodified || fileStatus.Worktree != git.Unmodified {
 			changes = append(changes, s)
 		}
 	}
