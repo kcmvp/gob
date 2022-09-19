@@ -160,8 +160,8 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 		})
 		paths = lo.Uniq[string](paths)
 		if len(paths) > 0 {
-			log.Println(color.GreenString("selective test with folders: %s", strings.Join(paths, " ")))
-			log.Println(color.GreenString("you can change the behavior by setting gob.commit-msg.testall: true"))
+			log.Println(color.GreenString("Selective tests in: %s", strings.Join(paths, " ")))
+			log.Println(color.GreenString("Set 'gob.commit-msg.testall: true' to change the behavior"))
 			scope = paths
 		}
 	}
