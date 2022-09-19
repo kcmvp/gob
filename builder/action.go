@@ -60,7 +60,7 @@ var setupLinter boot.Action = func(session *boot.Session, project boot.Project, 
 	log.Println("Setup linters")
 	linter := newLinter()
 	version := session.GetFlagString(command, "version")
-	cfgVersion := project.Config().GetString(fmt.Sprintf("%s.%s", boot.CfgPrefix, linter.CfgVerKey()))
+	cfgVersion := project.Config().GetString(linter.CfgVerKey())
 	if cfgVersion != version {
 		version = cfgVersion
 	}
@@ -152,7 +152,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	// selective test scope in commit-msg hook, default are all packages
 	scope := []string{"./..."}
 	// @todo add test for this configuration
-	scanAll := builder.Config().GetBool(fmt.Sprintf("%s.hooks.%s.testall", boot.CfgPrefix, command.Hook()))
+	scanAll := builder.Config().GetBool(fmt.Sprintf("%s.%s.testall", boot.CfgPrefix, command.Hook()))
 	if command == boot.CommitMsg && !scanAll {
 		changes, _ := changeSet(builder.RootDir())
 		paths := lo.Map(changes, func(t string, _ int) string {
