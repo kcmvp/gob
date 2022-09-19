@@ -45,9 +45,12 @@ var genBuilder boot.Action = func(session *boot.Session, project boot.Project, c
 var genHook boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Setup git hooks")
 	err := genGitHooks(project.GitHome(), project.ScriptDir())
-	if err != nil {
+	var gitErr *GitErr
+	if errors.As(err, &gitErr) && command != boot.SetupHook {
+		log.Println(color.YellowString("Project is not in the git repository"))
+	} else if err != nil {
 		err = fmt.Errorf("failed to setup hook:%w", err)
-	} else if command.Name() == "githook" {
+	} else if command == boot.SetupHook {
 		log.Println("git hooks are setup successfully")
 	}
 	return err

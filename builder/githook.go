@@ -18,26 +18,40 @@ type hookData struct {
 	Type   string
 }
 
+type GitErr struct {
+	Msg string
+}
+
+func (g GitErr) Error() string {
+	return g.Msg
+}
+
 func genGitHooks(gitHome, scriptDir string) error {
 	var err error
 	var tf []byte
 	if _, err = git.PlainOpen(gitHome); err != nil {
-		return errors.New("project is not at version control")
+		return &GitErr{fmt.Sprintf("project is not at version control:%s", err.Error())}
 	}
 	for k, v := range HookMap() {
 		g := fmt.Sprintf("%s.go", k)
 		abs, _ := filepath.Abs(filepath.Join(scriptDir, g))
 		// @todo code refactor for unit test
-		if _, err = os.Stat(abs); err != nil {
-			if tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", k))); err == nil {
-				err = boot.GenerateFile(string(tf), abs, nil, false)
-			} else {
+		if _, err = os.Stat(abs); errors.Is(err, os.ErrNotExist) {
+			tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", k)))
+			if err != nil {
 				return err
 			}
+			err = boot.GenerateFile(string(tf), abs, nil, false)
+			if err != nil {
+				return err //nolint
+			}
 		}
-		if tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl")); err == nil {
-			err = boot.GenerateFile(string(tf), filepath.Join(gitHome, "hooks", v), hookData{abs, v}, true)
-		} else {
+		tf, err = templateDir.ReadFile(filepath.Join("template", "hook.tmpl"))
+		if err != nil {
+			return err //nolint
+		}
+		err = boot.GenerateFile(string(tf), filepath.Join(gitHome, "hooks", v), hookData{abs, v}, true)
+		if err != nil {
 			return err
 		}
 	}
