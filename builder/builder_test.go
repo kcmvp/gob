@@ -140,7 +140,7 @@ func (b *BuilderTestSuite) TestReportCommand() {
 	require.NoError(b.T(), err)
 	data, err := os.ReadFile(filepath.Join(b.builder.TargetDir(), reportJSON))
 	require.NoError(b.T(), err)
-	report := Report{}
+	report := BuildReport{}
 	err = json.Unmarshal(data, &report)
 	require.NoError(b.T(), err)
 	require.True(b.T(), len(report.Pkgs) > 0)

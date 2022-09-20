@@ -3,12 +3,10 @@ package builder
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 
-	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gob/boot"
 )
@@ -120,6 +118,7 @@ func GitAdd(files ...string) {
 }
 */
 
+/*
 func PrePush(version, target string, repo *git.Repository) {
 	input, _ := os.ReadFile(os.Args[1])
 	rep := regexp.MustCompile(`\r?\n`)
@@ -130,3 +129,4 @@ func PrePush(version, target string, repo *git.Repository) {
 	}
 	// check the consistent between version and target
 }
+*/

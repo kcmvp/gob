@@ -217,7 +217,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	}
 	lines := strings.Split(strings.ReplaceAll(string(out), "\r\n", "\n"), "\n")
 	totalRep := regexp.MustCompile(`total:\s+\(statements\)\s+\S+`)
-	report := Report{}
+	report := BuildReport{}
 	for _, line := range lines {
 		if totalRep.MatchString(line) {
 			report.Coverage = strings.Fields(line)[2]
