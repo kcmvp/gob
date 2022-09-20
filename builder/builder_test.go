@@ -21,7 +21,6 @@ type BuilderTestSuite struct {
 func (b *BuilderTestSuite) SetupSuite() {
 	b.builder = NewBuilder()
 }
-
 func TestBuilderTestSuit(t *testing.T) {
 	suite.Run(t, new(BuilderTestSuite))
 }
