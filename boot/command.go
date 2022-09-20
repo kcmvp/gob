@@ -10,7 +10,7 @@ import (
 type Command string
 
 const (
-	None         Command = "_"
+	None         Command = ""
 	Clean        Command = "clean"
 	Build        Command = "build"
 	Report       Command = "report"
