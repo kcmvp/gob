@@ -29,14 +29,14 @@ func (command Command) Name() string {
 }
 
 func (command Command) Hook() string {
-	var hook string
+	var hookName string
 	switch command { //nolint:exhaustive
 	case PreCommit, CommitMsg, PrePush:
-		hook = strings.TrimRight(strings.ReplaceAll(command.Name(), "_", "-"), ".go")
+		hookName = strings.TrimRight(strings.ReplaceAll(command.Name(), "_", "-"), ".go")
 	default:
-		hook = ""
+		hookName = ""
 	}
-	return hook
+	return hookName
 }
 
 func (command Command) CtxKey() string {

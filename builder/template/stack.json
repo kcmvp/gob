@@ -1,0 +1,62 @@
+{
+  "stacks": [
+    {
+      "name": "githook",
+      "category": "Practice",
+      "status": 1
+    },
+    {
+      "name": "golangci-linter",
+      "module": "github.com/golangci/golangci-lint/cmd/golangci-lint",
+      "category": "Practice",
+      "CMD": "golangci-lint",
+      "Raw-OutPut": true,
+      "JSON-Output": true,
+      "Html-Output": true,
+      "status": 1
+    },
+    {
+      "name": "viper",
+      "module": "github.com/spf13/viper",
+      "category": "Configuration",
+      "status": 0
+    },
+    {
+      "name": "mysql",
+      "module": "github.com/go-sql-driver/mysql",
+      "category": "SQL",
+      "status": 0,
+      "depends": "viper"
+    },
+    {
+      "name": "pg",
+      "module": "github.com/lib/pq",
+      "category": "SQL",
+      "status": 0,
+      "depends": "viper"
+    },
+    {
+      "name": "go-sqlite3",
+      "module": "github.com/mattn/go-sqlite3",
+      "category": "SQL",
+      "status": 0,
+      "depends": "viper"
+    },
+    {
+      "name": "ent",
+      "module": "entgo.io/ent",
+      "category": "ORM",
+      "status": 0,
+      "depends": "viper"
+    },
+    {
+      "name": "redis",
+      "module": "github.com/go-redis/redis",
+      "category": "KV",
+      "status": 0,
+      "depends": "viper"
+    }
+  ]
+}
+
+

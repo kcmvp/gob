@@ -22,7 +22,8 @@ var CurrentSession ContextKey = "session"
 var rootCmd = &cobra.Command{
 	Use:   "gob",
 	Short: "Golang project booter",
-	Long: `Generate project scaffolds, including build script, github hook and other project setup.
+	Long: `
+Generate project scaffolds, including build script, github hook and other project setup.
 Please visit https://github.com/kcmvp/gob/wiki for details`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := os.ReadFile("go.mod")
