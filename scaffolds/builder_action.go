@@ -93,7 +93,6 @@ var lintAction boot.Action = func(session *boot.Session, project boot.Project, c
 	return newLinter().scan(session, builder, command) //nolint:wrapcheck
 }
 
-// @todo optimize in the commit-msg hook, only test the change file.
 var testAction boot.Action = func(session *boot.Session, builder boot.Project, command boot.Command) error {
 	err := os.Chdir(builder.RootDir())
 	log.Println("Running unit test")

@@ -3,17 +3,21 @@
     {
       "name": "githook",
       "category": "Practice",
-      "status": 1
+      "module": "-",
+      "status": 1,
+      "Description": "setup local git hook"
     },
     {
       "name": "golangci-linter",
       "module": "github.com/golangci/golangci-lint/cmd/golangci-lint",
       "category": "Practice",
-      "CMD": "golangci-lint",
+      "rCmd": "golangci-lint",
+      "Description": "Setup golangci-linter,linter check is part of git hook",
+      "initCmd": "linter",
+      "status": 1,
       "Raw-OutPut": true,
       "JSON-Output": true,
-      "Html-Output": true,
-      "status": 1
+      "Html-Output": true
     },
     {
       "name": "viper",
@@ -22,39 +26,24 @@
       "status": 0
     },
     {
-      "name": "mysql",
+      "name": "Data Source",
       "module": "github.com/go-sql-driver/mysql",
       "category": "SQL",
+      "Description": "Setup SQL data source for project.",
       "status": 0,
-      "depends": "viper"
+      "initCmd": "ds"
     },
     {
       "name": "pg",
       "module": "github.com/lib/pq",
       "category": "SQL",
-      "status": 0,
-      "depends": "viper"
+      "status": 0
     },
     {
       "name": "go-sqlite3",
       "module": "github.com/mattn/go-sqlite3",
       "category": "SQL",
-      "status": 0,
-      "depends": "viper"
-    },
-    {
-      "name": "ent",
-      "module": "entgo.io/ent",
-      "category": "ORM",
-      "status": 0,
-      "depends": "viper"
-    },
-    {
-      "name": "redis",
-      "module": "github.com/go-redis/redis",
-      "category": "KV",
-      "status": 0,
-      "depends": "viper"
+      "status": 0
     }
   ]
 }
