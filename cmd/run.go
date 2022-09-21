@@ -4,8 +4,12 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/kcmvp/gob/scaffolds"
+
 	"github.com/kcmvp/gob/boot"
-	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
 
@@ -20,13 +24,16 @@ var (
 
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
-	Use:       "run",
-	Short:     "Run 'clean', 'test', 'lint', 'build' and 'report' commands against current project",
-	ValidArgs: []string{"clean", "test", "lint", "build", "report"},
+	Use:       string(boot.Run),
+	Short:     fmt.Sprintf("Run %s commands against current project", boot.ValidCommands(boot.Run)),
+	ValidArgs: boot.ValidCommands(boot.Run),
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := cobra.MinimumNArgs(1)(cmd, args)
 		if err == nil {
 			err = cobra.OnlyValidArgs(cmd, args)
+		}
+		if err != nil {
+			err = fmt.Errorf("%w. Run with: %s against current project", err, strings.Join(boot.ValidCommands(boot.Run), ","))
 		}
 		return err
 	},
@@ -38,7 +45,7 @@ var runCmd = &cobra.Command{
 		session.BindFlag(boot.Clean, "-fuzzcache", cleanFuzzCache)
 		session.BindFlag(boot.Clean, "delete", cleanDeleteAll)
 		session.BindFlag(boot.Lint, "all", lintFullScan)
-		return session.Run(builder.NewBuilder(), boot.ToCommands(args...)...) //nolint
+		return session.Run(scaffolds.NewProject(), boot.ToCommands(args...)...) //nolint
 	},
 }
 

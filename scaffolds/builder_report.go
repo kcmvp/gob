@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 import (
 	"encoding/json"
@@ -18,8 +18,50 @@ const (
 	file    = "file"
 )
 
+const reportJSON = "report.json"
+
+type Issue struct {
+	Total   int            `json:"Total,omitempty"`
+	TypeMap map[string]int `json:"Linter,omitempty"`
+}
+
+type Metrics struct {
+	Coverage string
+	Issues   *Issue `json:"Issues,omitempty"`
+}
+
+type BuildReport struct {
+	Metrics
+	Pkgs []*PkgReport `json:"Packages,omitempty"`
+}
+
+// PkgReport package dimension.
+type PkgReport struct {
+	Name string
+	Metrics
+	Files []*FileReport
+}
+
+// FileReport file dimension.
+type FileReport struct {
+	Name string
+	Metrics
+}
+
+func (report *BuildReport) Save(dir string, session *boot.Session) error {
+	data, err := json.MarshalIndent(report, "", " ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal project report:%w", err)
+	}
+	err = os.WriteFile(filepath.Join(dir, session.Specified(reportJSON)), data, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to save project report:%w", err)
+	}
+	return nil
+}
+
 var reportAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	report := Report{}
+	report := BuildReport{}
 	data, err := os.ReadFile(filepath.Join(project.TargetDir(), session.Specified(reportJSON)))
 	if err != nil {
 		return fmt.Errorf("failed to create project report:%w", err)

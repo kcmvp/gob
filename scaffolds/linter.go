@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 import (
 	"bufio"
@@ -64,7 +64,7 @@ var linterVersion = func(name string) (string, string) {
 }
 
 // nolint
-func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot.Command) error {
+func (linter *Linter) scan(session *boot.Session, builder *Project, command boot.Command) error {
 	ver := builder.Config().GetString(linter.CfgVerKey())
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
@@ -170,7 +170,7 @@ func (linter *Linter) scan(session *boot.Session, builder *Builder, command boot
 			return errors.New(msg)
 		}
 	} else {
-		log.Println(color.GreenString("no linter issues are found"))
+		log.Println(color.GreenString("No linter issues are found"))
 	}
 	return nil
 }

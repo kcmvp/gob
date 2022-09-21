@@ -1,10 +1,8 @@
-package builder
+package scaffolds
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/kcmvp/gob/boot"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -15,19 +13,18 @@ import (
 
 type BuilderTestSuite struct {
 	suite.Suite
-	builder *Builder
+	builder *Project
 }
 
 func (b *BuilderTestSuite) SetupSuite() {
-	b.builder = NewBuilder()
+	b.builder = NewProject()
 }
-
 func TestBuilderTestSuit(t *testing.T) {
 	suite.Run(t, new(BuilderTestSuite))
 }
 
 func (b *BuilderTestSuite) TestSetupBuilder() {
-	boot.NewSession().Run(b.builder, boot.SetupBuilder)
+	boot.NewSession().Run(b.builder, boot.InitBuilder)
 	_, err := os.Stat(filepath.Join(b.builder.ScriptDir(), "builder.go"))
 	require.NoError(b.T(), err)
 }
@@ -39,7 +36,7 @@ func (b *BuilderTestSuite) TestSetupHook() {
 	require.NoError(b.T(), err)
 	err = os.Remove(filepath.Join(b.builder.GitHome(), "hooks", "commit-msg"))
 	require.NoError(b.T(), err)
-	boot.NewSession().Run(b.builder, boot.SetupHook)
+	boot.NewSession().Run(b.builder, boot.InitHook)
 	_, err = os.Stat(filepath.Join(b.builder.ScriptDir(), "pre_commit.go"))
 	require.NoError(b.T(), err)
 	_, err = os.Stat(filepath.Join(b.builder.ScriptDir(), "pre_push.go"))
@@ -56,7 +53,7 @@ func (b *BuilderTestSuite) TestSetupHook() {
 
 func (b *BuilderTestSuite) TestSetupLinter() {
 	info, err := os.Stat(filepath.Join(b.builder.RootDir(), lintCfg))
-	boot.NewSession().Run(b.builder, boot.SetupLinter)
+	boot.NewSession().Run(b.builder, boot.InitLinter)
 	var last time.Time
 	if err == nil {
 		last = info.ModTime()
@@ -141,100 +138,23 @@ func (b *BuilderTestSuite) TestReportCommand() {
 	require.NoError(b.T(), err)
 	data, err := os.ReadFile(filepath.Join(b.builder.TargetDir(), reportJSON))
 	require.NoError(b.T(), err)
-	report := Report{}
+	report := BuildReport{}
 	err = json.Unmarshal(data, &report)
 	require.NoError(b.T(), err)
 	require.True(b.T(), len(report.Pkgs) > 0)
 }
 
 func TestCommandActionMapping(t *testing.T) {
-	action1 := lo.Map(mapper()[boot.PreCommit], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 := lo.Map([]boot.Action{cleanAction, lintAction}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok := lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.CommitMsg], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{commitMsgAction, testAction}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.PrePush], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{cleanAction, testAction}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.SetupBuilder], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{createDirAction, genBuilder}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.SetupHook], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.SetupLinter], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{createDirAction, setupLinter}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.Clean], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{cleanAction, genHook}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.Lint], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook, lintAction}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.Test], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook, testAction}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.Build], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook, buildAction}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
+	mappers := mapper()
+	require.Equal(t, 3, len(mappers[boot.PreCommit]))
+	require.Equal(t, 3, len(mappers[boot.CommitMsg]))
+	require.Equal(t, 3, len(mappers[boot.PrePush]))
+	require.Equal(t, 2, len(mappers[boot.InitBuilder]))
+	require.Equal(t, 2, len(mappers[boot.InitHook]))
+	require.Equal(t, 2, len(mappers[boot.InitLinter]))
+	require.Equal(t, 2, len(mappers[boot.Clean]))
+	require.Equal(t, 3, len(mappers[boot.Lint]))
+	require.Equal(t, 3, len(mappers[boot.Test]))
+	require.Equal(t, 3, len(mappers[boot.Build]))
+	require.Equal(t, 5, len(mappers[boot.Report]))
 }

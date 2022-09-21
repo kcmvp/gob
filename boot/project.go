@@ -1,18 +1,13 @@
 package boot
 
 import (
-	"go/build"
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
 
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
-	"github.com/samber/lo"
 	"github.com/spf13/viper"
-
 	"golang.org/x/mod/modfile"
 )
 
@@ -75,64 +70,44 @@ func (project *DefaultProject) RootDir() string {
 	return project.root
 }
 
-func NewProject(mapper Mapper) DefaultProject {
-	goRoot := runtime.GOROOT()
-	log.Printf("GOROOT: %s\n", goRoot)
-	goPath := os.Getenv("GOPATH")
-	if goPath == "" {
-		goPath = build.Default.GOPATH
-	}
-	log.Printf("GOPATH: %s\n", goPath)
-	path := []string{goRoot, goPath}
-
-	pc := make([]uintptr, 15)   //nolint
-	n := runtime.Callers(1, pc) //nolint
-	frames := runtime.CallersFrames(pc[:n])
-	var frame runtime.Frame
-	more := true
-	initializers := []Command{PreCommit, CommitMsg, PrePush}
-	root := ""
-	initializer := None
-	var mod *modfile.File
-	for more { //nolint
-		frame, more = frames.Next()
-		found := lo.ContainsBy(path, func(p string) bool {
-			return strings.HasPrefix(frame.File, p)
-		})
-		if !found {
-			// 1: get root dir
-			dir := filepath.Dir(frame.File)
-			for len(root) == 0 && dir != "/" {
-				if data, err := os.ReadFile(filepath.Join(dir, "go.mod")); err == nil {
-					if mod, err = modfile.Parse("go.mod", data, nil); err != nil {
-						log.Fatalln(color.RedString("invalid mod file %v", err))
-					}
-					root = dir
-					log.Printf("Project root directory is %s\n", root)
-				} else {
-					dir = filepath.Dir(dir)
-				}
-			}
-			if len(root) == 0 {
-				log.Fatalln(color.RedString("can't find project root directory"))
-			}
-			// 2: get initializer
-			c, ok := lo.Find(initializers, func(command Command) bool {
-				return filepath.Base(frame.File) == string(command)
-			})
-			if ok {
-				initializer = c
-				break
-			}
+var hookInspector Inspector[string] = func(frame string) string {
+	commands := []Command{PreCommit, CommitMsg, PrePush}
+	for _, command := range commands {
+		if filepath.Base(frame) == string(command) {
+			return string(command)
 		}
 	}
+	return string(None)
+}
 
+var rootInspector Inspector[string] = func(frame string) string {
+	dir := filepath.Dir(frame)
+	// @todo need to check windows root directory
+	// @todo windows root directory
+	for dir != "/" {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			log.Printf("Project root directory is %s\n", dir)
+			return dir
+		}
+		dir = filepath.Dir(dir)
+	}
+	log.Fatalln("Can't find project root")
+	return dir
+}
+
+func NewProject(mapper Mapper) DefaultProject {
 	project := DefaultProject{
-		root,
-		viper.New(),
-		initializer,
-		mapper,
-		mod,
+		root:        Inspect(rootInspector),
+		cfg:         viper.New(),
+		mapper:      mapper,
+		initializer: Command(Inspect(hookInspector)),
+	}
+	if data, err := os.ReadFile(filepath.Join(project.root, "go.mod")); err == nil {
+		if mod, err := modfile.Parse("go.mod", data, nil); err != nil {
+			log.Fatalln(color.RedString("invalid mod file %v", err))
+		} else {
+			project.mod = mod
+		}
 	}
 	return project
 }

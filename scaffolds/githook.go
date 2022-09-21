@@ -1,14 +1,14 @@
-package builder
+package scaffolds
 
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 
-	"github.com/fatih/color"
+	"github.com/samber/lo"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gob/boot"
 )
@@ -26,7 +26,7 @@ func (g GitErr) Error() string {
 	return g.Msg
 }
 
-func genGitHooks(gitHome, scriptDir string) error {
+func initGitHooks(gitHome, scriptDir string) error {
 	var err error
 	var tf []byte
 	if _, err = git.PlainOpen(gitHome); err != nil {
@@ -86,8 +86,10 @@ func changeSet(projectRoot string) ([]string, error) {
 	}
 
 	status := map[string]*git.FileStatus(st)
+	excludes := []git.StatusCode{git.Unmodified, git.Renamed, git.Deleted}
 	for s, fileStatus := range status {
-		if fileStatus.Staging != git.Unmodified || fileStatus.Worktree != git.Unmodified {
+		exists := lo.Intersect(excludes, []git.StatusCode{fileStatus.Staging, fileStatus.Worktree})
+		if len(exists) == 0 {
 			changes = append(changes, s)
 		}
 	}
@@ -120,6 +122,7 @@ func GitAdd(files ...string) {
 }
 */
 
+/*
 func PrePush(version, target string, repo *git.Repository) {
 	input, _ := os.ReadFile(os.Args[1])
 	rep := regexp.MustCompile(`\r?\n`)
@@ -130,3 +133,4 @@ func PrePush(version, target string, repo *git.Repository) {
 	}
 	// check the consistent between version and target
 }
+*/
