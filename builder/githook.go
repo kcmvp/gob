@@ -24,7 +24,7 @@ func (g GitErr) Error() string {
 	return g.Msg
 }
 
-func genGitHooks(gitHome, scriptDir string) error {
+func initGitHooks(gitHome, scriptDir string) error {
 	var err error
 	var tf []byte
 	if _, err = git.PlainOpen(gitHome); err != nil {

@@ -22,7 +22,7 @@ func main() {
 	}
 	fmt.Println(refs)
 
-	if err := boot.NewSession().Run(builder.NewBuilder()); err != nil {
+	if err := boot.NewSession().Run(builder.NewProject()); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)

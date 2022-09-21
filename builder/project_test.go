@@ -15,18 +15,18 @@ import (
 
 type BuilderTestSuite struct {
 	suite.Suite
-	builder *Builder
+	builder *Project
 }
 
 func (b *BuilderTestSuite) SetupSuite() {
-	b.builder = NewBuilder()
+	b.builder = NewProject()
 }
 func TestBuilderTestSuit(t *testing.T) {
 	suite.Run(t, new(BuilderTestSuite))
 }
 
 func (b *BuilderTestSuite) TestSetupBuilder() {
-	boot.NewSession().Run(b.builder, boot.SetupBuilder)
+	boot.NewSession().Run(b.builder, boot.InitBuilder)
 	_, err := os.Stat(filepath.Join(b.builder.ScriptDir(), "builder.go"))
 	require.NoError(b.T(), err)
 }
@@ -38,7 +38,7 @@ func (b *BuilderTestSuite) TestSetupHook() {
 	require.NoError(b.T(), err)
 	err = os.Remove(filepath.Join(b.builder.GitHome(), "hooks", "commit-msg"))
 	require.NoError(b.T(), err)
-	boot.NewSession().Run(b.builder, boot.SetupHook)
+	boot.NewSession().Run(b.builder, boot.InitHook)
 	_, err = os.Stat(filepath.Join(b.builder.ScriptDir(), "pre_commit.go"))
 	require.NoError(b.T(), err)
 	_, err = os.Stat(filepath.Join(b.builder.ScriptDir(), "pre_push.go"))
@@ -55,7 +55,7 @@ func (b *BuilderTestSuite) TestSetupHook() {
 
 func (b *BuilderTestSuite) TestSetupLinter() {
 	info, err := os.Stat(filepath.Join(b.builder.RootDir(), lintCfg))
-	boot.NewSession().Run(b.builder, boot.SetupLinter)
+	boot.NewSession().Run(b.builder, boot.InitLinter)
 	var last time.Time
 	if err == nil {
 		last = info.ModTime()
@@ -174,28 +174,28 @@ func TestCommandActionMapping(t *testing.T) {
 	ok = lo.Every(action1, action2)
 	require.True(t, ok)
 
-	action1 = lo.Map(mapper()[boot.SetupBuilder], func(t boot.Action, _ int) string {
+	action1 = lo.Map(mapper()[boot.InitBuilder], func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
-	action2 = lo.Map([]boot.Action{createDirAction, genBuilder}, func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	ok = lo.Every(action1, action2)
-	require.True(t, ok)
-
-	action1 = lo.Map(mapper()[boot.SetupHook], func(t boot.Action, _ int) string {
-		return fmt.Sprintf("%v", t)
-	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook}, func(t boot.Action, _ int) string {
+	action2 = lo.Map([]boot.Action{createDirAction, initBuilder}, func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
 	ok = lo.Every(action1, action2)
 	require.True(t, ok)
 
-	action1 = lo.Map(mapper()[boot.SetupLinter], func(t boot.Action, _ int) string {
+	action1 = lo.Map(mapper()[boot.InitHook], func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
-	action2 = lo.Map([]boot.Action{createDirAction, setupLinter}, func(t boot.Action, _ int) string {
+	action2 = lo.Map([]boot.Action{createDirAction, initHook}, func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	ok = lo.Every(action1, action2)
+	require.True(t, ok)
+
+	action1 = lo.Map(mapper()[boot.InitLinter], func(t boot.Action, _ int) string {
+		return fmt.Sprintf("%v", t)
+	})
+	action2 = lo.Map([]boot.Action{createDirAction, initLinter}, func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
 	ok = lo.Every(action1, action2)
@@ -204,7 +204,7 @@ func TestCommandActionMapping(t *testing.T) {
 	action1 = lo.Map(mapper()[boot.Clean], func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
-	action2 = lo.Map([]boot.Action{cleanAction, genHook}, func(t boot.Action, _ int) string {
+	action2 = lo.Map([]boot.Action{cleanAction, initHook}, func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
 	ok = lo.Every(action1, action2)
@@ -213,7 +213,7 @@ func TestCommandActionMapping(t *testing.T) {
 	action1 = lo.Map(mapper()[boot.Lint], func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook, lintAction}, func(t boot.Action, _ int) string {
+	action2 = lo.Map([]boot.Action{createDirAction, initHook, lintAction}, func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
 	ok = lo.Every(action1, action2)
@@ -222,7 +222,7 @@ func TestCommandActionMapping(t *testing.T) {
 	action1 = lo.Map(mapper()[boot.Test], func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook, testAction}, func(t boot.Action, _ int) string {
+	action2 = lo.Map([]boot.Action{createDirAction, initHook, testAction}, func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
 	ok = lo.Every(action1, action2)
@@ -231,7 +231,7 @@ func TestCommandActionMapping(t *testing.T) {
 	action1 = lo.Map(mapper()[boot.Build], func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
-	action2 = lo.Map([]boot.Action{createDirAction, genHook, buildAction}, func(t boot.Action, _ int) string {
+	action2 = lo.Map([]boot.Action{createDirAction, initHook, buildAction}, func(t boot.Action, _ int) string {
 		return fmt.Sprintf("%v", t)
 	})
 	ok = lo.Every(action1, action2)

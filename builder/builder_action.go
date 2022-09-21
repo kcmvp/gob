@@ -28,60 +28,11 @@ const (
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var genBuilder boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	log.Println("Creating project build file")
-	var err error
-	var tf []byte
-	tf, err = templateDir.ReadFile(filepath.Join("template", "builder.tmpl"))
-	if err == nil {
-		err = boot.GenerateFile(string(tf), filepath.Join(project.ScriptDir(), "builder.go"), nil, false)
-	}
-	if err != nil {
-		err = fmt.Errorf("failed to generate builder script:%w", err)
-	}
-	return err
-}
-
-var genHook boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	log.Println("Setup git hooks")
-	err := genGitHooks(project.GitHome(), project.ScriptDir())
-	var gitErr *GitErr
-	if errors.As(err, &gitErr) && command != boot.SetupHook {
-		log.Println(color.YellowString("Project is not in the git repository"))
-	} else if err != nil {
-		err = fmt.Errorf("failed to setup hook:%w", err)
-	} else if command == boot.SetupHook {
-		log.Println("git hooks are setup successfully")
-	}
-	return err
-}
-
-var setupLinter boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	log.Println("Setup linters")
-	linter := newLinter()
-	version := session.GetFlagString(command, "version")
-	cfgVersion := project.Config().GetString(linter.CfgVerKey())
-	if cfgVersion != version {
-		version = cfgVersion
-	}
-	// to get the real version
-	version, err := linter.Install(version)
-	if err != nil {
-		return err
-	}
-	err = boot.GenerateFile(golangCiTmp, filepath.Join(project.RootDir(), lintCfg), nil, false)
-	if err != nil {
-		return fmt.Errorf("failed to generate lint config:%w", err)
-	}
-	project.SaveConfig(linter.CfgVerKey(), version)
-	return nil
-}
-
 var createDirAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Creating project directories")
 	var dir string
 	switch command.Name() {
-	case boot.SetupHook.Name(), boot.SetupBuilder.Name():
+	case boot.InitHook.Name(), boot.InitBuilder.Name():
 		dir = project.ScriptDir()
 	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name(), boot.Report.Name():
 		dir = project.TargetDir()
@@ -129,14 +80,14 @@ var cleanAction boot.Action = func(session *boot.Session, project boot.Project, 
 }
 
 var commitMsgAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	builder := project.(*Builder)
+	builder := project.(*Project)
 	log.Println("Validate commit message")
 	input, _ := os.ReadFile(os.Args[1])
 	return validateCommitMsg(string(input), string(builder.MsgPattern)) //nolint:wrapcheck
 }
 
 var lintAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	builder := project.(*Builder)
+	builder := project.(*Project)
 	log.Println("Running linters against source code")
 	return newLinter().scan(session, builder, command) //nolint:wrapcheck
 }

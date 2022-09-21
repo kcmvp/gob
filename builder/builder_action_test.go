@@ -11,12 +11,12 @@ import (
 
 type ActionTestSuite struct {
 	suite.Suite
-	project *Builder
+	project *Project
 	session *boot.Session
 }
 
 func (s *ActionTestSuite) SetupSuite() {
-	s.project = NewBuilder()
+	s.project = NewProject()
 }
 
 func TestActionTestSuite(t *testing.T) {
@@ -74,8 +74,8 @@ func (s *ActionTestSuite) TestGitHookAction() {
 		return err
 	})
 
-	lo.ForEach(mapper()[boot.SetupHook], func(action boot.Action, _ int) {
-		err := action(s.session, s.project, boot.SetupHook)
+	lo.ForEach(mapper()[boot.InitHook], func(action boot.Action, _ int) {
+		err := action(s.session, s.project, boot.InitHook)
 		require.NoError(s.T(), err)
 	})
 	filepath.WalkDir(filepath.Join(s.project.GitHome(), "hooks"), func(path string, d fs.DirEntry, err error) error {

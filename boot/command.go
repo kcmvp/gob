@@ -10,18 +10,18 @@ import (
 type Command string
 
 const (
-	None         Command = ""
-	Clean        Command = "clean"
-	Build        Command = "build"
-	Report       Command = "report"
-	Test         Command = "test"
-	Lint         Command = "lint"
-	SetupBuilder Command = "builder"
-	SetupLinter  Command = "linter"
-	SetupHook    Command = "githook"
-	PreCommit    Command = "pre_commit.go"
-	CommitMsg    Command = "commit_msg.go"
-	PrePush      Command = "pre_push.go"
+	None        Command = ""
+	Clean       Command = "clean"
+	Build       Command = "build"
+	Report      Command = "report"
+	Test        Command = "test"
+	Lint        Command = "lint"
+	InitBuilder Command = "builder"
+	InitLinter  Command = "linter"
+	InitHook    Command = "githook"
+	PreCommit   Command = "pre_commit.go"
+	CommitMsg   Command = "commit_msg.go"
+	PrePush     Command = "pre_push.go"
 )
 
 func (command Command) Name() string {
@@ -55,13 +55,30 @@ func ToCommands(commands ...string) []Command {
 
 func (command Command) ValidFlags() []string {
 	flagMap := map[Command][]string{
-		SetupBuilder: {},
-		SetupHook:    {},
-		SetupLinter:  {"version"},
-		Clean:        {"-cache", "-testcache", "-modcache", "-fuzzcache", "delete"},
-		Lint:         {"all"},
-		Test:         {},
-		Build:        {},
+		InitBuilder: {},
+		InitHook:    {},
+		InitLinter:  {"version"},
+		Clean:       {"-cache", "-testcache", "-modcache", "-fuzzcache", "delete"},
+		Lint:        {"all"},
+		Test:        {},
+		Build:       {},
 	}
 	return flagMap[command]
+}
+
+type SubCommand string
+
+const (
+	Run  SubCommand = "run"
+	Init SubCommand = "init"
+)
+
+func ValidCommands(category SubCommand) []string {
+	m := map[SubCommand][]Command{
+		Run:  {Clean, Build, Report, Test, Lint},
+		Init: {InitLinter, InitBuilder, InitHook},
+	}
+	return lo.Map(m[category], func(t Command, i int) string {
+		return t.Name()
+	})
 }

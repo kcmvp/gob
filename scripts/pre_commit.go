@@ -14,7 +14,7 @@ import (
 func main() {
 	// input, _ := os.ReadFile(os.Args[1])
 
-	if err := boot.NewSession().Run(builder.NewBuilder()); err != nil {
+	if err := boot.NewSession().Run(builder.NewProject()); err != nil {
 		log.Println(color.RedString(err.Error()))
 		os.Exit(1)
 	}
