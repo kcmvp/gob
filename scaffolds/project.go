@@ -44,6 +44,7 @@ var mapper = func() map[boot.Command][]boot.Action {
 		boot.InitBuilder: {createDirAction, initBuilder},
 		boot.InitHook:    {createDirAction, initHook},
 		boot.InitLinter:  {createDirAction, initLinter},
+		boot.InitList:    {listStacks},
 		boot.Clean:       {cleanAction, initHook},
 		boot.Lint:        {createDirAction, initHook, lintAction},
 		boot.Test:        {createDirAction, initHook, testAction},

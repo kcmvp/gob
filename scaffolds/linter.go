@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/net/html"
+
 	"github.com/samber/lo"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -37,9 +39,6 @@ var _ boot.Installer = (*Linter)(nil)
 
 //go:embed template/.golangci.yml
 var golangCiTmp string
-
-//go:embed template/golang_lint.tmpl
-var reportTpl string
 
 type Linter struct {
 	boot.Installer
@@ -132,40 +131,10 @@ func (linter *Linter) scan(session *boot.Session, builder *Project, command boot
 	if issues > 0 {
 		jq = jq.Select("FromLinter as Linter", "Text as Message", "SourceLines as Code", "Pos.Filename as File", "Pos.Line as Line", "Pos.Column as Column")
 		data := jq.Get()
-		//@todo need to be removed
-		/*
-			funcMap := template.FuncMap{
-				"add": func(i int) int {
-					return i + 1
-				},
-				"concat": func(s []interface{}) string {
-					var s1 []string
-					for _, i := range s {
-						s1 = append(s1, fmt.Sprintf("%v", i))
-					}
-					return strings.TrimSpace(strings.Join(s1, "\n"))
-				},
-			}
-			t, err := template.New("report").Funcs(funcMap).Parse(reportTpl)
-			if err != nil {
-				return fmt.Errorf("failed to parse lint report template: %w", err)
-			}
-
-			report := filepath.Join(builder.TargetDir(), session.Specified(LintHTMLReport))
-			html, err := os.Create(report)
-			defer html.Close()
-			if err != nil {
-				return fmt.Errorf("failed to create lint report: %w", err)
-			}
-			err = t.Execute(html, data)
-			if err != nil {
-				return fmt.Errorf("failed to generate lint report: %w", err)
-			}
-		*/
 		log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 		msg := fmt.Sprintf("Total %d linter issues are found", issues)
 		log.Println(color.RedString(msg))
-		tableReport(session, builder.TargetDir(), data, changedOnly)
+		saveLintReport(session, builder.TargetDir(), data, changedOnly)
 		if changedOnly {
 			return errors.New(msg)
 		}
@@ -192,7 +161,7 @@ func splitIntoGroup(msg string, size int) []string {
 	return subs
 }
 
-func tableReport(session *boot.Session, dir string, data interface{}, consoleOutput bool) error {
+func saveLintReport(session *boot.Session, dir string, data interface{}, consoleOutput bool) error {
 	ct := table.Table{}
 	ct.SetTitle("Lint Issues Report")
 	ct.AppendHeader(table.Row{"#", "File", "Line", "Linter", "Code", "Message"})
@@ -230,15 +199,20 @@ func tableReport(session *boot.Session, dir string, data interface{}, consoleOut
 			return table.Row{i + 1, filePath, strings.TrimSpace(fmt.Sprintf("%v:%v", tm["Line"], tm["Column"])), tm["Linter"], code, msg}
 		})
 		ct.AppendRows(tableRows)
-		html := ct.RenderHTML()
+		content := ct.RenderHTML()
 		var htmlReport *os.File
 		htmlReport, err = os.Create(filepath.Join(dir, session.Specified(LintHTMLReport)))
 		if err != nil {
 			return err //nolint
 		}
-		_, err = htmlReport.WriteString(html)
-		if err != nil {
-			return err //nolint
+		tableStyle := ` <style>
+		  table, th, td {
+		    border: 1px solid;
+		  }
+		 </style>`
+		root, _ := html.Parse(strings.NewReader(tableStyle + content))
+		if err = html.Render(htmlReport, root); err != nil {
+			log.Println(color.RedString("Failed to save lint html report:%^", err.Error()))
 		}
 		err = htmlReport.Close()
 	}

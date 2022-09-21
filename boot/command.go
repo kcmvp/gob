@@ -19,6 +19,7 @@ const (
 	InitBuilder Command = "builder"
 	InitLinter  Command = "linter"
 	InitHook    Command = "githook"
+	InitList    Command = "list"
 	PreCommit   Command = "pre_commit.go"
 	CommitMsg   Command = "commit_msg.go"
 	PrePush     Command = "pre_push.go"
