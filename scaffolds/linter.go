@@ -170,7 +170,7 @@ func (linter *Linter) scan(session *boot.Session, builder *Project, command boot
 			return errors.New(msg)
 		}
 	} else {
-		log.Println(color.GreenString("no linter issues are found"))
+		log.Println(color.GreenString("No linter issues are found"))
 	}
 	return nil
 }
