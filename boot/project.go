@@ -83,6 +83,7 @@ var hook Inspector[string] = func(frame string) string {
 var rootDir Inspector[string] = func(frame string) string {
 	dir := filepath.Dir(frame)
 	// @todo need to check windows root directory
+	// @todo windows root directory
 	for dir != "/" {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 			log.Printf("Project root directory is %s\n", dir)
