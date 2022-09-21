@@ -5,11 +5,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/kcmvp/gob/scaffolds"
 	"os"
 	"strings"
 
 	"github.com/kcmvp/gob/boot"
-	"github.com/kcmvp/gob/builder"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	}
 	fmt.Println(refs)
 
-	if err := boot.NewSession().Run(builder.NewProject()); err != nil {
+	if err := boot.NewSession().Run(scaffolds.NewProject()); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)

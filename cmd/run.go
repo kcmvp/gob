@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kcmvp/gob/scaffolds"
+
 	"github.com/kcmvp/gob/boot"
-	"github.com/kcmvp/gob/builder"
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +45,7 @@ var runCmd = &cobra.Command{
 		session.BindFlag(boot.Clean, "-fuzzcache", cleanFuzzCache)
 		session.BindFlag(boot.Clean, "delete", cleanDeleteAll)
 		session.BindFlag(boot.Lint, "all", lintFullScan)
-		return session.Run(builder.NewProject(), boot.ToCommands(args...)...) //nolint
+		return session.Run(scaffolds.NewProject(), boot.ToCommands(args...)...) //nolint
 	},
 }
 

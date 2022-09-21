@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 import (
 	"encoding/json"
@@ -30,7 +30,6 @@ type Metrics struct {
 	Issues   *Issue `json:"Issues,omitempty"`
 }
 
-// Report over all.
 type BuildReport struct {
 	Metrics
 	Pkgs []*PkgReport `json:"Packages,omitempty"`

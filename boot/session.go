@@ -1,6 +1,7 @@
 package boot
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -81,8 +82,7 @@ func (session *Session) Run(project Project, commands ...Command) error {
 	var ccs []Command
 	if project.Initializer() != None {
 		ccs = append(ccs, project.Initializer())
-		h := strings.TrimRight(project.Initializer().Name(), ".go")
-		log.Printf("Triggered by %s\n", strings.ReplaceAll(h, "_", "-"))
+		log.Printf("Triggered by hook %s\n", project.Initializer().Hook())
 	} else {
 		ccs = commands
 	}
@@ -98,6 +98,7 @@ func (session *Session) Run(project Project, commands ...Command) error {
 			err = action(session, project, command)
 			if err != nil {
 				err = fmt.Errorf("[%s]:%w", command, err)
+				log.Println(color.RedString("%s", err.Error()))
 			}
 			return err == nil
 		})
@@ -119,7 +120,7 @@ func (session *Session) cleanup(project Project) {
 		}
 		return err //nolint:wrapcheck
 	})
-	if err != nil {
-		log.Println(color.RedString("Failed to clean up the project"))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Println(color.RedString("Failed to clean up the project:%s", err.Error()))
 	}
 }

@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 import (
 	"github.com/kcmvp/gob/boot"

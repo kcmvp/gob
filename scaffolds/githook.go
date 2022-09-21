@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 import (
 	"errors"
@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/samber/lo"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/kcmvp/gob/boot"
@@ -84,8 +86,10 @@ func changeSet(projectRoot string) ([]string, error) {
 	}
 
 	status := map[string]*git.FileStatus(st)
+	excludes := []git.StatusCode{git.Unmodified, git.Renamed, git.Deleted}
 	for s, fileStatus := range status {
-		if fileStatus.Staging != git.Unmodified || fileStatus.Worktree != git.Unmodified {
+		exists := lo.Intersect(excludes, []git.StatusCode{fileStatus.Staging, fileStatus.Worktree})
+		if len(exists) == 0 {
 			changes = append(changes, s)
 		}
 	}

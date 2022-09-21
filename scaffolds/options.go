@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 // DefaultHookMsg default git commit message format, which contains 3 parts
 // 1: first part is a '#' and follow with a number and its length range is [1,7].

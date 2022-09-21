@@ -70,7 +70,7 @@ func (project *DefaultProject) RootDir() string {
 	return project.root
 }
 
-var hook Inspector[string] = func(frame string) string {
+var hookInspector Inspector[string] = func(frame string) string {
 	commands := []Command{PreCommit, CommitMsg, PrePush}
 	for _, command := range commands {
 		if filepath.Base(frame) == string(command) {
@@ -80,7 +80,7 @@ var hook Inspector[string] = func(frame string) string {
 	return string(None)
 }
 
-var rootDir Inspector[string] = func(frame string) string {
+var rootInspector Inspector[string] = func(frame string) string {
 	dir := filepath.Dir(frame)
 	// @todo need to check windows root directory
 	// @todo windows root directory
@@ -97,10 +97,10 @@ var rootDir Inspector[string] = func(frame string) string {
 
 func NewProject(mapper Mapper) DefaultProject {
 	project := DefaultProject{
-		root:        Inspect(rootDir),
+		root:        Inspect(rootInspector),
 		cfg:         viper.New(),
 		mapper:      mapper,
-		initializer: Command(Inspect(hook)),
+		initializer: Command(Inspect(hookInspector)),
 	}
 	if data, err := os.ReadFile(filepath.Join(project.root, "go.mod")); err == nil {
 		if mod, err := modfile.Parse("go.mod", data, nil); err != nil {

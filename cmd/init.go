@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kcmvp/gob/builder"
+	"github.com/kcmvp/gob/scaffolds"
 
 	"github.com/kcmvp/gob/boot"
 	"github.com/spf13/cobra"
@@ -31,7 +31,7 @@ var initCmd = &cobra.Command{
 		session := cmd.Context().Value(CurrentSession).(*boot.Session)
 		command := boot.Command(args[0])
 		session.BindFlag(boot.InitLinter, "version", version)
-		return session.Run(builder.NewProject(), command) //nolint
+		return session.Run(scaffolds.NewProject(), command) //nolint
 	},
 }
 

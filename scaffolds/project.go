@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 import (
 	"strings"
@@ -38,9 +38,9 @@ func NewProject() *Project {
 
 var mapper = func() map[boot.Command][]boot.Action {
 	return map[boot.Command][]boot.Action{
-		boot.PreCommit:   {cleanAction, lintAction},
-		boot.CommitMsg:   {commitMsgAction, testAction},
-		boot.PrePush:     {cleanAction, testAction},
+		boot.PreCommit:   {createDirAction, cleanAction, lintAction},
+		boot.CommitMsg:   {createDirAction, commitMsgAction, testAction},
+		boot.PrePush:     {createDirAction, cleanAction, testAction},
 		boot.InitBuilder: {createDirAction, initBuilder},
 		boot.InitHook:    {createDirAction, initHook},
 		boot.InitLinter:  {createDirAction, initLinter},

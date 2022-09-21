@@ -1,4 +1,4 @@
-package builder
+package scaffolds
 
 import (
 	"bufio"
@@ -34,7 +34,8 @@ var createDirAction boot.Action = func(session *boot.Session, project boot.Proje
 	switch command.Name() {
 	case boot.InitHook.Name(), boot.InitBuilder.Name():
 		dir = project.ScriptDir()
-	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name(), boot.Report.Name():
+	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name(), boot.Report.Name(),
+		boot.PreCommit.Name(), boot.CommitMsg.Name(), boot.PrePush.Name():
 		dir = project.TargetDir()
 	}
 	if len(dir) < 1 {
@@ -107,7 +108,9 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	if command == boot.CommitMsg && !scanAll {
 		changes, _ := changeSet(builder.RootDir())
 		paths := lo.FilterMap(changes, func(t string, _ int) (string, bool) {
-			valid := strings.HasSuffix(t, ".go") && filepath.Dir(file) != "scripts"
+			// ignore scripts folder
+			valid := strings.HasSuffix(t, ".go") && filepath.Dir(t) != "scripts"
+			// check the exists of the file
 			if valid {
 				return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator)), true
 			}
@@ -121,7 +124,6 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 		}
 	}
 	params = append(params, scope...)
-
 	testCmd := exec.Command("go", params...)
 	stdout, err := testCmd.StdoutPipe()
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kcmvp/gob/boot"
-	"github.com/kcmvp/gob/builder"
+	"github.com/kcmvp/gob/scaffolds"
 	"github.com/stretchr/testify/require"
 	"log"
 	"os"
@@ -21,7 +21,7 @@ import (
 
 type CmdTestSuite struct {
 	suite.Suite
-	builder *builder.Project
+	builder *scaffolds.Project
 	l       sync.Mutex
 	ctx     context.Context
 }
@@ -32,7 +32,7 @@ func (s *CmdTestSuite) SetupSuite() {
 	for {
 		if _, err := os.ReadFile(filepath.Join(root, "go.mod")); err == nil {
 			os.Chdir(root)
-			s.builder = builder.NewProject()
+			s.builder = scaffolds.NewProject()
 			break
 		} else {
 			root = filepath.Dir(root)
@@ -75,7 +75,7 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 
 func (s *CmdTestSuite) TestSetupHook() {
 
-	for _, v := range builder.HookMap() {
+	for _, v := range scaffolds.HookMap() {
 		err := os.Remove(filepath.Join(s.builder.GitHome(), "hooks", v))
 		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
 	}
@@ -86,7 +86,7 @@ func (s *CmdTestSuite) TestSetupHook() {
 	err := rootCmd.ExecuteContext(s.ctx)
 	require.NoError(s.T(), err)
 
-	for k, v := range builder.HookMap() {
+	for k, v := range scaffolds.HookMap() {
 		f := filepath.Join(s.builder.ScriptDir(), fmt.Sprintf("%s.go", k))
 		require.FileExists(s.T(), f)
 		f = filepath.Join(s.builder.GitHome(), "hooks", v)
