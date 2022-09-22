@@ -137,6 +137,8 @@ func (linter *Linter) scan(session *boot.Session, builder *Project, command boot
 		saveLintReport(session, builder.TargetDir(), data, changedOnly)
 		if changedOnly {
 			return errors.New(msg)
+		} else {
+			saveHistory("lint")
 		}
 	} else {
 		log.Println(color.GreenString("No linter issues are found"))

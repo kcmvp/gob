@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/samber/lo"
 
@@ -87,10 +88,11 @@ func changeSet(projectRoot string) ([]string, error) {
 
 	status := map[string]*git.FileStatus(st)
 	excludes := []git.StatusCode{git.Unmodified, git.Renamed, git.Deleted}
-	for s, fileStatus := range status {
-		exists := lo.Intersect(excludes, []git.StatusCode{fileStatus.Staging, fileStatus.Worktree})
-		if len(exists) == 0 {
-			changes = append(changes, s)
+	for goFile, fileStatus := range status {
+		valid := strings.HasSuffix(goFile, ".go") && filepath.Dir(goFile) != "scripts"
+		valid = valid && len(lo.Intersect(excludes, []git.StatusCode{fileStatus.Staging, fileStatus.Worktree})) > 0
+		if valid {
+			changes = append(changes, goFile)
 		}
 	}
 	return changes, nil

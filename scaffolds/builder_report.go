@@ -3,6 +3,7 @@ package scaffolds
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -91,13 +92,13 @@ var reportAction boot.Action = func(session *boot.Session, project boot.Project,
 		}
 	})
 
-	report.Issues = IssueMap(allOver, t3s)[allOver]
+	report.Issues = issueMap(allOver, t3s)[allOver]
 	if report.Issues.Total == 0 {
 		return nil
 	}
 	// package level report
-	pkgIssuesMap := IssueMap(pkg, t3s)
-	fileIssuesMap := IssueMap(file, t3s)
+	pkgIssuesMap := issueMap(pkg, t3s)
+	fileIssuesMap := issueMap(file, t3s)
 	for pkgName, pkgIssue := range pkgIssuesMap {
 		pkgName := pkgName
 		pkg, ok := lo.Find(report.Pkgs, func(t *PkgReport) bool {
@@ -137,7 +138,7 @@ var reportAction boot.Action = func(session *boot.Session, project boot.Project,
 	return err
 }
 
-func IssueMap(levelName string, data []lo.Tuple3[string, string, string]) map[string]*Issue {
+func issueMap(levelName string, data []lo.Tuple3[string, string, string]) map[string]*Issue {
 	var levels map[string][]lo.Tuple3[string, string, string]
 	switch levelName {
 	case pkg:
@@ -168,4 +169,16 @@ func IssueMap(levelName string, data []lo.Tuple3[string, string, string]) map[st
 		levelMap[l] = issue
 	}
 	return levelMap
+}
+
+func saveHistory(action string) {
+
+	hash := "latest"
+	changes, err := changeSet(action)
+	log.Printf("@todo save the history %s  %s\n", changes, err.Error())
+	// 1: err == nill && len(changes) == 0 means should get commit hash
+	// 2: save the data (update or insert)
+	// 3: delete the history (default only keep latest 5 records)
+	// 4: commit hash, coverage
+	log.Println(hash)
 }
