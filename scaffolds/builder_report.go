@@ -172,7 +172,6 @@ func issueMap(levelName string, data []lo.Tuple3[string, string, string]) map[st
 }
 
 func saveHistory(action string) {
-
 	hash := "latest"
 	changes, err := changeSet(action)
 	log.Printf("@todo save the history %s  %s\n", changes, err.Error())
