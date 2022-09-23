@@ -5,8 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
+
+	"github.com/fatih/color"
 	"github.com/spf13/viper"
 	"golang.org/x/mod/modfile"
 )
@@ -29,6 +30,7 @@ type Project interface {
 	Mapper() map[Command][]Action
 	Initializer() Command
 	Mod() *modfile.File
+	Git() *git.Repository
 }
 
 var _ Project = (*DefaultProject)(nil)
@@ -39,6 +41,11 @@ type DefaultProject struct {
 	initializer Command
 	mapper      Mapper
 	mod         *modfile.File
+	repo        *git.Repository
+}
+
+func (project *DefaultProject) Git() *git.Repository {
+	return project.repo
 }
 
 func (project *DefaultProject) Mod() *modfile.File {
@@ -108,6 +115,10 @@ func NewProject(mapper Mapper) DefaultProject {
 		} else {
 			project.mod = mod
 		}
+	}
+	// init git
+	if repo, err := git.PlainOpen(project.RootDir()); err == nil {
+		project.repo = repo
 	}
 	return project
 }

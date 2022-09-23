@@ -105,7 +105,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	// @todo add test for this configuration
 	scanAll := builder.Config().GetBool(fmt.Sprintf("%s.%s.testall", boot.CfgPrefix, command.Hook()))
 	if command == boot.CommitMsg && !scanAll {
-		changes, _ := changeSet(builder.RootDir())
+		changes, _ := changeSet(builder)
 		paths := lo.FilterMap(changes, func(t string, _ int) (string, bool) {
 			// ignore scripts folder
 			valid := strings.HasSuffix(t, ".go") && filepath.Dir(t) != "scripts"

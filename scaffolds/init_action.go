@@ -34,7 +34,7 @@ var initBuilder boot.Action = func(session *boot.Session, project boot.Project, 
 
 var initHook boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Setup git hooks")
-	err := initGitHooks(project.GitHome(), project.ScriptDir())
+	err := initGitHooks(project)
 	var gitErr *GitErr
 	if errors.As(err, &gitErr) && command != boot.InitHook {
 		log.Println(color.YellowString("Project is not in the git repository"))
