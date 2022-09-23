@@ -14,6 +14,7 @@ import (
 	"github.com/kcmvp/gob/boot"
 )
 
+// @todo code refactor by introduce GitService.
 type hookData struct {
 	Target string
 	Type   string

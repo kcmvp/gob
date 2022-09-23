@@ -1,0 +1,22 @@
+package scaffolds
+
+import (
+	"github.com/kcmvp/gob/boot"
+)
+
+// saveHistory.
+var saveHistory boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
+	// 1: save - 1
+	// 1.1 key: {current}-{parent} : in order to quickly get the chain
+	// 1.2: stale data is need to take into consideration (latest-xxx) but the parent is not the correct parent
+	//     save only latest x records, delete the previous records after successfully save
+	// 1.3:  fix : In this case for latest we need always check(delete and insert) when save data.
+	// 1.4: re-run : don't save data when {c-hash}-{p-hash} does not change: one-exception: c-hash is 'latest'
+
+	// 2: query - need to scan the workspace first then build out the tree and qury db to show the result
+
+	// 3: delete - in order to quickly delete result, need to record the commit hash creation time (might be use
+	// another bulk to save the result).
+
+	return nil
+}

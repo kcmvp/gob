@@ -3,7 +3,6 @@ package scaffolds
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -169,15 +168,4 @@ func issueMap(levelName string, data []lo.Tuple3[string, string, string]) map[st
 		levelMap[l] = issue
 	}
 	return levelMap
-}
-
-func saveHistory(action string) {
-	hash := "latest"
-	changes, err := changeSet(action)
-	log.Printf("@todo save the history %s  %s\n", changes, err.Error())
-	// 1: err == nill && len(changes) == 0 means should get commit hash
-	// 2: save the data (update or insert)
-	// 3: delete the history (default only keep latest 5 records)
-	// 4: commit hash, coverage
-	log.Println(hash)
 }
