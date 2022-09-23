@@ -26,15 +26,15 @@ func (g GitErr) Error() string {
 	return g.Msg
 }
 
-func initGitHooks(gitHome, scriptDir string) error {
+func initGitHooks(project boot.Project) error {
 	var err error
 	var tf []byte
-	if _, err = git.PlainOpen(gitHome); err != nil {
+	if project.Git() == nil {
 		return &GitErr{fmt.Sprintf("project is not at version control:%s", err.Error())}
 	}
 	for k, v := range HookMap() {
 		g := fmt.Sprintf("%s.go", k)
-		abs, _ := filepath.Abs(filepath.Join(scriptDir, g))
+		abs, _ := filepath.Abs(filepath.Join(project.ScriptDir(), g))
 		// @todo code refactor for unit test
 		if _, err = os.Stat(abs); errors.Is(err, os.ErrNotExist) {
 			tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", k)))
@@ -50,7 +50,7 @@ func initGitHooks(gitHome, scriptDir string) error {
 		if err != nil {
 			return err //nolint
 		}
-		err = boot.GenerateFile(string(tf), filepath.Join(gitHome, "hooks", v), hookData{abs, v}, true)
+		err = boot.GenerateFile(string(tf), filepath.Join(project.GitHome(), "hooks", v), hookData{abs, v}, true)
 		if err != nil {
 			return err
 		}
@@ -70,13 +70,12 @@ func validateCommitMsg(msg, pattern string) error {
 	return err //nolint
 }
 
-func changeSet(projectRoot string) ([]string, error) {
+func changeSet(project boot.Project) ([]string, error) {
 	changes := []string{}
-	repo, err := git.PlainOpen(projectRoot)
-	if err != nil {
-		return changes, &GitErr{fmt.Sprintf("project is not at version control:%s", err.Error())}
+	if project.Git() == nil {
+		return changes, &GitErr{"project is not at version control"}
 	}
-	wt, err := repo.Worktree()
+	wt, err := project.Git().Worktree()
 	if err != nil {
 		return changes, &GitErr{fmt.Sprintf("project is not at version control:%s", err.Error())}
 	}
