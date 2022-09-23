@@ -105,7 +105,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	// @todo add test for this configuration
 	selectiveTest := command == boot.CommitMsg && !builder.Config().GetBool(fmt.Sprintf("%s.%s.testall", boot.CfgPrefix, command.Hook()))
 	if selectiveTest {
-		changes, _ := changeSet(builder.RootDir())
+		changes, _ := changeSet(builder)
 		paths := lo.FilterMap(changes, func(t string, _ int) (string, bool) {
 			return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator)), true
 		})
