@@ -1,3 +1,9 @@
+<p align="center">
+Boot for Golang project
+  <br/>
+  <a href="https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml" rel="nofollow">
+  </a>
+</p>
 
 <span id="nav-1"></span>
 
