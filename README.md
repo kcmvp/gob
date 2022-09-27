@@ -23,17 +23,20 @@ a good job in **Java** ecosystem. it supplies lots of libraries and best practic
 only need to focus on system business, it reduces programmer's mental overhead very much. This framework aims to supplies
 the same functionalities as [Spring Boot](https://spring.io/projects/spring-boot/) did in Java ecosystem.
 
+As a developer you **DON'T NEED** do any special configuration, you can get below two categories functionalities. It achieves this by reading **go.mod** and do the cumbersome configuration automatically.
 
+- Functionalities supports SLDC. such as build, clean, git hooks and reporting.
+- Environment sensitive configuration(Think about data source in Dev, Test, Prd environments) and code generation.
 
 <span id="nav-3"></span>
 
 ## Features
 
 Here are just outstanding features, for details please refer to the [documents](https://github.com/kcmvp/gob/wiki)
-
-- [x] Uniform build scripts(Test, Build and delivery) without shell on all platform (build go with go).
+- SLDC
+ - [x] Uniform build scripts(Test, Build and delivery) without shell on all platform (build go with go).
 In most case, you dont need to write any code to build the project. from both command line as well as CI
-- [x] Git Hook: for code format and quality. it support [golangci-linter](https://golangci-lint.run/) by default and generate beautify report.
+ - [x] Git Hook: for code format and quality. it support [golangci-linter](https://golangci-lint.run/) by default and generate beautify report.
 
 
 <span id="nav-4"></span>
