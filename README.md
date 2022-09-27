@@ -77,5 +77,9 @@ Detail can be found here  [Document](https://github.com/kcmvp/gob/wiki)
   Keep the principle:Don't let the bad smell comes into code repositories.
   As server side hooks happens after code have been pushed into repositories, a local hook can help you prevent issues
   slipping into repository. 
+  
+- Can I call the script from git server hook or piple line?
+
+Yes, you can call it. In fact this project's piple line is calling the **builder.go** directly. [builder workflow](https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml) 
 
 
