@@ -2,6 +2,7 @@
 Boot for Golang project
   <br/>
   <a href="https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml" rel="nofollow">
+     <img src="https://img.shields.io/github/workflow/status/kcmvp/gob/Build?logo=github" alt="Build" />
   </a>
 </p>
 
