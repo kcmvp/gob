@@ -23,3 +23,8 @@ jobs:
 
     - name: Test
       run: go test -v ./...
+    - name: upload
+      run: |
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        chmod +x codecov
+        ./codecov -t 52620315-d3a3-4850-9609-59b95c62ea8b
