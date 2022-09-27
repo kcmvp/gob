@@ -3,7 +3,7 @@ Boot for Golang project
   <br/>
   <br/>
   <a href="https://goreportcard.com/report/github.com/kcmvp/gob">
-    <img src="https://goreportcard.com/report/github.com/kcmvp/gob" />
+    <img src="https://goreportcard.com/badge/github.com/kcmvp/gob" />
   </a>
   <a href="https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml" rel="nofollow">
      <img src="https://img.shields.io/github/workflow/status/kcmvp/gob/Build?logo=github" alt="Build" />
