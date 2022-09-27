@@ -1,9 +1,7 @@
 package boot
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -126,17 +124,19 @@ func (ins *installer) tagVersion(file, ver string) {
 	if strings.HasPrefix(base, ins.Cmd()) && strings.Contains(base, fv) {
 		return
 	}
+	if _, err := os.Readlink(file); err == nil {
+		return
+	}
 	target := fmt.Sprintf("%s-%s", ins.Cmd(), fv)
 	if strings.HasSuffix(base, ".exe") {
 		target = fmt.Sprintf("%s.exe", target)
 	}
-	if t, err := os.OpenFile(filepath.Join(filepath.Dir(file), target), os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err == nil {
-		if s, err := os.Open(file); err == nil {
-			if _, err = io.Copy(t, s); err != nil {
-				log.Fatalln(color.RedString("failed to tag %s as %s", filepath.Base(file), target))
-			}
+	target = filepath.Join(filepath.Dir(file), target)
+	if err := os.Rename(file, target); err != nil {
+		log.Println(color.RedString("Failed tag the file %s to %s", file, target))
+	} else {
+		if err = os.Symlink(target, file); err != nil {
+			log.Println(color.RedString("Failed to create soft link of %s", target))
 		}
-	} else if !errors.Is(err, os.ErrExist) {
-		log.Fatalln(color.RedString("failed to tag %s as %s", filepath.Base(file), target))
 	}
 }
