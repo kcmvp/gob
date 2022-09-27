@@ -212,9 +212,6 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	if err != nil {
 		return err //nolint
 	}
-	if !selectiveTest {
-		return saveHistory(session, builder, command)
-	}
 	log.Printf("coverage report is generated at %s \n", filepath.Join(builder.TargetDir(), testCoverHTML))
 	return err //nolint:wrapcheck
 }
