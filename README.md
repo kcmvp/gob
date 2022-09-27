@@ -23,10 +23,6 @@ a good job in **Java** ecosystem. it supplies lots of libraries and best practic
 only need to focus on system business, it reduces programmer's mental overhead very much. This framework aims to supplies
 the same functionalities as [Spring Boot](https://spring.io/projects/spring-boot/) did in Java ecosystem.
 
-<span id="nav-2-1"></span>
-<hr/>
-<h3><strong>@todo</strong></h3>
-<hr/>
 
 
 <span id="nav-3"></span>
@@ -40,7 +36,7 @@ In most case, you dont need to write any code to build the project. from both co
 - [x] Git Hook: for code format and quality. it support [golangci-linter](https://golangci-lint.run/) by default and generate beautify report.
 
 
-<span id="nav-4"></span>-
+<span id="nav-4"></span>
 
 ## Document
 Detail can be found here  [Document](https://github.com/kcmvp/gob/wiki)
