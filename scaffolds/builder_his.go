@@ -42,6 +42,5 @@ var saveHistory boot.Action = func(session *boot.Session, project boot.Project, 
 
 	// 3: delete - in order to quickly delete result, need to record the commit hash creation time (might be use
 	// another bulk to save the result).
-
 	return err
 }
