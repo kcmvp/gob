@@ -2,6 +2,9 @@
 Boot for Golang project
   <br/>
   <br/>
+  <a href = "https://github.com/kcmvp/gob/blob/main/LICENSE">
+   <img src="https://img.shields.io/github/license/kcmvp/gob"/>
+  </a>
   <a href="https://goreportcard.com/report/github.com/kcmvp/gob">
     <img src="https://goreportcard.com/badge/github.com/kcmvp/gob" />
   </a>
