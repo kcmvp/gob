@@ -155,6 +155,6 @@ func TestCommandActionMapping(t *testing.T) {
 	require.Equal(t, 2, len(mappers[boot.Clean]))
 	require.Equal(t, 3, len(mappers[boot.Lint]))
 	require.Equal(t, 3, len(mappers[boot.Test]))
-	require.Equal(t, 3, len(mappers[boot.Build]))
+	require.Equal(t, 4, len(mappers[boot.Build]))
 	require.Equal(t, 5, len(mappers[boot.Report]))
 }
