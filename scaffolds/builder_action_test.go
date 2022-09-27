@@ -32,14 +32,6 @@ func (s *ActionTestSuite) TestCleanAction() {
 		err := action(s.session, s.project, boot.Clean)
 		require.NoError(s.T(), err)
 	})
-	require.DirExists(s.T(), s.project.TargetDir())
-	/*
-		f, err := os.Open(s.project.TargetDir())
-		require.NoError(s.T(), err)
-		defer f.Close()
-		_, err = f.Readdirnames(1) // Or f.Readdir(1)
-		require.ErrorIs(s.T(), err, io.EOF)
-	*/
 	flags := lo.Filter(s.session.AllFlags(boot.Clean), func(k string, _ int) bool {
 		return strings.HasPrefix(k, "clean.")
 	})

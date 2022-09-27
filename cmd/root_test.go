@@ -114,34 +114,3 @@ func (s *CmdTestSuite) TestSetupLint() {
 	//session := s.ctx.Value(CurrentSession).(*boot.Session)
 	//require.Equal(s.T(), test.expV, session.GetFlagString(boot.InitLinter, "version"))
 }
-
-/*
-func (s *CmdTestSuite) TestRunLintAll() {
-	test := struct {
-		name   string
-		flags  []string
-		result bool
-		ctx    string
-	}{
-		"all",
-		[]string{string(boot.Run), boot.Lint.Name(), "-a"},
-		true,
-		"run -v --out-format json ./... --fix false golangci-lint-v1-49-0",
-	}
-
-	//ctx := context.WithValue(context.Background(), CurrentSession, session)
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	rootCmd.SetArgs(test.flags)
-	err := rootCmd.ExecuteContext(s.ctx)
-
-	if err != nil {
-		require.True(s.T(), strings.Contains(err.Error(), "linter issues are found"))
-	}
-	session := s.ctx.Value(CurrentSession).(*boot.Session)
-	require.Equal(s.T(), session.GetFlagBool(boot.Lint, "all"), test.result)
-	require.Equal(s.T(), session.AllFlags(boot.Lint), []string{"all"})
-	require.Equal(s.T(), test.ctx, session.CtxValue(boot.Lint))
-
-}
-*/
