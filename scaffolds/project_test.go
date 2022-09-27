@@ -101,11 +101,11 @@ func (b *BuilderTestSuite) TestLint() {
 		scanAll  bool
 		ctxValue string
 	}{
-		{
-			"changesOnly",
-			false,
-			"run -v --out-format json ./... --new-from-rev HEAD~ golangci-lint-v1-49-0",
-		},
+		//{
+		//	"changesOnly",
+		//	false,
+		//	"run -v --out-format json ./... --new-from-rev HEAD~ golangci-lint-v1-49-0",
+		//},
 		{
 			"changesAll",
 			true,
