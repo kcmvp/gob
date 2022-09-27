@@ -55,7 +55,7 @@ achieves this by reading **go.mod** and do the cumbersome configuration automati
 
 Here are just outstanding features, for details please refer to the [documents](https://github.com/kcmvp/gob/wiki)
 
-### [Commands](https://github.com/kcmvp/gob/wiki#sldc)
+### [Commands](https://github.com/kcmvp/gob/wiki#commands)
 
 - [x] Uniform build scripts(Test, Build and delivery) without shell on all platform (build go with go).
   In most case, you don't need to write any code to build the project. from both command line as well as CI
