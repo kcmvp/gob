@@ -21,22 +21,22 @@
 Engineering methodology is very important to a project. [Spring Boot](https://spring.io/projects/spring-boot/) did
 a good job in **Java** ecosystem. it supplies lots of libraries and best practices for a Java project. With it programmer
 only need to focus on system business, it reduces programmer's mental overhead very much. This framework aims to supplies
-the same functionalities as [Spring Boot](https://spring.io/projects/spring-boot/)did in Java ecosystem.
+the same functionalities as [Spring Boot](https://spring.io/projects/spring-boot/) did in Java ecosystem.
 
-<span id="nav-2-1"></span>
-<hr/>
-<h3><strong>@todo</strong></h3>
-<hr/>
+As a developer you **DON'T NEED** do any special configuration, you can get below two categories functionalities. It achieves this by reading **go.mod** and do the cumbersome configuration automatically.
 
+- Functionalities supports SLDC. such as build, clean, git hooks and reporting.
+- Environment sensitive configuration(Think about data source in Dev, Test, Prd environments) and code generation.
 
 <span id="nav-3"></span>
 
 ## Features
 
-- [x] SLDC supports which includes
-  - [x] Uniform build scripts(Test, Build and delivery) on all platform
-  - [x] Git Hook(local) for code format and quality
-  - [ ] Beautify unit test coverage report and Lint report (in progress)
+Here are just outstanding features, for details please refer to the [documents](https://github.com/kcmvp/gob/wiki)
+### [SLDC](https://github.com/kcmvp/gob/wiki#sldc)
+ - [x] Uniform build scripts(Test, Build and delivery) without shell on all platform (build go with go).
+In most case, you dont need to write any code to build the project. from both command line as well as CI
+ - [x] Git Hook: for code format and quality. it support [golangci-linter](https://golangci-lint.run/) by default and generate beautify report.
 
 
 <span id="nav-4"></span>
