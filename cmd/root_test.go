@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"testing"
 
@@ -116,6 +115,7 @@ func (s *CmdTestSuite) TestSetupLint() {
 	//require.Equal(s.T(), test.expV, session.GetFlagString(boot.InitLinter, "version"))
 }
 
+/*
 func (s *CmdTestSuite) TestRunLintAll() {
 	test := struct {
 		name   string
@@ -144,3 +144,4 @@ func (s *CmdTestSuite) TestRunLintAll() {
 	require.Equal(s.T(), test.ctx, session.CtxValue(boot.Lint))
 
 }
+*/
