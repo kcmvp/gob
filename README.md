@@ -33,7 +33,7 @@ As a developer you **DON'T NEED** do any special configuration, you can get belo
 ## Features
 
 Here are just outstanding features, for details please refer to the [documents](https://github.com/kcmvp/gob/wiki)
-- SLDC
+SLDC
  - [x] Uniform build scripts(Test, Build and delivery) without shell on all platform (build go with go).
 In most case, you dont need to write any code to build the project. from both command line as well as CI
  - [x] Git Hook: for code format and quality. it support [golangci-linter](https://golangci-lint.run/) by default and generate beautify report.
