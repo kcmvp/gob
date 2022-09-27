@@ -23,7 +23,7 @@ jobs:
 
     - name: Test
       run: go test -v ./... -coverpkg ./...
-    - name: upload
+    - name: Upload Coverage Report
       run: |
         curl -Os https://uploader.codecov.io/latest/linux/codecov
         chmod +x codecov
