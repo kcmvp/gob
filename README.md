@@ -4,6 +4,10 @@ Boot for Golang project
   <a href="https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml" rel="nofollow">
      <img src="https://img.shields.io/github/workflow/status/kcmvp/gob/Build?logo=github" alt="Build" />
   </a>
+  <a href="https://app.codecov.io/gh/kcmvp/gob" ref="nofollow">
+    <img src ="https://img.shields.io/codecov/c/github/kcmvp/gob" alt="coverage"/>
+  </a>
+
 </p>
 
 <span id="nav-1"></span>
