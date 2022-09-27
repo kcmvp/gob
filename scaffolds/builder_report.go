@@ -91,13 +91,13 @@ var reportAction boot.Action = func(session *boot.Session, project boot.Project,
 		}
 	})
 
-	report.Issues = IssueMap(allOver, t3s)[allOver]
+	report.Issues = issueMap(allOver, t3s)[allOver]
 	if report.Issues.Total == 0 {
 		return nil
 	}
 	// package level report
-	pkgIssuesMap := IssueMap(pkg, t3s)
-	fileIssuesMap := IssueMap(file, t3s)
+	pkgIssuesMap := issueMap(pkg, t3s)
+	fileIssuesMap := issueMap(file, t3s)
 	for pkgName, pkgIssue := range pkgIssuesMap {
 		pkgName := pkgName
 		pkg, ok := lo.Find(report.Pkgs, func(t *PkgReport) bool {
@@ -137,7 +137,7 @@ var reportAction boot.Action = func(session *boot.Session, project boot.Project,
 	return err
 }
 
-func IssueMap(levelName string, data []lo.Tuple3[string, string, string]) map[string]*Issue {
+func issueMap(levelName string, data []lo.Tuple3[string, string, string]) map[string]*Issue {
 	var levels map[string][]lo.Tuple3[string, string, string]
 	switch levelName {
 	case pkg:

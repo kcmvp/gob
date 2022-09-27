@@ -103,17 +103,11 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	// selective test scope in commit-msg hook, default are all packages
 	scope := []string{"./..."}
 	// @todo add test for this configuration
-	scanAll := builder.Config().GetBool(fmt.Sprintf("%s.%s.testall", boot.CfgPrefix, command.Hook()))
-	if command == boot.CommitMsg && !scanAll {
+	selectiveTest := command == boot.CommitMsg && !builder.Config().GetBool(fmt.Sprintf("%s.%s.testall", boot.CfgPrefix, command.Hook()))
+	if selectiveTest {
 		changes, _ := changeSet(builder)
 		paths := lo.FilterMap(changes, func(t string, _ int) (string, bool) {
-			// ignore scripts folder
-			valid := strings.HasSuffix(t, ".go") && filepath.Dir(t) != "scripts"
-			// check the exists of the file
-			if valid {
-				return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator)), true
-			}
-			return "", false
+			return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator)), true
 		})
 		paths = lo.Uniq[string](paths)
 		if len(paths) > 0 {
