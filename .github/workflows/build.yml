@@ -18,11 +18,11 @@ jobs:
       with:
         go-version: 1.19
 
-    - name: Build
-      run: go build -v ./...
+#    - name: Build
+#      run: go build -v ./...
 
     - name: Test
-      run: go test -v ./... -coverpkg ./...
+      run:  go run ../../scripts/builder.go
     - name: Upload Coverage Report
       run: |
         curl -Os https://uploader.codecov.io/latest/linux/codecov

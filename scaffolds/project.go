@@ -48,8 +48,7 @@ var mapper = func() map[boot.Command][]boot.Action {
 		boot.Clean:       {cleanAction, initHook},
 		boot.Lint:        {createDirAction, initHook, lintAction},
 		boot.Test:        {createDirAction, initHook, testAction},
-		// @todo bug fix need to run test before build
-		boot.Build: {createDirAction, initHook, testAction, buildAction},
+		boot.Build:       {createDirAction, initHook, testAction, buildAction},
 		// @todo refactor #68, this command will show the history data in console
 		boot.Report: {createDirAction, initHook, lintAction, testAction, reportAction},
 	}

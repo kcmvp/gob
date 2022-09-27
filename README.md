@@ -70,7 +70,9 @@ Detail can be found here  [Document](https://github.com/kcmvp/gob/wiki)
 ## FAQ
 
 - As we can define server side hooks easily, do I need a local git hook?
+
   Keep the principle:Don't let the bad smell comes into code repositories.
   As server side hooks happens after code have been pushed into repositories, a local hook can help you prevent issues
   slipping into repository. 
+
 
