@@ -80,6 +80,6 @@ Detail can be found here  [Document](https://github.com/kcmvp/gob/wiki)
   
 - Can I call the script from git server hook or piple line?
 
-Yes, you can call it. In fact this project's piple line is calling the **builder.go** directly. [builder workflow](https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml) 
+  Yes, you can call it. In fact this project's piple line is calling the **builder.go** directly. [builder workflow](https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml) 
 
 
