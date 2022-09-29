@@ -66,20 +66,3 @@ func (command Command) ValidFlags() []string {
 	}
 	return flagMap[command]
 }
-
-type SubCommand string
-
-const (
-	Run  SubCommand = "run"
-	Init SubCommand = "init"
-)
-
-func ValidCommands(category SubCommand) []string {
-	m := map[SubCommand][]Command{
-		Run:  {Clean, Build, Report, Test, Lint},
-		Init: {InitLinter, InitBuilder, InitHook},
-	}
-	return lo.Map(m[category], func(t Command, i int) string {
-		return t.Name()
-	})
-}

@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kcmvp/gob/scaffolds"
 
@@ -20,24 +19,34 @@ var (
 	cleanFuzzCache bool
 	cleanDeleteAll bool
 	lintFullScan   bool
+	listAllRun     bool
 )
+
+const runCommand = "run"
 
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
-	Use:       string(boot.Run),
-	Short:     fmt.Sprintf("Run %s commands against current project", boot.ValidCommands(boot.Run)),
-	ValidArgs: boot.ValidCommands(boot.Run),
+	Use:       runCommand,
+	Short:     "Run build, test, lint and etc against current project, run `gob run -l` get more information",
+	ValidArgs: scaffolds.ValidStack(runCommand),
 	Args: func(cmd *cobra.Command, args []string) error {
+		if listAllRun {
+			return nil
+		}
 		err := cobra.MinimumNArgs(1)(cmd, args)
 		if err == nil {
 			err = cobra.OnlyValidArgs(cmd, args)
 		}
 		if err != nil {
-			err = fmt.Errorf("%w. Run with: %s against current project", err, strings.Join(boot.ValidCommands(boot.Run), ","))
+			err = fmt.Errorf("run with %s against current project:%w", runCommand, err)
 		}
 		return err
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if listAllRun {
+			scaffolds.ListStack(runCommand)
+			return nil
+		}
 		session := cmd.Context().Value(CurrentSession).(*boot.Session)
 		session.BindFlag(boot.Clean, "-cache", cleanCache)
 		session.BindFlag(boot.Clean, "-testcache", cleanTestCache)
@@ -50,6 +59,7 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
+	runCmd.Flags().BoolVarP(&listAllRun, "list", "l", false, "list all arguments for run command")
 	runCmd.Flags().BoolVarP(&cleanCache, "cache", "c", false, "remove the entire go build cache")
 	runCmd.Flags().BoolVarP(&cleanTestCache, "testcache", "t", false, "expire all test results")
 	runCmd.Flags().BoolVarP(&cleanModCache, "modcache", "m", false, "remove the entire module download cache")
