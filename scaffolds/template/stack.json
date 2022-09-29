@@ -1,49 +1,64 @@
 {
   "stacks": [
     {
-      "name": "githook",
-      "category": "Practice",
+      "name": "builder",
+      "category": "setup",
       "module": "-",
-      "status": 1,
+      "Description": "Setup build script for project"
+    },
+    {
+      "name": "hook",
+      "category": "setup",
+      "module": "-",
       "Description": "setup local git hook"
     },
     {
-      "name": "golangci-linter",
+      "name": "linter",
       "module": "github.com/golangci/golangci-lint/cmd/golangci-lint",
-      "category": "Practice",
-      "rCmd": "golangci-lint",
-      "Description": "Setup golangci-linter,linter check is part of git hook",
-      "initCmd": "linter",
-      "status": 1,
-      "Raw-OutPut": true,
-      "JSON-Output": true,
-      "Html-Output": true
+      "category": "setup",
+      "Description": "Setup golangci-linter"
+    },
+    {
+      "name": "clean",
+      "category": "run",
+      "module": "-",
+      "Description": "Setup build script for project"
+    },
+    {
+      "name": "build",
+      "category": "run",
+      "module": "-",
+      "Description": "Build the project"
+    },
+    {
+      "name": "test",
+      "category": "run",
+      "module": "-",
+      "Description": "Run test against project"
+    },
+    {
+      "name": "lint",
+      "category": "run",
+      "module": "-",
+      "Description": "Run linter against project, by default it will run full scan"
+    },
+    {
+      "name": "report",
+      "category": "run",
+      "module": "-",
+      "Description": "Generate full quality report of the project,\nwhich includes test coverage and lint issue report"
     },
     {
       "name": "viper",
       "module": "github.com/spf13/viper",
-      "category": "Configuration",
-      "status": 0
+      "category": "gen",
+      "Description": "Generate viper configuration for project."
     },
     {
-      "name": "Data Source",
-      "module": "github.com/go-sql-driver/mysql",
-      "category": "SQL",
-      "Description": "Setup SQL data source for project.",
-      "status": 0,
-      "initCmd": "ds"
-    },
-    {
-      "name": "pg",
-      "module": "github.com/lib/pq",
-      "category": "SQL",
-      "status": 0
-    },
-    {
-      "name": "go-sqlite3",
-      "module": "github.com/mattn/go-sqlite3",
-      "category": "SQL",
-      "status": 0
+      "name": "sql",
+      "module": "-",
+      "category": "gen",
+      "Description": "Generate SQL data source for project based on viper configuration."
     }
   ]
 }

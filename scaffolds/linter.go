@@ -133,7 +133,6 @@ func (linter *Linter) scan(session *boot.Session, builder *Project, command boot
 		data := jq.Get()
 		log.Printf("lint report is generated at %s\n", filepath.Join(builder.TargetDir(), LintHTMLReport))
 		msg := fmt.Sprintf("Total %d linter issues are found", issues)
-		log.Println(color.RedString(msg))
 		saveLintReport(session, builder.TargetDir(), data, changedOnly)
 		if changedOnly {
 			return errors.New(msg)

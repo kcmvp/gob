@@ -61,7 +61,7 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 	_, err := os.Stat(builder)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{string(boot.Init), boot.InitBuilder.Name()})
+	rootCmd.SetArgs([]string{string(setupCommand), boot.InitBuilder.Name()})
 	err = rootCmd.ExecuteContext(s.ctx)
 	if err == nil {
 		require.NoError(s.T(), err, "should create builder.go successfully")
@@ -81,7 +81,7 @@ func (s *CmdTestSuite) TestSetupHook() {
 
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{string(boot.Init), boot.InitHook.Name()})
+	rootCmd.SetArgs([]string{string(setupCommand), boot.InitHook.Name()})
 	err := rootCmd.ExecuteContext(s.ctx)
 	require.NoError(s.T(), err)
 
@@ -102,7 +102,7 @@ func (s *CmdTestSuite) TestSetupLint() {
 		expV  string
 	}{
 		"withVersion",
-		[]string{string(boot.Init), boot.InitLinter.Name(), "-v", "v1.49.0"},
+		[]string{string(setupCommand), boot.InitLinter.Name(), "-v", "v1.49.0"},
 		"v1.49.0",
 	}
 	b := bytes.NewBufferString("")

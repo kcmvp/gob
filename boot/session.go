@@ -97,7 +97,6 @@ func (session *Session) Run(project Project, commands ...Command) error {
 		return lo.EveryBy(project.Mapper()[command], func(action Action) bool {
 			err = action(session, project, command)
 			if err != nil {
-				err = fmt.Errorf("[%s]:%w", command, err)
 				log.Println(color.RedString("%s", err.Error()))
 			}
 			return err == nil
