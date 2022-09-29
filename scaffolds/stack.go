@@ -53,7 +53,7 @@ func ListStack(category string) []Stack {
 			tm["module"].(string),
 			tm["Description"].(string),
 		}
-		hasModule = hasModule || len(st.Module) == 0 || st.Module == "-"
+		hasModule = hasModule || len(st.Module) == 0 || st.Module != "-"
 		return st
 	})
 
