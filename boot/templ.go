@@ -31,7 +31,7 @@ func GenerateFile(tmpl string, targetName string, data interface{}, trunk bool) 
 		}
 	} else if !trunk && errors.Is(err, os.ErrExist) {
 		// it's normal get os.ErrExist when don't trunk existing file
-		log.Println(color.YellowString("File %s exists", filepath.Base(targetName)))
+		log.Println(color.YellowString("File: %s exists", filepath.Base(targetName)))
 		err = nil
 	}
 	return err
