@@ -14,6 +14,8 @@ import (
 	"regexp"
 	"strings"
 
+	"golang.org/x/mod/modfile"
+
 	"github.com/spf13/viper"
 
 	"github.com/samber/lo"
@@ -33,7 +35,7 @@ var stackDir embed.FS
 
 var generate boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	stack := getStack(session.GetFlagString(command, genFlagName))
-	register := []string{}
+	var register []string
 	return visit(stack, project, register)
 }
 
@@ -69,16 +71,22 @@ func scaffold(stack string, module string, project boot.Project, register []stri
 		return err //nolint
 	}
 	dependencies := strings.Split(module, ",")
-	for _, dependency := range dependencies {
-		// @todo need to optimize when the module exists then no need to run this command
-		log.Printf("Adding dependency %s\n", dependency)
-		cmd := exec.Command("go", "get", dependency)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Println(color.YellowString("Failed to get module: %s, please setup it manually", dependency))
-			log.Println(color.YellowString(string(out)))
+	requires := lo.Map(project.Mod().Require, func(t *modfile.Require, i int) string {
+		return t.Mod.Path
+	})
+	lo.ForEach(dependencies, func(dep string, _ int) {
+		if !lo.Contains(requires, dep) {
+			log.Printf("Adding dependency %s\n", dep)
+			cmd := exec.Command("go", "get", dep)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Println(color.YellowString("Failed to get module: %s, please setup it manually", dep))
+				log.Println(color.YellowString(string(out)))
+			}
+		} else {
+			log.Println(color.YellowString("Module: %s exists ", dep))
 		}
-	}
+	})
 	return err //nolint
 }
 
