@@ -64,7 +64,7 @@ var linterVersion = func(name string) (string, string) {
 
 // nolint
 func (linter *Linter) scan(session *boot.Session, builder *Project, command boot.Command) error {
-	ver := builder.Config().GetString(linter.CfgVerKey())
+	ver := builder.Config().GetString(linter.Cmd())
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
 	}

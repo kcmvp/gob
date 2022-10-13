@@ -39,12 +39,12 @@ var initHook boot.Action = func(session *boot.Session, project boot.Project, com
 	return err
 }
 
-var initLinter boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
+var setupLinter boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
 	log.Println("Setup linters")
 	linter := newLinter()
 	version := session.GetFlagString(command, "version")
-	cfgVersion := project.Config().GetString(linter.CfgVerKey())
-	if cfgVersion != version {
+	cfgVersion := project.Config().GetString(linter.Cmd())
+	if len(cfgVersion) > 0 && cfgVersion != version {
 		version = cfgVersion
 	}
 	// to get the real version
@@ -56,6 +56,6 @@ var initLinter boot.Action = func(session *boot.Session, project boot.Project, c
 	if err != nil {
 		return fmt.Errorf("failed to generate lint config:%w", err)
 	}
-	project.SaveConfig(linter.CfgVerKey(), version)
+	project.SaveConfig(linter.Cmd(), version)
 	return nil
 }

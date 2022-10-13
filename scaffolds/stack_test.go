@@ -39,8 +39,8 @@ func TestValidStack(t *testing.T) {
 		category string
 		args     []string
 	}{
-		{"setup", "setup", []string{"builder", "hook", "linter"}},
-		{"gen", "gen", []string{"viper", "sql"}},
+		{"setup", "setup", []string{"builder", "githook", "linter"}},
+		{"gen", "gen", []string{"config", "database"}},
 		{"run", "run", []string{"clean", "build", "test", "lint", "report"}},
 	}
 	for _, test := range tests {
@@ -50,4 +50,37 @@ func TestValidStack(t *testing.T) {
 		})
 	}
 	log.Println(tests)
+}
+
+func TestGetStack(t *testing.T) {
+
+	tests := []struct {
+		Name        string
+		Module      string
+		Description string
+		DependsOn   string
+	}{
+		{
+			"config",
+			"github.com/spf13/viper",
+			"Generate viper configuration for project.",
+			"boot",
+		},
+		{
+			"database",
+			"-",
+			"Generate sql data source based on configuration.",
+			"config",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			st := getStack(test.Name)
+			require.Equal(t, test.Module, st.Module)
+			require.Equal(t, test.Description, st.Description)
+			require.Equal(t, test.DependsOn, st.DependsOn)
+		})
+	}
+
 }

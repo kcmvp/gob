@@ -1,0 +1,101 @@
+package infra
+
+import (
+	"fmt"
+	"go/build"
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+
+	"github.com/samber/do"
+
+	"github.com/spf13/viper"
+)
+
+const AppCfgName = "application"
+
+type Inspector[T comparable] func(frame string) T
+
+func Inspect[T comparable](inspector Inspector[T]) T {
+	goRoot := runtime.GOROOT()
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = build.Default.GOPATH
+	}
+	runtimePaths := []string{goRoot, goPath}
+
+	pc := make([]uintptr, 15)   //nolint
+	n := runtime.Callers(1, pc) //nolint
+	frames := runtime.CallersFrames(pc[:n])
+	var frame runtime.Frame
+	more := true
+	var zero T
+	for more {
+		frame, more = frames.Next()
+		goRuntime := false
+		for _, path := range runtimePaths {
+			if strings.HasPrefix(frame.File, path) {
+				goRuntime = true
+				break
+			}
+		}
+		if !goRuntime {
+			if t := inspector(frame.File); t != zero {
+				return t
+			}
+		}
+	}
+	return zero
+}
+
+var (
+	rootInspector Inspector[string] = func(frame string) string {
+		dir := filepath.Dir(frame)
+		for dir != "/" {
+			if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+				log.Printf("Project root directory is %s\n", dir)
+				return dir
+			}
+			dir = filepath.Dir(dir)
+		}
+		log.Fatalln("Can't find project root")
+		return dir
+	}
+	testInspector = func(file string) bool {
+		return strings.HasSuffix(file, "_test.go")
+	}
+)
+
+func newViper(dir, cfgName string) *viper.Viper {
+	ins := viper.New()
+	ins.SetConfigName(cfgName)
+	ins.SetConfigType("yml")
+	ins.AddConfigPath(".")
+	ins.AddConfigPath(dir)
+	err := ins.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error config file: %w", err))
+	}
+	return ins
+}
+
+func config(_ *do.Injector) (*viper.Viper, error) {
+	rootDir := Inspect(rootInspector)
+	testEnv := Inspect(testInspector)
+	viper := newViper(rootDir, AppCfgName)
+	if testEnv {
+		testViper := newViper(rootDir, "application_test")
+		cfg := testViper.ConfigFileUsed()
+		f, err := os.Open(cfg)
+		if err != nil {
+			log.Fatalf("Failed to read %s", cfg)
+		}
+		err = viper.MergeConfig(f)
+		if err != nil {
+			log.Fatalln("Failed to merger configuration file")
+		}
+	}
+	return viper, nil
+}

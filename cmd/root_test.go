@@ -61,7 +61,7 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 	_, err := os.Stat(builder)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{string(setupCommand), boot.InitBuilder.Name()})
+	rootCmd.SetArgs([]string{setupCmd.Name(), boot.InitBuilder.Name()})
 	err = rootCmd.ExecuteContext(s.ctx)
 	if err == nil {
 		require.NoError(s.T(), err, "should create builder.go successfully")
@@ -70,6 +70,15 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 	}
 	session := rootCmd.Context().Value(CurrentSession).(*boot.Session)
 	require.Empty(s.T(), session.AllFlags(boot.InitBuilder))
+}
+
+func (s *CmdTestSuite) TestGenConfig() {
+	b := bytes.NewBufferString("")
+	rootCmd.SetOut(b)
+	rootCmd.SetArgs([]string{boot.Generate.Name(), "config"})
+	rootCmd.ExecuteContext(s.ctx)
+	session := rootCmd.Context().Value(CurrentSession).(*boot.Session)
+	require.NotEmpty(s.T(), session.AllFlags(boot.Generate))
 }
 
 func (s *CmdTestSuite) TestSetupHook() {
@@ -81,7 +90,7 @@ func (s *CmdTestSuite) TestSetupHook() {
 
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{string(setupCommand), boot.InitHook.Name()})
+	rootCmd.SetArgs([]string{setupCmd.Name(), boot.InitHook.Name()})
 	err := rootCmd.ExecuteContext(s.ctx)
 	require.NoError(s.T(), err)
 
@@ -102,7 +111,7 @@ func (s *CmdTestSuite) TestSetupLint() {
 		expV  string
 	}{
 		"withVersion",
-		[]string{string(setupCommand), boot.InitLinter.Name(), "-v", "v1.49.0"},
+		[]string{setupCmd.Name(), boot.SetupLinter.Name(), "-v", "v1.49.0"},
 		"v1.49.0",
 	}
 	b := bytes.NewBufferString("")
@@ -112,5 +121,5 @@ func (s *CmdTestSuite) TestSetupLint() {
 	require.NoError(s.T(), err)
 	//@todo command does not switch context
 	//session := s.ctx.Value(CurrentSession).(*boot.Session)
-	//require.Equal(s.T(), test.expV, session.GetFlagString(boot.InitLinter, "version"))
+	//require.Equal(s.T(), test.expV, session.GetFlagString(boot.SetupLinter, "version"))
 }

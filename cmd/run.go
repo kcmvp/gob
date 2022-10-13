@@ -4,8 +4,6 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/kcmvp/gob/scaffolds"
 
 	"github.com/kcmvp/gob/boot"
@@ -19,34 +17,24 @@ var (
 	cleanFuzzCache bool
 	cleanDeleteAll bool
 	lintFullScan   bool
-	listAllRun     bool
 )
-
-const runCommand = "run"
 
 // runCmd represents the run command.
 var runCmd = &cobra.Command{
-	Use:       runCommand,
+	Use:       "run",
 	Short:     "Run build, test, lint and etc against current project, run `gob run -l` get more information",
-	ValidArgs: scaffolds.ValidStack(runCommand),
+	ValidArgs: scaffolds.ValidStack("run"),
 	Args: func(cmd *cobra.Command, args []string) error {
-		if listAllRun {
+		if listCommandArgs {
 			return nil
 		}
 		err := cobra.MinimumNArgs(1)(cmd, args)
-		if err == nil {
-			err = cobra.OnlyValidArgs(cmd, args)
-		}
 		if err != nil {
-			err = fmt.Errorf("run with %s against current project:%w", runCommand, err)
+			return err
 		}
-		return err
+		return cobra.OnlyValidArgs(cmd, args) //nolint
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if listAllRun {
-			scaffolds.ListStack(runCommand)
-			return nil
-		}
 		session := cmd.Context().Value(CurrentSession).(*boot.Session)
 		session.BindFlag(boot.Clean, "-cache", cleanCache)
 		session.BindFlag(boot.Clean, "-testcache", cleanTestCache)
@@ -59,7 +47,6 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	runCmd.Flags().BoolVarP(&listAllRun, "list", "l", false, "list all arguments for run command")
 	runCmd.Flags().BoolVarP(&cleanCache, "cache", "c", false, "remove the entire go build cache")
 	runCmd.Flags().BoolVarP(&cleanTestCache, "testcache", "t", false, "expire all test results")
 	runCmd.Flags().BoolVarP(&cleanModCache, "modcache", "m", false, "remove the entire module download cache")

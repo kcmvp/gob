@@ -53,7 +53,7 @@ func (b *BuilderTestSuite) TestSetupHook() {
 
 func (b *BuilderTestSuite) TestSetupLinter() {
 	info, err := os.Stat(filepath.Join(b.builder.RootDir(), lintCfg))
-	boot.NewSession().Run(b.builder, boot.InitLinter)
+	boot.NewSession().Run(b.builder, boot.SetupLinter)
 	var last time.Time
 	if err == nil {
 		last = info.ModTime()
@@ -151,7 +151,7 @@ func TestCommandActionMapping(t *testing.T) {
 	require.Equal(t, 3, len(mappers[boot.PrePush]))
 	require.Equal(t, 2, len(mappers[boot.InitBuilder]))
 	require.Equal(t, 2, len(mappers[boot.InitHook]))
-	require.Equal(t, 2, len(mappers[boot.InitLinter]))
+	require.Equal(t, 2, len(mappers[boot.SetupLinter]))
 	require.Equal(t, 2, len(mappers[boot.Clean]))
 	require.Equal(t, 3, len(mappers[boot.Lint]))
 	require.Equal(t, 3, len(mappers[boot.Test]))

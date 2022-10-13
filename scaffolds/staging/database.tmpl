@@ -1,0 +1,87 @@
+package infra
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/samber/do"
+	"github.com/spf13/viper"
+)
+
+const (
+	DBCfgName    = "datasource"
+	Mysql        = "mysql"
+	Postgres     = "postgres"
+	Sqlite3      = "sqlite3"
+	MaxOpen      = 200
+	MaxIdleCount = 100
+	MaxIdleTime  = 3
+)
+
+type DataSource struct {
+	Driver       string
+	Protocol     string
+	Host         string
+	User         string
+	Password     string
+	Db           string
+	MaxOpen      int
+	MaxIdleCount int
+	MaxIdleTime  int
+	Parameters   string
+	Dsn          string
+}
+
+func (ds DataSource) Uri() string {
+	if len(ds.Dsn) > 0 {
+		return ds.Dsn
+	}
+	switch ds.Driver {
+	case Mysql:
+		return fmt.Sprintf("%s:%s@%s(%s)/%s?%s", ds.User, ds.Password, ds.Protocol, ds.Host, ds.Db, ds.Parameters)
+	case Postgres:
+		return fmt.Sprintf("postgres://%s:%s@%s/%s?%s", ds.User, ds.Password, ds.Host, ds.Db, ds.Parameters)
+	case Sqlite3:
+		return ds.Dsn
+	default:
+		log.Fatalf("Unsupported database %s", ds.Driver)
+	}
+	return ""
+}
+
+func (ds DataSource) newDB() *sql.DB {
+	sqldb, err := sql.Open(ds.Driver, ds.Uri())
+	if err != nil {
+		log.Fatalf("Failed to connect to database %s", err.Error())
+	}
+	if ds.MaxOpen == 0 {
+		ds.MaxOpen = MaxOpen
+	}
+	if ds.MaxIdleCount == 0 {
+		ds.MaxIdleCount = MaxIdleCount
+	}
+	if ds.MaxIdleTime == 0 {
+		ds.MaxIdleTime = MaxIdleTime
+	}
+	// https://github.com/mattn/go-sqlite3#faq
+	if ds.Driver == Sqlite3 {
+		ds.MaxOpen = 1
+		ds.MaxIdleCount = 1
+	}
+	sqldb.SetMaxOpenConns(ds.MaxOpen)
+	sqldb.SetMaxIdleConns(ds.MaxIdleCount)
+	sqldb.SetConnMaxIdleTime(time.Minute * time.Duration(ds.MaxIdleTime))
+	return sqldb
+}
+
+func database(i *do.Injector) (*sql.DB, error) {
+	cfg := do.MustInvoke[*viper.Viper](i)
+	ds := DataSource{}
+	err := cfg.UnmarshalKey(fmt.Sprintf("%s.%s", AppCfgName, DBCfgName), &ds)
+	if err != nil {
+		log.Fatalf("Failed to start the application: %s", err.Error())
+	}
+	return ds.newDB(), nil
+}
