@@ -103,10 +103,13 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	// selective test scope in commit-msg hook, default are all packages
 	scope := []string{"./..."}
 	// @todo add test for this configuration
-	selectiveTest := command == boot.CommitMsg && !builder.Config().GetBool(fmt.Sprintf("%s.%s.testall", boot.CfgPrefix, command.Hook()))
+	selectiveTest := command == boot.CommitMsg && !builder.Config().GetBool(fmt.Sprintf("%s.testall", command.Hook()))
 	if selectiveTest {
 		changes, _ := changeSet(builder)
 		paths := lo.FilterMap(changes, func(t string, _ int) (string, bool) {
+			if strings.HasSuffix(strings.Split(t, string(os.PathSeparator))[0], ".go") {
+				return "", false
+			}
 			return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator)), true
 		})
 		paths = lo.Uniq[string](paths)
@@ -159,6 +162,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 	params = []string{"tool", "cover", "-func", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut))}
 	out, err := exec.Command("go", params...).CombinedOutput()
 	if err != nil {
+		log.Println(color.RedString("failed to get coverage report:%s", err.Error()))
 		return fmt.Errorf("failed to get coverage report:%w", err)
 	}
 	lines := strings.Split(strings.ReplaceAll(string(out), "\r\n", "\n"), "\n")
@@ -228,6 +232,7 @@ var buildAction boot.Action = func(session *boot.Session, builder boot.Project, 
 		}
 		for _, t := range targetFiles {
 			if strings.EqualFold(d.Name(), t) {
+				// @todo optimize need to read application.yml to determine the binary name
 				if output, err := exec.Command("go", "build", "-o", builder.TargetDir(), path).CombinedOutput(); err != nil { //nolint
 					log.Println(string(output))
 					return err //nolint

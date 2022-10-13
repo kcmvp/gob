@@ -1,0 +1,15 @@
+application:
+  database:
+    Driver:  {{ .Driver}}       # Required
+    protocol: "tcp"   # Optional, default 'tcp'
+    host: ""          # Optional
+    username: ""      # Optional
+    password: ""      # Optional
+    maxOpen: 100      # Optional,default is 200
+    maxIdleCount: 10  # Optional, default is 100
+    maxIdleTime: 3    # Optional, default is 3 * time.Minute
+    parameters: ""    # Optional, database specified parameters
+    dsn: ""           # Optional, when dsn supplied system use it directly and all other configurations are ignored.
+
+# Drivers
+# Mysql:

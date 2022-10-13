@@ -1,2 +1,14 @@
-gob:
-    golangci-lint: v1.49.0
+application:
+    database:
+        driver: <no value>
+        dsn: ""
+        host: ""
+        maxidlecount: 10
+        maxidletime: 3
+        maxopen: 100
+        parameters: ""
+        password: ""
+        protocol: tcp
+        username: ""
+    name: gob
+    test3: "3"

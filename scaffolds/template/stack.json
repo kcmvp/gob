@@ -7,7 +7,7 @@
       "Description": "Setup build script for project"
     },
     {
-      "name": "hook",
+      "name": "githook",
       "category": "setup",
       "module": "-",
       "Description": "setup local git hook"
@@ -49,16 +49,26 @@
       "Description": "Generate full quality report of the project,\nwhich includes test coverage and lint issue report"
     },
     {
-      "name": "viper",
-      "module": "github.com/spf13/viper",
-      "category": "gen",
+      "name": "boot",
+      "module": "github.com/samber/do",
+      "category": "-",
       "Description": "Generate viper configuration for project."
     },
     {
-      "name": "sql",
+      "name": "config",
+      "module": "github.com/spf13/viper",
+      "category": "gen",
+      "Description": "Generate viper configuration for project.",
+      "DependsOn": "boot",
+      "Register": true
+    },
+    {
+      "name": "database",
       "module": "-",
       "category": "gen",
-      "Description": "Generate SQL data source for project based on viper configuration."
+      "Description": "Generate sql data source based on configuration.",
+      "DependsOn": "config",
+      "Register": true
     }
   ]
 }

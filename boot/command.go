@@ -17,12 +17,13 @@ const (
 	Test        Command = "test"
 	Lint        Command = "lint"
 	InitBuilder Command = "builder"
-	InitLinter  Command = "linter"
+	SetupLinter Command = "linter"
 	InitHook    Command = "githook"
 	InitList    Command = "list"
 	PreCommit   Command = "pre_commit.go"
 	CommitMsg   Command = "commit_msg.go"
 	PrePush     Command = "pre_push.go"
+	Generate    Command = "gen"
 )
 
 func (command Command) Name() string {
@@ -58,11 +59,12 @@ func (command Command) ValidFlags() []string {
 	flagMap := map[Command][]string{
 		InitBuilder: {},
 		InitHook:    {},
-		InitLinter:  {"version"},
+		SetupLinter: {"version"},
 		Clean:       {"-cache", "-testcache", "-modcache", "-fuzzcache", "delete"},
 		Lint:        {"all"},
 		Test:        {},
 		Build:       {},
+		Generate:    {"stack"},
 	}
 	return flagMap[command]
 }

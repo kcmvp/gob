@@ -1,6 +1,8 @@
 package boot
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,7 +17,8 @@ import (
 const (
 	scriptDir = "scripts"
 	targetDir = "target"
-	CfgPrefix = "gob"
+
+	BuildCfg = "build"
 )
 
 type Mapper func() map[Command][]Action
@@ -124,12 +127,12 @@ func NewProject(mapper Mapper) DefaultProject {
 }
 
 func (project *DefaultProject) Config() *viper.Viper {
-	project.cfg.SetConfigName("application")
+	project.cfg.SetConfigName(BuildCfg)
 	project.cfg.SetConfigType("yml")
 	project.cfg.AddConfigPath(project.RootDir())
 	if err := project.cfg.ReadInConfig(); err != nil {
-		// application.yml does not exist at very beginning
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		var t1 viper.ConfigFileNotFoundError
+		if ok := errors.Is(err, t1); ok {
 			log.Fatalln(color.RedString("Failed to read configuration %s", err.Error()))
 		}
 	}
@@ -138,7 +141,7 @@ func (project *DefaultProject) Config() *viper.Viper {
 
 func (project *DefaultProject) SaveConfig(key, value string) {
 	project.cfg.Set(key, value)
-	err := project.cfg.WriteConfigAs(filepath.Join(project.RootDir(), "application.yml"))
+	err := project.cfg.WriteConfigAs(filepath.Join(project.RootDir(), fmt.Sprintf("%s.yml", BuildCfg)))
 	if err != nil {
 		log.Println(color.RedString("Failed to save the configuration %s", err.Error()))
 	}

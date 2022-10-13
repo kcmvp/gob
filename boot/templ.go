@@ -1,6 +1,7 @@
 package boot
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -19,7 +20,7 @@ func GenerateFile(tmpl string, targetName string, data interface{}, trunk bool) 
 	var err error
 	var f *os.File
 	var t *template.Template
-	if f, err = os.OpenFile(targetName, flag, os.ModePerm); err == nil {
+	if f, err = os.OpenFile(targetName, flag, os.ModePerm); err == nil { //nolint:nestif
 		defer f.Close()
 		if t, err = template.New(targetName).Parse(tmpl); err != nil {
 			err = fmt.Errorf("failed to parse template: %w", err)
@@ -34,4 +35,16 @@ func GenerateFile(tmpl string, targetName string, data interface{}, trunk bool) 
 		err = nil
 	}
 	return err
+}
+
+func GenerateString(tmpl string, data interface{}) string {
+	var buf bytes.Buffer
+	if t, err := template.New("tmpl").Parse(tmpl); err != nil {
+		log.Fatalln(color.YellowString("failed to parse template: %s", err.Error()))
+	} else {
+		if err = t.Execute(&buf, data); err != nil {
+			log.Fatalln(color.YellowString("failed to create string %v: %s", data, err.Error()))
+		}
+	}
+	return buf.String()
 }

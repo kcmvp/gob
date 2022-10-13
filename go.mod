@@ -7,12 +7,12 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/jedib0t/go-pretty/v6 v6.3.8
-	github.com/samber/lo v1.28.2
+	github.com/samber/do v1.4.1
+	github.com/samber/lo v1.31.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.0
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
-	go.etcd.io/bbolt v1.3.6
 	golang.org/x/mod v0.6.0-dev.0.20211013180041-c96bc1413d57
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 )

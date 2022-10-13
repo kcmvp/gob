@@ -22,7 +22,6 @@ type Installer interface {
 	Cmd() string
 	Versions() []string
 	Version(cmd string) (string, string)
-	CfgVerKey() string
 	Format(ver string) string
 }
 
@@ -31,10 +30,6 @@ type installer struct {
 	cmd     string
 	config  string
 	version Version
-}
-
-func (ins *installer) CfgVerKey() string {
-	return fmt.Sprintf("%s.%s", CfgPrefix, ins.Cmd())
 }
 
 func (ins *installer) Format(ver string) string {

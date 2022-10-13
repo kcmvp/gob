@@ -1,0 +1,19 @@
+package infra
+
+import (
+	"github.com/samber/do"
+)
+
+func Register[T any](provider do.Provider[T]) {
+	do.Provide(nil, provider)
+}
+
+func Injector() *do.Injector {
+	return do.DefaultInjector
+}
+
+func Boot() {
+    {{range $fn := .}}
+	Register({{$fn}})
+    {{end}}
+}
