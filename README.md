@@ -9,7 +9,7 @@ Boot for Golang project
     <img src="https://goreportcard.com/badge/github.com/kcmvp/gob" />
   </a>
   <a href="https://github.com/kcmvp/gob/blob/main/.github/workflows/build.yml" rel="nofollow">
-     <img src="https://img.shields.io/github/workflow/status/kcmvp/gob/Build?logo=github" alt="Build" />
+     <img src="https://img.shields.io/github/actions/workflow/status/kcmvp/gob/build.yml?branch=main" alt="Build" />
   </a>
   <a href="https://app.codecov.io/gh/kcmvp/gob" ref="nofollow">
     <img src ="https://img.shields.io/codecov/c/github/kcmvp/gob" alt="coverage"/>
