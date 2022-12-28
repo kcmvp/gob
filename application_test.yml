@@ -1,4 +1,7 @@
 application:
-  test1: true
-  test2: "abc"
-  test3: "3_test"
+    database:
+        driver: sqlite3
+        dsn: ""
+    test1: true
+    test2: abc
+    test3: 3_test
