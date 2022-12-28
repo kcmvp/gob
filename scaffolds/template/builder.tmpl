@@ -5,6 +5,7 @@ package main
 import (
 	"github.com/kcmvp/gob/boot"
 	"github.com/kcmvp/gob/scaffolds"
+	"os"
 )
 
 func main() {
