@@ -31,7 +31,7 @@ var setupCmd = &cobra.Command{
 		session := cmd.Context().Value(CurrentSession).(*boot.Session)
 		command := boot.Command(args[0])
 		session.BindFlag(boot.SetupLinter, "version", version)
-		return session.Run(scaffolds.NewProject(), command) //nolint
+		return session.Run(scaffolds.NewProject(cmd.Context().Value(RootDir).(string)), command) //nolint
 	},
 }
 

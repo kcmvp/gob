@@ -10,12 +10,14 @@ import (
 )
 
 type Stack struct {
-	Name        string
-	Command     string
-	Module      string
-	Description string
-	DependsOn   string
-	Register    bool
+	Name             string
+	Command          string
+	Module           string
+	Description      string
+	DependsOn        string
+	Register         bool
+	TestModule       string
+	TestEnvVariables map[string]interface{}
 }
 
 //go:embed template/stack.json
@@ -36,12 +38,20 @@ func getStack(name string) Stack {
 		tm["Description"].(string),
 		"",
 		false,
+		"",
+		map[string]interface{}{},
 	}
 	if v, ok := tm["DependsOn"]; ok {
 		stack.DependsOn = v.(string)
 	}
 	if v, ok := tm["Register"]; ok {
 		stack.Register = v.(bool)
+	}
+	if v, ok := tm["TestModule"]; ok {
+		stack.TestModule = v.(string)
+	}
+	if v, ok := tm["TestEnvVariables"]; ok {
+		stack.TestEnvVariables = v.(map[string]interface{})
 	}
 	return stack
 }
@@ -74,6 +84,8 @@ func ListStack(category string) []Stack {
 			tm["Description"].(string),
 			"",
 			false,
+			"",
+			map[string]interface{}{},
 		}
 		hasModule = hasModule || len(st.Module) == 0 || st.Module != "-"
 		if v, ok := tm["DependsOn"]; ok {
@@ -81,6 +93,12 @@ func ListStack(category string) []Stack {
 		}
 		if v, ok := tm["Register"]; ok {
 			st.Register = v.(bool)
+		}
+		if v, ok := tm["TestModule"]; ok {
+			st.TestModule = v.(string)
+		}
+		if v, ok := tm["TestEnvVariables"]; ok {
+			st.TestEnvVariables = v.(map[string]interface{})
 		}
 		return st
 	})

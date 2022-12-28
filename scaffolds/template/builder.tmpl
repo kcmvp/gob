@@ -8,5 +8,6 @@ import (
 )
 
 func main() {
-	boot.NewSession().Run(scaffolds.NewProject(), boot.Clean, boot.Build)
+	pwd, _ := os.Getwd()
+	boot.NewSession().Run(scaffolds.NewProject(pwd), boot.Clean, boot.Build)
 }

@@ -22,7 +22,8 @@ func main() {
 	}
 	fmt.Println(refs)
 
-	if err := boot.NewSession().Run(scaffolds.NewProject()); err != nil {
+	pwd, _ := os.Getwd()
+	if err := boot.NewSession().Run(scaffolds.NewProject(pwd)); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)

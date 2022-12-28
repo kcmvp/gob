@@ -29,7 +29,7 @@ var genCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		session := cmd.Context().Value(CurrentSession).(*boot.Session)
 		session.BindFlag(boot.Generate, "stack", args[0])
-		return session.Run(scaffolds.NewProject(), boot.Generate) //nolint
+		return session.Run(scaffolds.NewProject(cmd.Context().Value(RootDir).(string)), boot.Generate) //nolint
 	},
 }
 

@@ -90,8 +90,7 @@ var hookInspector Inspector[string] = func(frame string) string {
 	return string(None)
 }
 
-var rootInspector Inspector[string] = func(frame string) string {
-	dir := filepath.Dir(frame)
+var rootInspector Inspector[string] = func(dir string) string {
 	// @todo need to check windows root directory
 	// @todo windows root directory
 	for dir != "/" {
@@ -105,9 +104,10 @@ var rootInspector Inspector[string] = func(frame string) string {
 	return dir
 }
 
-func NewProject(mapper Mapper) DefaultProject {
+func NewProject(root string, mapper Mapper) DefaultProject {
 	project := DefaultProject{
-		root:        Inspect(rootInspector),
+		root: rootInspector(root),
+		// root:        root,
 		cfg:         viper.New(),
 		mapper:      mapper,
 		initializer: Command(Inspect(hookInspector)),

@@ -18,7 +18,9 @@ import (
 
 type ContextKey string
 
-var CurrentSession ContextKey = "session"
+const CurrentSession ContextKey = "session"
+
+const RootDir ContextKey = "rootDir"
 
 var listCommandArgs bool
 
@@ -40,6 +42,9 @@ Please visit https://github.com/kcmvp/gob/wiki for details`,
 		if err != nil {
 			err = errors.New(color.RedString("please run the command in the module root directory"))
 		}
+		pwd, _ := os.Getwd()
+		ctx := context.WithValue(cmd.Context(), RootDir, pwd)
+		cmd.SetContext(ctx)
 		return err
 	},
 }

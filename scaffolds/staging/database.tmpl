@@ -34,7 +34,7 @@ type DataSource struct {
 	Dsn          string
 }
 
-func (ds DataSource) Uri() string {
+func (ds DataSource) URI() string {
 	if len(ds.Dsn) > 0 {
 		return ds.Dsn
 	}
@@ -52,7 +52,7 @@ func (ds DataSource) Uri() string {
 }
 
 func (ds DataSource) newDB() *sql.DB {
-	sqldb, err := sql.Open(ds.Driver, ds.Uri())
+	sqldb, err := sql.Open(ds.Driver, ds.URI())
 	if err != nil {
 		log.Fatalf("Failed to connect to database %s", err.Error())
 	}

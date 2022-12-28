@@ -3,9 +3,7 @@
 package main
 
 import (
-	"github.com/fatih/color"
 	"github.com/kcmvp/gob/scaffolds"
-	"log"
 	"os"
 
 	"github.com/kcmvp/gob/boot"
@@ -13,8 +11,8 @@ import (
 
 func main() {
 	// input, _ := os.ReadFile(os.Args[1])
-
-	if err := boot.NewSession().Run(scaffolds.NewProject()); err != nil {
+	pwd, _ := os.Getwd()
+	if err := boot.NewSession().Run(scaffolds.NewProject(pwd)); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)

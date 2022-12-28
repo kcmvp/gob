@@ -42,7 +42,7 @@ var runCmd = &cobra.Command{
 		session.BindFlag(boot.Clean, "-fuzzcache", cleanFuzzCache)
 		session.BindFlag(boot.Clean, "delete", cleanDeleteAll)
 		session.BindFlag(boot.Lint, "all", lintFullScan)
-		return session.Run(scaffolds.NewProject(), boot.ToCommands(args...)...) //nolint
+		return session.Run(scaffolds.NewProject(cmd.Context().Value(RootDir).(string)), boot.ToCommands(args...)...) //nolint
 	},
 }
 

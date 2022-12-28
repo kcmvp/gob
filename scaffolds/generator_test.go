@@ -19,7 +19,9 @@ type GeneratorTestSuite struct {
 }
 
 func (b *GeneratorTestSuite) SetupSuite() {
-	b.project = NewProject()
+
+	pwd, _ := os.Getwd()
+	b.project = NewProject(pwd)
 }
 
 func (b *GeneratorTestSuite) SetupTest() {
@@ -145,5 +147,3 @@ func (b *GeneratorTestSuite) TestGenerateConfigDatabase() {
 	require.True(b.T(), config)
 	require.True(b.T(), configLine < databaseLine)
 }
-
-

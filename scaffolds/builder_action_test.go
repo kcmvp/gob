@@ -5,6 +5,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"os"
 	"strings"
 	"testing"
 )
@@ -16,7 +17,9 @@ type ActionTestSuite struct {
 }
 
 func (s *ActionTestSuite) SetupSuite() {
-	s.project = NewProject()
+
+	pwd, _ := os.Getwd()
+	s.project = NewProject(pwd)
 }
 
 func TestActionTestSuite(t *testing.T) {

@@ -17,7 +17,8 @@ type BuilderTestSuite struct {
 }
 
 func (b *BuilderTestSuite) SetupSuite() {
-	b.builder = NewProject()
+	pwd, _ := os.Getwd()
+	b.builder = NewProject(pwd)
 }
 func TestBuilderTestSuit(t *testing.T) {
 	suite.Run(t, new(BuilderTestSuite))

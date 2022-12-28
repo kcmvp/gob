@@ -26,10 +26,10 @@ func HookMap() map[string]string {
 	})
 }
 
-func NewProject() *Project {
+func NewProject(root string) *Project {
 	once.Do(func() {
 		instance = &Project{
-			boot.NewProject(mapper),
+			boot.NewProject(root, mapper),
 			defaultOption(),
 		}
 	})

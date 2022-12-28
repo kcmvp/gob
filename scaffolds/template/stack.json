@@ -68,7 +68,11 @@
       "category": "gen",
       "Description": "Generate sql data source based on configuration.",
       "DependsOn": "config",
-      "Register": true
+      "Register": true,
+      "TestModule": "github.com/mattn/go-sqlite3",
+      "TestEnvVariables": {
+        "Driver": "sqlite3"
+      }
     }
   ]
 }

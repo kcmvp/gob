@@ -43,7 +43,7 @@ func visit(stack Stack, project boot.Project, register []string) error {
 	if stack.Register {
 		register = lo.Reverse(append(register, stack.Name))
 	}
-	err := scaffold(stack.Name, stack.Module, project, register)
+	err := scaffold(stack, project, register)
 	for len(stack.DependsOn) > 0 {
 		t := getStack(stack.DependsOn)
 		return visit(t, project, register)
@@ -51,26 +51,29 @@ func visit(stack Stack, project boot.Project, register []string) error {
 	return err //nolint
 }
 
-func scaffold(stack string, module string, project boot.Project, register []string) error {
+func scaffold(stack Stack, project boot.Project, register []string) error {
 	err := fs.WalkDir(stackDir, ".", func(path string, d fs.DirEntry, err error) error {
-		if !strings.HasPrefix(d.Name(), stack) {
+		if !strings.HasPrefix(d.Name(), stack.Name) {
 			return err
 		}
 		template, _ := fs.ReadFile(stackDir, path)
-		switch d.Name() {
-		case fmt.Sprintf("%s.tmpl", stack):
-			genCode(string(template), stack, register, project)
-		case fmt.Sprintf("%s.yml", stack):
-			applicationYml(string(template), project)
+		switch {
+		case strings.HasSuffix(d.Name(), ".tmpl"):
+			genCode(string(template), stack.Name, register, project)
+		case strings.HasSuffix(d.Name(), ".yml"):
+			genYml(string(template), stack, project, strings.HasSuffix(d.Name(), "_test.yml"))
 		default:
 			//
 		}
 		return err
 	})
-	if err != nil {
-		return err //nolint
-	}
-	dependencies := strings.Split(module, ",")
+	setupDependencies(stack, project)
+	return err //nolint
+}
+
+func setupDependencies(stack Stack, project boot.Project) {
+	dependencies := strings.Split(stack.Module, ",")
+	dependencies = append(dependencies, strings.Split(stack.TestModule, ",")...)
 	requires := lo.Map(project.Mod().Require, func(t *modfile.Require, i int) string {
 		return t.Mod.Path
 	})
@@ -87,23 +90,32 @@ func scaffold(stack string, module string, project boot.Project, register []stri
 			log.Println(color.YellowString("Module: %s exists ", dep))
 		}
 	})
-	return err //nolint
 }
 
-func ymlVariable(project boot.Project) map[string]interface{} {
+func ymlVariable(stack Stack, project boot.Project, test bool) map[string]interface{} {
 	env := map[string]interface{}{}
 	segs := strings.Split(project.Mod().Module.Mod.String(), "/")
 	env["Module"] = segs[len(segs)-1]
+	if test {
+		for k, v := range stack.TestEnvVariables {
+			env[k] = v
+		}
+	}
 	return env
 }
 
-func applicationYml(yml string, project boot.Project) {
-	processed := boot.GenerateString(yml, ymlVariable(project))
+func genYml(yml string, stack Stack, project boot.Project, test bool) {
+	vars := ymlVariable(stack, project, test)
+	processed := boot.GenerateString(yml, vars)
 	v1 := viper.New()
 	v1.SetConfigType("yml")
 	v1.ReadConfig(bytes.NewBuffer([]byte(processed))) //nolint:errcheck
 	v2 := viper.New()
-	v2.SetConfigName(AppCfgName)
+	fileName := AppCfgName
+	if test {
+		fileName = fmt.Sprintf("%s_test", AppCfgName)
+	}
+	v2.SetConfigName(fileName)
 	v2.SetConfigType("yml")
 	v2.AddConfigPath(project.RootDir())
 	if err := v2.ReadInConfig(); err != nil {
@@ -119,10 +131,10 @@ func applicationYml(yml string, project boot.Project) {
 		}
 		err = v1.MergeConfig(f)
 		if err != nil {
-			log.Println(color.YellowString("Failed to update %s.yml", AppCfgName))
+			log.Println(color.YellowString("Failed to update %s.yml", fileName))
 		}
 	}
-	v1.WriteConfigAs(filepath.Join(project.RootDir(), fmt.Sprintf("%s.yml", AppCfgName))) //nolint
+	v1.WriteConfigAs(filepath.Join(project.RootDir(), fmt.Sprintf("%s.yml", fileName))) //nolint
 }
 
 func genCode(text string, stack string, vars []string, project boot.Project) {
