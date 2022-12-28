@@ -8,8 +8,6 @@ import (
 	"errors"
 	"os"
 
-	"github.com/kcmvp/gob/scaffolds"
-
 	"github.com/kcmvp/gob/boot"
 
 	"github.com/fatih/color"
@@ -33,7 +31,7 @@ Generate project scaffolds, including build script, github hook and other projec
 Please visit https://github.com/kcmvp/gob/wiki for details`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		if listCommandArgs {
-			sts := scaffolds.ListStack(cmd.Name())
+			sts := boot.ListStack(cmd.Name())
 			if len(sts) > 0 {
 				os.Exit(0)
 			}

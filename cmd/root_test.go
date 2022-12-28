@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kcmvp/gob/boot"
-	"github.com/kcmvp/gob/scaffolds"
 	"github.com/stretchr/testify/require"
 	"log"
 	"os"
@@ -20,7 +19,7 @@ import (
 
 type CmdTestSuite struct {
 	suite.Suite
-	builder *scaffolds.Project
+	builder *boot.Project
 	l       sync.Mutex
 	ctx     context.Context
 }
@@ -31,7 +30,7 @@ func (s *CmdTestSuite) SetupSuite() {
 	for {
 		if _, err := os.ReadFile(filepath.Join(root, "go.mod")); err == nil {
 			os.Chdir(root)
-			s.builder = scaffolds.NewProject(root)
+			s.builder = boot.NewProject(root)
 			break
 		} else {
 			root = filepath.Dir(root)
@@ -61,7 +60,7 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 	_, err := os.Stat(builder)
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{setupCmd.Name(), boot.InitBuilder.Name()})
+	rootCmd.SetArgs([]string{setupCmd.Name(), boot.SetupBuilder.Name()})
 	err = rootCmd.ExecuteContext(s.ctx)
 	if err == nil {
 		require.NoError(s.T(), err, "should create builder.go successfully")
@@ -69,7 +68,7 @@ func (s *CmdTestSuite) TestSetupBuilder() {
 		require.ErrorIs(s.T(), err, os.ErrExist, "should get file exists error")
 	}
 	session := rootCmd.Context().Value(CurrentSession).(*boot.Session)
-	require.Empty(s.T(), session.AllFlags(boot.InitBuilder))
+	require.Empty(s.T(), session.AllFlags(boot.SetupBuilder))
 }
 
 func (s *CmdTestSuite) TestGenConfig() {
@@ -83,25 +82,25 @@ func (s *CmdTestSuite) TestGenConfig() {
 
 func (s *CmdTestSuite) TestSetupHook() {
 
-	for _, v := range scaffolds.HookMap() {
+	for _, v := range boot.HookMap() {
 		err := os.Remove(filepath.Join(s.builder.GitHome(), "hooks", v))
 		require.True(s.T(), err == nil || errors.Is(err, os.ErrNotExist))
 	}
 
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	rootCmd.SetArgs([]string{setupCmd.Name(), boot.InitHook.Name()})
+	rootCmd.SetArgs([]string{setupCmd.Name(), boot.SetupHook.Name()})
 	err := rootCmd.ExecuteContext(s.ctx)
 	require.NoError(s.T(), err)
 
-	for k, v := range scaffolds.HookMap() {
+	for k, v := range boot.HookMap() {
 		f := filepath.Join(s.builder.ScriptDir(), fmt.Sprintf("%s.go", k))
 		require.FileExists(s.T(), f)
 		f = filepath.Join(s.builder.GitHome(), "hooks", v)
 		require.FileExists(s.T(), f)
 	}
 	session := rootCmd.Context().Value(CurrentSession).(*boot.Session)
-	require.Empty(s.T(), session.AllFlags(boot.InitBuilder))
+	require.Empty(s.T(), session.AllFlags(boot.SetupBuilder))
 
 }
 func (s *CmdTestSuite) TestSetupLint() {

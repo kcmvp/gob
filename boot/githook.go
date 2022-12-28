@@ -1,4 +1,4 @@
-package scaffolds
+package boot
 
 import (
 	"errors"
@@ -11,7 +11,6 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/kcmvp/gob/boot"
 )
 
 // @todo code refactor by introduce GitService.
@@ -28,7 +27,7 @@ func (g GitErr) Error() string {
 	return g.Msg
 }
 
-func initGitHooks(project boot.Project) error {
+func setupGitHooks(project *Project) error {
 	var err error
 	var tf []byte
 	if project.Git() == nil {
@@ -41,9 +40,9 @@ func initGitHooks(project boot.Project) error {
 		if _, err = os.Stat(abs); errors.Is(err, os.ErrNotExist) {
 			tf, err = templateDir.ReadFile(filepath.Join("template", fmt.Sprintf("%s.tmpl", k)))
 			if err != nil {
-				return err
+				return err //nolint
 			}
-			err = boot.GenerateFile(string(tf), abs, nil, false)
+			err = GenerateFile(string(tf), abs, nil, false)
 			if err != nil {
 				return err //nolint
 			}
@@ -52,7 +51,7 @@ func initGitHooks(project boot.Project) error {
 		if err != nil {
 			return err //nolint
 		}
-		err = boot.GenerateFile(string(tf), filepath.Join(project.GitHome(), "hooks", v), hookData{abs, v}, true)
+		err = GenerateFile(string(tf), filepath.Join(project.GitHome(), "hooks", v), hookData{abs, v}, true)
 		if err != nil {
 			return err
 		}
@@ -72,7 +71,7 @@ func validateCommitMsg(msg, pattern string) error {
 	return err //nolint
 }
 
-func changeSet(project boot.Project) ([]string, error) {
+func changeSet(project *Project) ([]string, error) {
 	changes := []string{}
 	if project.Git() == nil {
 		return changes, &GitErr{"project is not at version control"}

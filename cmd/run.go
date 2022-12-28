@@ -4,8 +4,6 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
-	"github.com/kcmvp/gob/scaffolds"
-
 	"github.com/kcmvp/gob/boot"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +21,7 @@ var (
 var runCmd = &cobra.Command{
 	Use:       "run",
 	Short:     "Run build, test, lint and etc against current project, run `gob run -l` get more information",
-	ValidArgs: scaffolds.ValidStack("run"),
+	ValidArgs: boot.ValidStack("run"),
 	Args: func(cmd *cobra.Command, args []string) error {
 		if listCommandArgs {
 			return nil
@@ -42,7 +40,7 @@ var runCmd = &cobra.Command{
 		session.BindFlag(boot.Clean, "-fuzzcache", cleanFuzzCache)
 		session.BindFlag(boot.Clean, "delete", cleanDeleteAll)
 		session.BindFlag(boot.Lint, "all", lintFullScan)
-		return session.Run(scaffolds.NewProject(cmd.Context().Value(RootDir).(string)), boot.ToCommands(args...)...) //nolint
+		return session.Run(boot.NewProject(cmd.Context().Value(RootDir).(string)), boot.ToCommands(args...)...) //nolint
 	},
 }
 

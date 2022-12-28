@@ -1,4 +1,4 @@
-package scaffolds
+package boot
 
 import (
 	_ "embed"

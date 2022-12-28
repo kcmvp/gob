@@ -1,7 +1,6 @@
-package scaffolds
+package boot
 
 import (
-	"github.com/kcmvp/gob/boot"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -13,7 +12,7 @@ import (
 type ActionTestSuite struct {
 	suite.Suite
 	project *Project
-	session *boot.Session
+	session *Session
 }
 
 func (s *ActionTestSuite) SetupSuite() {
@@ -27,15 +26,15 @@ func TestActionTestSuite(t *testing.T) {
 }
 
 func (s *ActionTestSuite) SetupTest() {
-	s.session = boot.NewSession()
+	s.session = NewSession()
 }
 
 func (s *ActionTestSuite) TestCleanAction() {
-	lo.ForEach(mapper()[boot.Clean], func(action boot.Action, _ int) {
-		err := action(s.session, s.project, boot.Clean)
+	lo.ForEach(mapper()[Clean], func(action Action, _ int) {
+		err := action(s.session, s.project, Clean)
 		require.NoError(s.T(), err)
 	})
-	flags := lo.Filter(s.session.AllFlags(boot.Clean), func(k string, _ int) bool {
+	flags := lo.Filter(s.session.AllFlags(Clean), func(k string, _ int) bool {
 		return strings.HasPrefix(k, "clean.")
 	})
 	require.Empty(s.T(), flags, "should no flags")
@@ -69,8 +68,8 @@ func (s *ActionTestSuite) TestGitHookAction() {
 		return err
 	})
 
-	lo.ForEach(mapper()[boot.InitHook], func(action boot.Action, _ int) {
-		err := action(s.session, s.project, boot.InitHook)
+	lo.ForEach(mapper()[boot.SetupHook], func(action boot.Action, _ int) {
+		err := action(s.session, s.project, boot.SetupHook)
 		require.NoError(s.T(), err)
 	})
 	filepath.WalkDir(filepath.Join(s.project.GitHome(), "hooks"), func(path string, d fs.DirEntry, err error) error {

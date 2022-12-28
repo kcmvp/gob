@@ -16,7 +16,7 @@ import (
 )
 
 type (
-	Action func(session *Session, project Project, command Command) error
+	Action func(session *Session, project *Project, command Command) error
 )
 
 type Session struct {
@@ -78,7 +78,7 @@ func (session *Session) CtxValue(command Command) string {
 	return session.store[command.CtxKey()].(string)
 }
 
-func (session *Session) Run(project Project, commands ...Command) error {
+func (session *Session) Run(project *Project, commands ...Command) error {
 	var ccs []Command
 	if project.Initializer() != None {
 		ccs = append(ccs, project.Initializer())
@@ -108,7 +108,7 @@ func (session *Session) Run(project Project, commands ...Command) error {
 	return err
 }
 
-func (session *Session) cleanup(project Project) {
+func (session *Session) cleanup(project *Project) {
 	err := filepath.WalkDir(project.TargetDir(), func(path string, d fs.DirEntry, err error) error {
 		if err == nil && !d.IsDir() && strings.HasSuffix(d.Name(), session.ID()) {
 			np := strings.TrimSuffix(path, fmt.Sprintf(".%s", session.ID()))

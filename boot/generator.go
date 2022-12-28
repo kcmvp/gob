@@ -1,4 +1,4 @@
-package scaffolds
+package boot
 
 import (
 	"bufio"
@@ -21,8 +21,6 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/fatih/color"
-
-	"github.com/kcmvp/gob/boot"
 )
 
 const (
@@ -33,13 +31,13 @@ const (
 //go:embed staging
 var stackDir embed.FS
 
-var generate boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
+var generate Action = func(session *Session, project *Project, command Command) error {
 	stack := getStack(session.GetFlagString(command, genFlagName))
 	var register []string
 	return visit(stack, project, register)
 }
 
-func visit(stack Stack, project boot.Project, register []string) error {
+func visit(stack Stack, project *Project, register []string) error {
 	if stack.Register {
 		register = lo.Reverse(append(register, stack.Name))
 	}
@@ -51,7 +49,7 @@ func visit(stack Stack, project boot.Project, register []string) error {
 	return err //nolint
 }
 
-func scaffold(stack Stack, project boot.Project, register []string) error {
+func scaffold(stack Stack, project *Project, register []string) error {
 	err := fs.WalkDir(stackDir, ".", func(path string, d fs.DirEntry, err error) error {
 		if !strings.HasPrefix(d.Name(), stack.Name) {
 			return err
@@ -67,11 +65,11 @@ func scaffold(stack Stack, project boot.Project, register []string) error {
 		}
 		return err
 	})
-	setupDependencies(stack, project)
+	setupDependencies(stack, *project)
 	return err //nolint
 }
 
-func setupDependencies(stack Stack, project boot.Project) {
+func setupDependencies(stack Stack, project Project) {
 	dependencies := strings.Split(stack.Module, ",")
 	dependencies = append(dependencies, strings.Split(stack.TestModule, ",")...)
 	requires := lo.Map(project.Mod().Require, func(t *modfile.Require, i int) string {
@@ -92,7 +90,7 @@ func setupDependencies(stack Stack, project boot.Project) {
 	})
 }
 
-func ymlVariable(stack Stack, project boot.Project, test bool) map[string]interface{} {
+func ymlVariable(stack Stack, project *Project, test bool) map[string]interface{} {
 	env := map[string]interface{}{}
 	segs := strings.Split(project.Mod().Module.Mod.String(), "/")
 	env["Module"] = segs[len(segs)-1]
@@ -104,9 +102,9 @@ func ymlVariable(stack Stack, project boot.Project, test bool) map[string]interf
 	return env
 }
 
-func genYml(yml string, stack Stack, project boot.Project, test bool) {
+func genYml(yml string, stack Stack, project *Project, test bool) {
 	vars := ymlVariable(stack, project, test)
-	processed := boot.GenerateString(yml, vars)
+	processed := GenerateString(yml, vars)
 	v1 := viper.New()
 	v1.SetConfigType("yml")
 	v1.ReadConfig(bytes.NewBuffer([]byte(processed))) //nolint:errcheck
@@ -137,7 +135,7 @@ func genYml(yml string, stack Stack, project boot.Project, test bool) {
 	v1.WriteConfigAs(filepath.Join(project.RootDir(), fmt.Sprintf("%s.yml", fileName))) //nolint
 }
 
-func genCode(text string, stack string, vars []string, project boot.Project) {
+func genCode(text string, stack string, vars []string, project *Project) {
 	lines := strings.Split(text, "\n")
 	pkgDecl, found := lo.Find(lines, func(line string) bool {
 		return len(line) > 0 && strings.HasPrefix(line, "package ")
@@ -148,13 +146,13 @@ func genCode(text string, stack string, vars []string, project boot.Project) {
 		os.Mkdir(dir, os.ModePerm) //nolint
 	}
 	vars = codeVariable(stack, vars, project)
-	err := boot.GenerateFile(text, filepath.Join(dir, fmt.Sprintf("%s.go", stack)), vars, stack == "boot")
+	err := GenerateFile(text, filepath.Join(dir, fmt.Sprintf("%s.go", stack)), vars, stack == "boot")
 	if err != nil {
 		log.Println(color.YellowString("Failed to generate code:%s", err.Error()))
 	}
 }
 
-func codeVariable(stack string, vars []string, project boot.Project) []string {
+func codeVariable(stack string, vars []string, project *Project) []string {
 	if strings.Compare(stack, "boot") != 0 {
 		return vars
 	}

@@ -5,7 +5,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/kcmvp/gob/scaffolds"
 	"os"
 	"strings"
 
@@ -23,7 +22,7 @@ func main() {
 	fmt.Println(refs)
 
 	pwd, _ := os.Getwd()
-	if err := boot.NewSession().Run(scaffolds.NewProject(pwd)); err != nil {
+	if err := boot.NewSession().Run(boot.NewProject(pwd)); err != nil {
 		os.Exit(1)
 	}
 	os.Exit(0)

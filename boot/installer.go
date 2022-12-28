@@ -17,37 +17,27 @@ const LatestVer = "latest"
 
 type Version func(cmd string) (string, string)
 
-type Installer interface {
-	Install(ver string) (string, error)
-	Cmd() string
-	Versions() []string
-	Version(cmd string) (string, string)
-	Format(ver string) string
-}
-
-type installer struct {
+type Installer struct {
 	module  string
 	cmd     string
 	config  string
 	version Version
 }
 
-func (ins *installer) Format(ver string) string {
+func (ins *Installer) Format(ver string) string {
 	return strings.ReplaceAll(ver, ".", "-")
 }
 
-func (ins *installer) Version(cmd string) (string, string) {
+func (ins *Installer) Version(cmd string) (string, string) {
 	return ins.version(cmd)
 }
 
-func (ins *installer) Cmd() string {
+func (ins *Installer) Cmd() string {
 	return ins.cmd
 }
 
-var _ Installer = (*installer)(nil)
-
-func NewInstallable(module, cmd, config string, version Version) Installer {
-	return &installer{
+func NewInstallable(module, cmd, config string, version Version) *Installer {
+	return &Installer{
 		module,
 		cmd,
 		config,
@@ -55,7 +45,7 @@ func NewInstallable(module, cmd, config string, version Version) Installer {
 	}
 }
 
-func (ins *installer) Versions() []string {
+func (ins *Installer) Versions() []string {
 	vMap := map[string]byte{}
 	ver, file := ins.version(ins.Cmd())
 	if ver == "" {
@@ -85,7 +75,7 @@ func (ins *installer) Versions() []string {
 	return versions
 }
 
-func (ins *installer) Install(ver string) (string, error) {
+func (ins *Installer) Install(ver string) (string, error) {
 	var err error
 	var out []byte
 	ivs := ins.Versions()
@@ -113,7 +103,7 @@ func (ins *installer) Install(ver string) (string, error) {
 	return ver, err
 }
 
-func (ins *installer) tagVersion(file, ver string) {
+func (ins *Installer) tagVersion(file, ver string) {
 	fv := ins.Format(ver)
 	base := filepath.Base(file)
 	if strings.HasPrefix(base, ins.Cmd()) && strings.Contains(base, fv) {

@@ -4,8 +4,6 @@ Copyright © 2022 kcmvp <kcheng.mvp@gmail.com>
 package cmd
 
 import (
-	"github.com/kcmvp/gob/scaffolds"
-
 	"github.com/kcmvp/gob/boot"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +14,7 @@ var version string
 var setupCmd = &cobra.Command{
 	Use:       "setup",
 	Short:     "Setup build script, hook, linter and other configurations. Run `gob setup -l` get more information",
-	ValidArgs: scaffolds.ValidStack("setup"),
+	ValidArgs: boot.ValidStack("setup"),
 	Args: func(cmd *cobra.Command, args []string) error {
 		if listCommandArgs {
 			return nil
@@ -31,7 +29,7 @@ var setupCmd = &cobra.Command{
 		session := cmd.Context().Value(CurrentSession).(*boot.Session)
 		command := boot.Command(args[0])
 		session.BindFlag(boot.SetupLinter, "version", version)
-		return session.Run(scaffolds.NewProject(cmd.Context().Value(RootDir).(string)), command) //nolint
+		return session.Run(boot.NewProject(cmd.Context().Value(RootDir).(string)), command) //nolint
 	},
 }
 

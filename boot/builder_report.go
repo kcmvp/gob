@@ -1,4 +1,4 @@
-package scaffolds
+package boot
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kcmvp/gob/boot"
 	"github.com/samber/lo"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
@@ -48,7 +47,7 @@ type FileReport struct {
 	Metrics
 }
 
-func (report *BuildReport) Save(dir string, session *boot.Session) error {
+func (report *BuildReport) Save(dir string, session *Session) error {
 	data, err := json.MarshalIndent(report, "", " ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal project report:%w", err)
@@ -60,7 +59,7 @@ func (report *BuildReport) Save(dir string, session *boot.Session) error {
 	return nil
 }
 
-var reportAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
+var reportAction Action = func(session *Session, project *Project, command Command) error {
 	report := BuildReport{}
 	data, err := os.ReadFile(filepath.Join(project.TargetDir(), session.Specified(reportJSON)))
 	if err != nil {

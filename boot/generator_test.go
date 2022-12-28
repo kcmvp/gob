@@ -1,8 +1,7 @@
-package scaffolds
+package boot
 
 import (
 	"bufio"
-	"github.com/kcmvp/gob/boot"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -33,9 +32,9 @@ func TestGeneratorSuit(t *testing.T) {
 }
 
 func (b *GeneratorTestSuite) TestGenerateConfig() {
-	session := boot.NewSession()
-	session.BindFlag(boot.Generate, "stack", "config")
-	session.Run(b.project, boot.Generate)
+	session := NewSession()
+	session.BindFlag(Generate, "stack", "config")
+	session.Run(b.project, Generate)
 	v := viper.New()
 	v.SetConfigType("yml")
 	v.SetConfigName(AppCfgName)
@@ -60,9 +59,9 @@ func (b *GeneratorTestSuite) TestGenerateConfig() {
 }
 
 func (b *GeneratorTestSuite) TestGenerateDatabase() {
-	session := boot.NewSession()
-	session.BindFlag(boot.Generate, "stack", "database")
-	session.Run(b.project, boot.Generate)
+	session := NewSession()
+	session.BindFlag(Generate, "stack", "database")
+	session.Run(b.project, Generate)
 	v := viper.New()
 	v.SetConfigType("yml")
 	v.SetConfigName(AppCfgName)
@@ -102,13 +101,13 @@ func (b *GeneratorTestSuite) TestGenerateDatabase() {
 }
 
 func (b *GeneratorTestSuite) TestGenerateConfigDatabase() {
-	session := boot.NewSession()
-	session.BindFlag(boot.Generate, "stack", "config")
-	session.Run(b.project, boot.Generate)
+	session := NewSession()
+	session.BindFlag(Generate, "stack", "config")
+	session.Run(b.project, Generate)
 
-	session = boot.NewSession()
-	session.BindFlag(boot.Generate, "stack", "database")
-	session.Run(b.project, boot.Generate)
+	session = NewSession()
+	session.BindFlag(Generate, "stack", "database")
+	session.Run(b.project, Generate)
 
 	v := viper.New()
 	v.SetConfigType("yml")

@@ -1,8 +1,7 @@
-package scaffolds
+package boot
 
 import (
 	"encoding/json"
-	"github.com/kcmvp/gob/boot"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -25,7 +24,7 @@ func TestBuilderTestSuit(t *testing.T) {
 }
 
 func (b *BuilderTestSuite) TestSetupBuilder() {
-	boot.NewSession().Run(b.builder, boot.InitBuilder)
+	NewSession().Run(b.builder, SetupBuilder)
 	_, err := os.Stat(filepath.Join(b.builder.ScriptDir(), "builder.go"))
 	require.NoError(b.T(), err)
 }
@@ -37,7 +36,7 @@ func (b *BuilderTestSuite) TestSetupHook() {
 	require.NoError(b.T(), err)
 	err = os.Remove(filepath.Join(b.builder.GitHome(), "hooks", "commit-msg"))
 	require.NoError(b.T(), err)
-	boot.NewSession().Run(b.builder, boot.InitHook)
+	NewSession().Run(b.builder, SetupHook)
 	_, err = os.Stat(filepath.Join(b.builder.ScriptDir(), "pre_commit.go"))
 	require.NoError(b.T(), err)
 	_, err = os.Stat(filepath.Join(b.builder.ScriptDir(), "pre_push.go"))
@@ -54,7 +53,7 @@ func (b *BuilderTestSuite) TestSetupHook() {
 
 func (b *BuilderTestSuite) TestSetupLinter() {
 	info, err := os.Stat(filepath.Join(b.builder.RootDir(), lintCfg))
-	boot.NewSession().Run(b.builder, boot.SetupLinter)
+	NewSession().Run(b.builder, SetupLinter)
 	var last time.Time
 	if err == nil {
 		last = info.ModTime()
@@ -62,6 +61,17 @@ func (b *BuilderTestSuite) TestSetupLinter() {
 	info, err = os.Stat(filepath.Join(b.builder.RootDir(), lintCfg))
 	require.NoError(b.T(), err)
 	require.True(b.T(), info.ModTime().UnixMilli() >= last.UnixMilli())
+}
+
+func (b *BuilderTestSuite) TestSetupGitFlow() {
+	NewSession().Run(b.builder, SetupGitFlow)
+	//var last time.Time
+	//if err == nil {
+	//	last = info.ModTime()
+	//}
+	//info, err = os.Stat(filepath.Join(b.builder.RootDir(), lintCfg))
+	//require.NoError(b.T(), err)
+	//require.True(b.T(), info.ModTime().UnixMilli() >= last.UnixMilli())
 }
 
 func (b *BuilderTestSuite) TestClean() {
@@ -85,13 +95,13 @@ func (b *BuilderTestSuite) TestClean() {
 		},
 	}
 	for _, test := range tests {
-		session := boot.NewSession()
+		session := NewSession()
 		if len(test.flag) > 0 {
-			session.BindFlag(boot.Clean, test.flag, true)
+			session.BindFlag(Clean, test.flag, true)
 		}
-		session.Run(b.builder, boot.Clean)
+		session.Run(b.builder, Clean)
 		b.T().Run(test.name, func(t *testing.T) {
-			require.Equal(t, test.ctxValue, session.CtxValue(boot.Clean))
+			require.Equal(t, test.ctxValue, session.CtxValue(Clean))
 		})
 	}
 }
@@ -114,11 +124,11 @@ func (b *BuilderTestSuite) TestLint() {
 		},
 	}
 	for _, test := range tests {
-		session := boot.NewSession()
+		session := NewSession()
 		b.T().Run(test.name, func(t *testing.T) {
-			session.BindFlag(boot.Lint, "all", test.scanAll)
-			session.Run(b.builder, boot.Lint)
-			require.Equal(t, test.ctxValue, session.CtxValue(boot.Lint))
+			session.BindFlag(Lint, "all", test.scanAll)
+			session.Run(b.builder, Lint)
+			require.Equal(t, test.ctxValue, session.CtxValue(Lint))
 			_, err := os.Stat(filepath.Join(b.builder.TargetDir(), "lint.html"))
 			require.NoError(t, err)
 			_, err = os.Stat(filepath.Join(b.builder.TargetDir(), "lint.out"))
@@ -134,8 +144,8 @@ func (b *BuilderTestSuite) TestReportCommand() {
 		return
 	}
 	os.Setenv("callFromTest", "1")
-	session := boot.NewSession()
-	err := session.Run(b.builder, boot.Report)
+	session := NewSession()
+	err := session.Run(b.builder, Report)
 	require.NoError(b.T(), err)
 	data, err := os.ReadFile(filepath.Join(b.builder.TargetDir(), reportJSON))
 	require.NoError(b.T(), err)
@@ -147,15 +157,15 @@ func (b *BuilderTestSuite) TestReportCommand() {
 
 func TestCommandActionMapping(t *testing.T) {
 	mappers := mapper()
-	require.Equal(t, 3, len(mappers[boot.PreCommit]))
-	require.Equal(t, 3, len(mappers[boot.CommitMsg]))
-	require.Equal(t, 3, len(mappers[boot.PrePush]))
-	require.Equal(t, 2, len(mappers[boot.InitBuilder]))
-	require.Equal(t, 2, len(mappers[boot.InitHook]))
-	require.Equal(t, 2, len(mappers[boot.SetupLinter]))
-	require.Equal(t, 2, len(mappers[boot.Clean]))
-	require.Equal(t, 3, len(mappers[boot.Lint]))
-	require.Equal(t, 3, len(mappers[boot.Test]))
-	require.Equal(t, 4, len(mappers[boot.Build]))
-	require.Equal(t, 5, len(mappers[boot.Report]))
+	require.Equal(t, 3, len(mappers[PreCommit]))
+	require.Equal(t, 3, len(mappers[CommitMsg]))
+	require.Equal(t, 3, len(mappers[PrePush]))
+	require.Equal(t, 3, len(mappers[SetupBuilder]))
+	require.Equal(t, 3, len(mappers[SetupHook]))
+	require.Equal(t, 2, len(mappers[SetupLinter]))
+	require.Equal(t, 2, len(mappers[Clean]))
+	require.Equal(t, 3, len(mappers[Lint]))
+	require.Equal(t, 3, len(mappers[Test]))
+	require.Equal(t, 4, len(mappers[Build]))
+	require.Equal(t, 5, len(mappers[Report]))
 }

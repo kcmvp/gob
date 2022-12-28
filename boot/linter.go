@@ -1,4 +1,4 @@
-package scaffolds
+package boot
 
 import (
 	"bufio"
@@ -21,7 +21,6 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/boot"
 	"github.com/thedevsaddam/gojsonq/v2"
 )
 
@@ -35,18 +34,16 @@ const (
 	LintOutputReport = "lint.out"
 )
 
-var _ boot.Installer = (*Linter)(nil)
-
 //go:embed template/.golangci.yml
 var golangCiTmp string
 
 type Linter struct {
-	boot.Installer
+	*Installer
 }
 
 func newLinter() *Linter {
 	return &Linter{
-		boot.NewInstallable(lintModule, lintCmd, lintCfg, linterVersion),
+		NewInstallable(lintModule, lintCmd, lintCfg, linterVersion),
 	}
 }
 
@@ -63,7 +60,7 @@ var linterVersion = func(name string) (string, string) {
 }
 
 // nolint
-func (linter *Linter) scan(session *boot.Session, builder *Project, command boot.Command) error {
+func (linter *Linter) scan(session *Session, builder *Project, command Command) error {
 	ver := builder.Config().GetString(linter.Cmd())
 	if len(ver) < 1 {
 		return errors.New("lint is not setup")
@@ -74,15 +71,16 @@ func (linter *Linter) scan(session *boot.Session, builder *Project, command boot
 	}
 	os.Chdir(builder.RootDir())
 	args := []string{"run", "-v", "--out-format", "json", "./..."}
-	changedOnly := (builder.Initializer() != boot.None || !session.GetFlagBool(command, "all")) && command != boot.Report
+	changedOnly := (builder.Initializer() != None || !session.GetFlagBool(command, "all")) && command != Report
 	if changedOnly {
 		args = append(args, "--new-from-rev", "HEAD~")
+		log.Printf("** scan changed files")
 	} else {
 		// if '--fix' is set in the command line then keep it, otherwise it should be always false
 		args = append(args, "--fix", "false")
 	}
 	vCmd := fmt.Sprintf("%s-%s", linter.Cmd(), linter.Format(ver))
-	log.Printf("Scan with %s-%s", linter.Cmd(), ver)
+	log.Printf("** scan with %s-%s", linter.Cmd(), ver)
 	session.SaveCtxValue(command, strings.Join(append(args, vCmd), " "))
 	cmd := exec.Command(vCmd, args...)
 	stderr, err := cmd.StderrPipe()
@@ -160,7 +158,7 @@ func splitIntoGroup(msg string, size int) []string {
 	return subs
 }
 
-func saveLintReport(session *boot.Session, dir string, data interface{}, consoleOutput bool) error {
+func saveLintReport(session *Session, dir string, data interface{}, consoleOutput bool) error {
 	ct := table.Table{}
 	ct.SetTitle("Lint Issues Report")
 	ct.AppendHeader(table.Row{"#", "File", "Line", "Linter", "Code", "Message"})

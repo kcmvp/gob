@@ -6,6 +6,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/samber/lo"
 
 	"github.com/go-git/go-git/v5"
 
@@ -17,67 +20,73 @@ import (
 const (
 	scriptDir = "scripts"
 	targetDir = "target"
-
-	BuildCfg = "build"
+	BuildCfg  = "build"
 )
 
-type Mapper func() map[Command][]Action
+const DefaultHookMsg = `((^|[\s])(#[0-9]{1,7}))+:\s?(\S+\s?){10,}`
 
-type Project interface {
-	GitHome() string
-	ScriptDir() string
-	TargetDir() string
-	RootDir() string
-	Config() *viper.Viper
-	SaveConfig(key, value string)
-	Mapper() map[Command][]Action
-	Initializer() Command
-	Mod() *modfile.File
-	Git() *git.Repository
+// HookMsgPattern @todo should simplify.
+type HookMsgPattern string
+
+type BuildOption struct {
+	MinCoverage float64
+	MaxCoverage float64
+	MsgPattern  HookMsgPattern
 }
 
-var _ Project = (*DefaultProject)(nil)
+func DefaultOption() *BuildOption {
+	return &BuildOption{
+		MinCoverage: 0.35,
+		MaxCoverage: 0.90,
+		MsgPattern:  DefaultHookMsg,
+	}
+}
 
-type DefaultProject struct {
+type Project struct {
 	root        string
 	cfg         *viper.Viper
 	initializer Command
 	mapper      Mapper
 	mod         *modfile.File
 	repo        *git.Repository
+	option      *BuildOption
 }
 
-func (project *DefaultProject) Git() *git.Repository {
+func (project *Project) Git() *git.Repository {
 	return project.repo
 }
 
-func (project *DefaultProject) Mod() *modfile.File {
+func (project *Project) Mod() *modfile.File {
 	return project.mod
 }
 
-func (project *DefaultProject) Mapper() map[Command][]Action {
+func (project *Project) Mapper() map[Command][]Action {
 	return project.mapper()
 }
 
-func (project *DefaultProject) Initializer() Command {
+func (project *Project) Initializer() Command {
 	return project.initializer
 }
 
-func (project *DefaultProject) GitHome() string {
+func (project *Project) GitHome() string {
 	dir := filepath.Join(project.RootDir(), git.GitDirName)
 	return dir
 }
 
-func (project *DefaultProject) ScriptDir() string {
+func (project *Project) ScriptDir() string {
 	return filepath.Join(project.RootDir(), scriptDir)
 }
 
-func (project *DefaultProject) TargetDir() string {
+func (project *Project) TargetDir() string {
 	return filepath.Join(project.RootDir(), targetDir)
 }
 
-func (project *DefaultProject) RootDir() string {
+func (project *Project) RootDir() string {
 	return project.root
+}
+
+func (project *Project) Option() *BuildOption {
+	return project.option
 }
 
 var hookInspector Inspector[string] = func(frame string) string {
@@ -104,13 +113,14 @@ var rootInspector Inspector[string] = func(dir string) string {
 	return dir
 }
 
-func NewProject(root string, mapper Mapper) DefaultProject {
-	project := DefaultProject{
+func NewProject(root string) *Project {
+	project := &Project{
 		root: rootInspector(root),
 		// root:        root,
 		cfg:         viper.New(),
 		mapper:      mapper,
 		initializer: Command(Inspect(hookInspector)),
+		option:      DefaultOption(),
 	}
 	if data, err := os.ReadFile(filepath.Join(project.root, "go.mod")); err == nil {
 		if mod, err := modfile.Parse("go.mod", data, nil); err != nil {
@@ -126,7 +136,7 @@ func NewProject(root string, mapper Mapper) DefaultProject {
 	return project
 }
 
-func (project *DefaultProject) Config() *viper.Viper {
+func (project *Project) Config() *viper.Viper {
 	project.cfg.SetConfigName(BuildCfg)
 	project.cfg.SetConfigType("yml")
 	project.cfg.AddConfigPath(project.RootDir())
@@ -139,10 +149,16 @@ func (project *DefaultProject) Config() *viper.Viper {
 	return project.cfg
 }
 
-func (project *DefaultProject) SaveConfig(key, value string) {
+func (project *Project) SaveConfig(key, value string) {
 	project.cfg.Set(key, value)
 	err := project.cfg.WriteConfigAs(filepath.Join(project.RootDir(), fmt.Sprintf("%s.yml", BuildCfg)))
 	if err != nil {
 		log.Println(color.RedString("Failed to save the configuration %s", err.Error()))
 	}
+}
+
+func HookMap() map[string]string {
+	return lo.KeyBy([]string{"pre-commit", "commit-msg", "pre-push"}, func(v string) string {
+		return strings.ReplaceAll(v, "-", "_")
+	})
 }

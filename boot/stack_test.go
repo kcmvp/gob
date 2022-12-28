@@ -1,4 +1,4 @@
-package scaffolds
+package boot
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func TestListStack(t *testing.T) {
 		category string
 		count    int
 	}{
-		{"setup", "setup", 3},
+		{"setup", "setup", 4},
 		{"gen", "gen", 2},
 		{"run", "run", 5},
 	}
@@ -39,7 +39,7 @@ func TestValidStack(t *testing.T) {
 		category string
 		args     []string
 	}{
-		{"setup", "setup", []string{"builder", "githook", "linter"}},
+		{"setup", "setup", []string{"builder", "githook", "gitflow", "linter"}},
 		{"gen", "gen", []string{"config", "database"}},
 		{"run", "run", []string{"clean", "build", "test", "lint", "report"}},
 	}

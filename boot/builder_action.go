@@ -1,4 +1,4 @@
-package scaffolds
+package boot
 
 import (
 	"bufio"
@@ -17,7 +17,6 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/boot"
 )
 
 const (
@@ -28,15 +27,17 @@ const (
 //go:embed template/*.tmpl
 var templateDir embed.FS
 
-var createDirAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
+var createDirAction Action = func(session *Session, project *Project, command Command) error {
 	log.Println("Creating project directories")
 	var dir string
 	switch command.Name() {
-	case boot.InitHook.Name(), boot.InitBuilder.Name():
+	case SetupHook.Name(), SetupBuilder.Name():
 		dir = project.ScriptDir()
-	case boot.Lint.Name(), boot.Test.Name(), boot.Build.Name(), boot.Report.Name(),
-		boot.PreCommit.Name(), boot.CommitMsg.Name(), boot.PrePush.Name():
+	case Lint.Name(), Test.Name(), Build.Name(), Report.Name(),
+		PreCommit.Name(), CommitMsg.Name(), PrePush.Name():
 		dir = project.TargetDir()
+	case SetupGitFlow.Name():
+		dir = ".github/workflows"
 	}
 	if len(dir) < 1 {
 		return nil
@@ -48,7 +49,7 @@ var createDirAction boot.Action = func(session *boot.Session, project boot.Proje
 	return err
 }
 
-var cleanAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
+var cleanAction Action = func(session *Session, project *Project, command Command) error {
 	log.Println("Cleaning project")
 	flags := lo.FilterMap(command.ValidFlags(), func(flag string, i int) (string, bool) {
 		return flag, session.GetFlagBool(command, flag) && flag != "delete"
@@ -80,37 +81,37 @@ var cleanAction boot.Action = func(session *boot.Session, project boot.Project, 
 	return err //nolint:wrapcheck
 }
 
-var commitMsgAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	builder := project.(*Project)
+var commitMsgAction Action = func(session *Session, project *Project, command Command) error {
 	log.Println("Validate commit message")
 	input, _ := os.ReadFile(os.Args[1])
-	return validateCommitMsg(string(input), string(builder.MsgPattern)) //nolint:wrapcheck
+	return validateCommitMsg(string(input), string(project.Option().MsgPattern)) //nolint:wrapcheck
 }
 
-var lintAction boot.Action = func(session *boot.Session, project boot.Project, command boot.Command) error {
-	builder := project.(*Project)
+var lintAction Action = func(session *Session, project *Project, command Command) error {
 	log.Println("Running linters against source code")
-	return newLinter().scan(session, builder, command) //nolint:wrapcheck
+	return newLinter().scan(session, project, command) //nolint:wrapcheck
 }
 
-var testAction boot.Action = func(session *boot.Session, builder boot.Project, command boot.Command) error {
-	err := os.Chdir(builder.RootDir())
+var testAction Action = func(session *Session, project *Project, command Command) error {
+	err := os.Chdir(project.RootDir())
 	log.Println("Running unit test")
 	if err != nil {
 		return fmt.Errorf("failed to change directory:%w", err)
 	}
-	params := []string{"test", "-v", "-coverpkg", "./...", "-coverprofile", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut))}
+	params := []string{"test", "-v", "-coverpkg", "./...", "-coverprofile", filepath.Join(project.TargetDir(), session.Specified(testCoverOut))}
 	// selective test scope in commit-msg hook, default are all packages
 	scope := []string{"./..."}
 	// @todo add test for this configuration
-	selectiveTest := command == boot.CommitMsg && !builder.Config().GetBool(fmt.Sprintf("%s.testall", command.Hook()))
+	selectiveTest := command == CommitMsg && !project.Config().GetBool(fmt.Sprintf("%s.testall", command.Hook()))
 	if selectiveTest {
-		changes, _ := changeSet(builder)
-		paths := lo.FilterMap(changes, func(t string, _ int) (string, bool) {
-			if strings.HasSuffix(strings.Split(t, string(os.PathSeparator))[0], ".go") {
+		changes, _ := changeSet(project)
+		paths := lo.FilterMap(changes, func(c string, _ int) (string, bool) {
+			p := strings.Split(c, string(os.PathSeparator))[0]
+			_, err := os.Stat(filepath.Join(project.root, p))
+			if strings.HasSuffix(p, ".go") || err != nil {
 				return "", false
 			}
-			return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), strings.Split(t, string(os.PathSeparator))[0], string(os.PathSeparator)), true
+			return fmt.Sprintf(".%s%s%s...", string(os.PathSeparator), p, string(os.PathSeparator)), true
 		})
 		paths = lo.Uniq[string](paths)
 		if len(paths) > 0 {
@@ -130,7 +131,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 		return fmt.Errorf("test failed:%w", err)
 	}
 	scanner := bufio.NewScanner(stdout)
-	// ok  	github.com/kcmvp/gob/builder	0.155s	coverage: 16.9% of statements
+	// ok  	github.com/kcmvp/gob/project	0.155s	coverage: 16.9% of statements
 	pkr := regexp.MustCompile(`\sok\s+\S+\s+\S+s\s+coverage:\s+\S+% of statements`)
 	// ?   	github.com/kcmvp/gob/infra	[no test files]
 	ntr := regexp.MustCompile(`\s+\S+\s+\[no test files\]`)
@@ -159,7 +160,7 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 		return fmt.Errorf("test failed:%w", err)
 	}
 	// run 'go tool cover -func ./targetDir/coverage.data' to get project level coverage
-	params = []string{"tool", "cover", "-func", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut))}
+	params = []string{"tool", "cover", "-func", filepath.Join(project.TargetDir(), session.Specified(testCoverOut))}
 	out, err := exec.Command("go", params...).CombinedOutput()
 	if err != nil {
 		log.Println(color.RedString("failed to get coverage report:%s", err.Error()))
@@ -174,8 +175,8 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 		}
 	}
 	//  go tool cover -html ./targetDir/coverage.data to get detail coverage html report
-	htmlReport := filepath.Join(builder.TargetDir(), session.Specified(testCoverHTML))
-	params = []string{"tool", "cover", "-html", filepath.Join(builder.TargetDir(), session.Specified(testCoverOut)), "-o", htmlReport}
+	htmlReport := filepath.Join(project.TargetDir(), session.Specified(testCoverHTML))
+	params = []string{"tool", "cover", "-html", filepath.Join(project.TargetDir(), session.Specified(testCoverOut)), "-o", htmlReport}
 	out, err = exec.Command("go", params...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s:%w", string(out), err)
@@ -212,15 +213,15 @@ var testAction boot.Action = func(session *boot.Session, builder boot.Project, c
 		}
 	})
 
-	err = report.Save(builder.TargetDir(), session)
+	err = report.Save(project.TargetDir(), session)
 	if err != nil {
 		return err //nolint
 	}
-	log.Printf("coverage report is generated at %s \n", filepath.Join(builder.TargetDir(), testCoverHTML))
+	log.Printf("coverage report is generated at %s \n", filepath.Join(project.TargetDir(), testCoverHTML))
 	return err //nolint:wrapcheck
 }
 
-var buildAction boot.Action = func(session *boot.Session, builder boot.Project, command boot.Command) error {
+var buildAction Action = func(session *Session, builder *Project, command Command) error {
 	var targetFiles []string
 	if len(targetFiles) == 0 {
 		targetFiles = append(targetFiles, "main.go")

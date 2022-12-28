@@ -13,6 +13,12 @@
       "Description": "setup local git hook"
     },
     {
+      "name": "gitflow",
+      "category": "setup",
+      "module": "-",
+      "Description": "setup github workflows. it depends on the `builder`"
+    },
+    {
       "name": "linter",
       "module": "github.com/golangci/golangci-lint/cmd/golangci-lint",
       "category": "setup",
