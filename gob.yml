@@ -1,0 +1,15 @@
+githook:
+  pre-commit:
+    - test
+    - linter
+  pre-push:
+    - test
+    - linter
+  commit-msg:
+    menLength: 10
+    format: '#\d:.*'
+#github-workflows: true
+golangci-lint: v1.2
+
+
+
