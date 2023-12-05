@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
+// setupCmd represents the setup command
+var setupCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize useful infrastructures and tools",
 	Long: `Initialize useful infrastructures and tools such as:

@@ -2,21 +2,32 @@ package internal
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/fatih/color"
 	"log"
 	"os/exec"
 	"strings"
+	"sync"
 )
 
 var (
-	Yellow *color.Color
-	Red    *color.Color
-	Blue   *color.Color
+	Yellow  *color.Color
+	Red     *color.Color
+	Blue    *color.Color
+	once    sync.Once
+	project *Project
 )
 
 func init() {
 	Yellow = color.New(color.FgYellow)
 	Red = color.New(color.FgRed)
+}
+
+func CurProject() *Project {
+	once.Do(func() {
+		project = initProject()
+	})
+	return project
 }
 
 type Project struct {
@@ -25,7 +36,7 @@ type Project struct {
 	deps   []string
 }
 
-func NewProject() *Project {
+func initProject() *Project {
 	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}:{{.Path}}")
 	output, err := cmd.Output()
 	if err != nil || len(string(output)) == 0 {
@@ -60,4 +71,24 @@ func (project *Project) Root() string {
 
 func (project *Project) Module() string {
 	return project.module
+}
+
+func FindGoFilesByPkg(pkg string) ([]string, error) {
+	cmd := exec.Command("go", "list", "-f", fmt.Sprintf("{{if eq .Name \"%s\"}}{{.Dir}}{{end}}", pkg), "./...")
+	output, err := cmd.Output()
+	if err != nil {
+		return []string{}, err
+	}
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	var dirs []string
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) > 0 {
+			dirs = append(dirs, line)
+		}
+	}
+	if err = scanner.Err(); err != nil {
+		return []string{}, err
+	}
+	return dirs, nil
 }
