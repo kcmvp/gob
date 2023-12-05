@@ -4,6 +4,7 @@ package cmd
 import (
 	"context"
 	"github.com/kcmvp/gob/internal"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -11,17 +12,42 @@ import (
 var validArgsFun = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	var validArgs []string
 	if cmd.Name() == "gob" {
-		validArgs = append(validArgs, []string{"build", "clean", "test", "package"}...)
+		validArgs = append(validArgs, []string{"action", "clean", "test", "package"}...)
 	}
 	return validArgs, cobra.ShellCompDirectiveNoSpace
 }
 
+const (
+	CleanCacheFlag     = "cache"
+	CleanTestCacheFlag = "testcache"
+	CleanModCacheFlag  = "modcache"
+	ReportFlag         = "report"
+)
+
+// cache the same as 'go clean -cache'
+var cache bool
+
+// testCache the same as `go clean -testcache'
+var testCache bool
+
+// modCache the same as 'go clean -modcache'
+var modCache bool
+
+// report generate test or lint report
+var report bool
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:               "gob",
-	Short:             "Go project boot",
-	Long:              `Supply most frequently usage and best practice for go project development`,
-	ValidArgsFunction: validArgsFun,
+	Use:   "gob",
+	Short: "Go project boot",
+	Long:  `Supply most frequently used tool and best practices for go project development`,
+	ValidArgs: lo.Map(actions, func(item lo.Tuple3[string, int, func(cmd *cobra.Command) error], _ int) string {
+		return item.A
+	}),
+	Args: cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return execBuild(cmd, args)
+	},
 }
 
 func Execute() {
@@ -41,15 +67,11 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gob.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
 	rootCmd.SetErrPrefix(internal.Red.Sprintf("Error:"))
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(setupCmd)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().BoolVar(&cache, CleanCacheFlag, false, "to remove the entire go build cache")
+	rootCmd.Flags().BoolVar(&testCache, CleanTestCacheFlag, false, "to expire all test results in the go build cache")
+	rootCmd.Flags().BoolVar(&modCache, CleanModCacheFlag, false, "to remove the entire module download cache")
+	rootCmd.Flags().BoolVar(&report, ReportFlag, true, "generate build report")
 }
