@@ -3,11 +3,8 @@ Copyright © 2023 kcheng.mvp@gmail.com
 */
 package main
 
-import (
-	"github.com/kcmvp/gob/cmd"
-	"os"
-)
+import "github.com/kcmvp/gob/cmd"
 
 func main() {
-	os.Exit(cmd.Execute(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+	cmd.Execute()
 }
