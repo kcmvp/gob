@@ -21,7 +21,6 @@ const (
 	CleanCacheFlag     = "cache"
 	CleanTestCacheFlag = "testcache"
 	CleanModCacheFlag  = "modcache"
-	ReportFlag         = "report"
 )
 
 // cache the same as 'go clean -cache'
@@ -41,12 +40,12 @@ var rootCmd = &cobra.Command{
 	Use:   "gob",
 	Short: "Go project boot",
 	Long:  `Supply most frequently used tool and best practices for go project development`,
-	ValidArgs: lo.Map(actions, func(item lo.Tuple3[string, int, func(cmd *cobra.Command) error], _ int) string {
+	ValidArgs: lo.Map(buildActions, func(item lo.Tuple2[string, buildCmdFunc], _ int) string {
 		return item.A
 	}),
 	Args: cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return execBuild(cmd, args)
+	Run: func(cmd *cobra.Command, args []string) {
+		buildProject(cmd, args)
 	},
 }
 
@@ -73,5 +72,4 @@ func init() {
 	rootCmd.Flags().BoolVar(&cache, CleanCacheFlag, false, "to remove the entire go build cache")
 	rootCmd.Flags().BoolVar(&testCache, CleanTestCacheFlag, false, "to expire all test results in the go build cache")
 	rootCmd.Flags().BoolVar(&modCache, CleanModCacheFlag, false, "to remove the entire module download cache")
-	rootCmd.Flags().BoolVar(&report, ReportFlag, true, "generate build report")
 }
