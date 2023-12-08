@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/kcmvp/gob/cmd/common"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -23,10 +24,7 @@ const (
 	TargetFolder = "target"
 )
 
-var blueMsg = color.New(color.FgRed)
 var targetFolder = fmt.Sprintf("%s/target", internal.CurProject().Root())
-
-type buildCmdFunc func(cmd *cobra.Command) error
 
 func findMain(dir string) (string, error) {
 	var mf string
@@ -59,7 +57,7 @@ func findMain(dir string) (string, error) {
 	return mf, err
 }
 
-var cleanFunc buildCmdFunc = func(cmd *cobra.Command) error {
+var cleanFunc common.ArgFunc = func(cmd *cobra.Command) error {
 	// clean target folder
 	target := filepath.Join(internal.CurProject().Root(), TargetFolder)
 	filepath.WalkDir(target, func(path string, d fs.DirEntry, err error) error {
@@ -76,13 +74,13 @@ var cleanFunc buildCmdFunc = func(cmd *cobra.Command) error {
 	fmt.Println("Clean target folder successfully !")
 	// clean cache
 	args := []string{"clean"}
-	if ok, _ := cmd.Flags().GetBool(CleanCacheFlag); ok {
+	if cleanCache {
 		args = append(args, fmt.Sprintf("--%s", CleanCacheFlag))
 	}
-	if ok, _ := cmd.Flags().GetBool(CleanTestCacheFlag); ok {
+	if cleanTestCache {
 		args = append(args, fmt.Sprintf("--%s", CleanTestCacheFlag))
 	}
-	if ok, _ := cmd.Flags().GetBool(CleanModCacheFlag); ok {
+	if cleanModCache {
 		args = append(args, fmt.Sprintf("--%s", CleanModCacheFlag))
 	}
 	_, err := exec.Command("go", args...).CombinedOutput()
@@ -92,25 +90,24 @@ var cleanFunc buildCmdFunc = func(cmd *cobra.Command) error {
 	return nil
 }
 
-var lintFunc buildCmdFunc = func(cmd *cobra.Command) error {
+var lintFunc common.ArgFunc = func(cmd *cobra.Command) error {
 	return nil
 }
 
-var testFunc buildCmdFunc = func(cmd *cobra.Command) error {
-	coverprofile := fmt.Sprintf("-coverprofile=%s/cover.out", targetFolder)
-	testCmd := exec.Command("go", []string{"test", "-v", coverprofile, "./..."}...)
+var testFunc common.ArgFunc = func(cmd *cobra.Command) error {
+	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", targetFolder)
+	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...)
 	err := streamOutput(testCmd, fmt.Sprintf("%s/test.log", targetFolder), "FAIL:")
+	if err != nil {
+		return err
+	}
 	exec.Command("go", []string{"tool", "cover", fmt.Sprintf("-html=%s/cover.out", targetFolder), fmt.Sprintf("-o=%s/cover.html", targetFolder)}...).CombinedOutput()
-	cc := lo.IfF(err != nil, func() color.Attribute {
-		return color.FgYellow
-	}).Else(color.FgGreen)
-	c := color.New(cc)
-	c.Printf("Test report is generated at %s/test.log \n", targetFolder)
-	c.Printf("Coverage report is generated at %s/cover.html \n", targetFolder)
-	return err
+	color.Green("Test report is generated at %s/test.log \n", targetFolder)
+	color.Green("Coverage report is generated at %s/cover.html \n", targetFolder)
+	return nil
 }
 
-var buildFunc buildCmdFunc = func(cmd *cobra.Command) error {
+var buildFunc common.ArgFunc = func(cmd *cobra.Command) error {
 	dirs, err := internal.FindGoFilesByPkg("main")
 	if err != nil {
 		return err
@@ -141,7 +138,7 @@ var buildFunc buildCmdFunc = func(cmd *cobra.Command) error {
 	return nil
 }
 
-var buildActions = []lo.Tuple2[string, buildCmdFunc]{
+var buildActions = []lo.Tuple2[string, common.ArgFunc]{
 	lo.T2(cleanAction, cleanFunc),
 	lo.T2(testAction, testFunc),
 	lo.T2(lintAction, lintFunc),
@@ -150,16 +147,16 @@ var buildActions = []lo.Tuple2[string, buildCmdFunc]{
 
 var buildProject = func(cmd *cobra.Command, args []string) {
 	uArgs := lo.Uniq(args)
-	attended := lo.Filter(buildActions, func(item lo.Tuple2[string, buildCmdFunc], index int) bool {
+	expectedActions := lo.Filter(buildActions, func(item lo.Tuple2[string, common.ArgFunc], index int) bool {
 		return lo.Contains(uArgs, item.A)
 	})
 	// Check if the folder exists
 	os.Mkdir(targetFolder, 0755)
-	for _, a := range attended {
-		msg := fmt.Sprintf("Start %s project", a.A)
+	for _, action := range expectedActions {
+		msg := fmt.Sprintf("Start %s project", action.A)
 		fmt.Printf("%-20s ...... \n", msg)
-		if err := a.B(cmd); err != nil {
-			internal.Red.Printf("Failed to %s project %v \n", a.A, err.Error())
+		if err := action.B(cmd); err != nil {
+			internal.Red.Printf("Failed to %s project %v \n", action.A, err.Error())
 			break
 		}
 	}

@@ -1,5 +1,4 @@
 # The template of scaffold
-
 ## DataSource
 ## Kafka
 ## Redis
