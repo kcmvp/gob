@@ -23,5 +23,5 @@ go.work
 .idea
 gob
 *.sql
-*.json
+11.json
 target

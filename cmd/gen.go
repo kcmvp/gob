@@ -8,11 +8,10 @@ import (
 
 // genCmd represents the generate command
 var genCmd = &cobra.Command{
-	Use:   "init",
+	Use:   "gen",
 	Short: "Initialize useful infrastructures and tools",
 	Long: `Initialize useful infrastructures and tools such as:
 git hook, linter and so. run "gob init -h" get more information`,
-	ValidArgsFunction: validArgsFun,
 	Args: func(cmd *cobra.Command, args []string) error {
 		return cobra.OnlyValidArgs(cmd, args) //nolint
 	},
@@ -24,3 +23,6 @@ git hook, linter and so. run "gob init -h" get more information`,
 func init() {
 	viper.SetDefault("ContentDir", "content")
 }
+
+// https://github.com/jedib0t/go-pretty
+// https://github.com/guptarohit/asciigraph
