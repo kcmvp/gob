@@ -1,0 +1,16 @@
+[
+  {
+    "name": "githook",
+    "desc": "setup git hook"
+  },
+  {
+    "name": "gitflow",
+    "desc": "setup github workflow"
+  },
+  {
+    "name": "onion",
+    "desc": "generate onion architecture project layout"
+  }
+]
+
+

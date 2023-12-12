@@ -1,29 +1,41 @@
 package cmd
 
 import (
-	"bytes"
-	"github.com/kcmvp/gob/internal"
 	"github.com/stretchr/testify/require"
-	"os"
 	"testing"
 )
 
-func TestSetup(t *testing.T) {
-	os.Chdir(internal.CurProject().Root())
-	b := bytes.NewBufferString("")
-	rootCmd.SetOut(b)
-	//rootCmd.SetArgs([]string{"action", "--cache"})
-	rootCmd.SetArgs([]string{"setup", "-l"})
-	err := rootCmd.Execute()
-	require.NoError(t, err)
+func TestSetupArgs(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{
+			"no arg",
+			[]string{},
+			true,
+		},
+		{
+			"two args",
+			[]string{"list", "githook"},
+			true,
+		},
+		{
+			"non-exist arg",
+			[]string{"abc"},
+			true,
+		},
+		{
+			"list",
+			[]string{"list"},
+			false,
+		},
+	}
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := setupCmd.ValidateArgs(testCase.args)
+			require.True(t, testCase.wantErr == (err != nil))
+		})
+	}
 }
-
-//func TestSetup_GitHook(t *testing.T) {
-//	os.Chdir(internal.CurProject().Root())
-//	b := bytes.NewBufferString("")
-//	rootCmd.SetOut(b)
-//	//rootCmd.SetArgs([]string{"action", "--cache"})
-//	rootCmd.SetArgs([]string{"setup", "githook"})
-//	err := rootCmd.Execute()
-//	require.NoError(t, err)
-//}

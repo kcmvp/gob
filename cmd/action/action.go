@@ -1,17 +1,40 @@
-package cmd
+package action
 
 import (
 	"bufio"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
+	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
-func streamOutput(cmd *exec.Cmd, file string, errWords ...string) error {
+type Execution func(cmd *cobra.Command, args ...string) error
+
+type CmdAction lo.Tuple2[string, Execution]
+
+func PrintCmd(cmd *cobra.Command, msg string) error {
+	if ok, file := internal.TestEnv(); ok {
+		// Get the call stack
+		outputFile, err := os.Create(filepath.Join(internal.CurProject().Target(), file))
+		if err != nil {
+			return err
+		}
+		defer outputFile.Close()
+		writer := io.MultiWriter(os.Stdout, outputFile)
+		fmt.Fprintln(writer, msg)
+	} else {
+		cmd.Println(msg)
+	}
+	return nil
+}
+
+func StreamExtCmdOutput(cmd *exec.Cmd, file string, errWords ...string) error {
 	// Create a pipe to capture the command's combined output
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -35,7 +58,7 @@ func streamOutput(cmd *exec.Cmd, file string, errWords ...string) error {
 			if lo.SomeBy(errWords, func(item string) bool {
 				return strings.Contains(line, item)
 			}) {
-				internal.Red.Fprintln(os.Stdout, line)
+				color.Red(line)
 				fmt.Fprintln(outputFile, line)
 			} else {
 				fmt.Fprintln(writer, line)

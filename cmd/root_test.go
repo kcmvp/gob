@@ -16,7 +16,6 @@ func TestBuilder_Build(t *testing.T) {
 	os.Chdir(internal.CurProject().Root())
 	b := bytes.NewBufferString("")
 	rootCmd.SetOut(b)
-	//rootCmd.SetArgs([]string{"action", "--cache"})
 	rootCmd.SetArgs([]string{"test"})
 	err := rootCmd.Execute()
 	require.NoError(t, err)
