@@ -3,58 +3,38 @@ package cmd
 
 import (
 	"context"
-	"github.com/kcmvp/gob/cmd/common"
+	"fmt"
+	"github.com/fatih/color"
+	"github.com/kcmvp/gob/cmd/action"
+	"github.com/kcmvp/gob/cmd/root"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
 )
 
-const (
-	CleanCacheFlag     = "cache"
-	CleanTestCacheFlag = "testcache"
-	CleanModCacheFlag  = "modcache"
-	LintAllFlag        = "all"
-)
-
-// cleanCache the same as 'go clean -cache'
-var cleanCache bool
-
-// cleanTestCache the same as `go clean -testcache'
-var cleanTestCache bool
-
-// cleanModCache the same as 'go clean -modcache'
-var cleanModCache bool
-
-// lintAll stands for lint on all source code
-var lintAll bool
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gob",
 	Short: "Go project boot",
 	Long:  `Supply most frequently used tool and best practices for go project development`,
-	ValidArgs: lo.Map(buildActions, func(item lo.Tuple2[string, common.ArgFunc], _ int) string {
+	ValidArgs: lo.Map(root.BuildActions(), func(item action.CmdAction, _ int) string {
 		return item.A
 	}),
 	Args: cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		//@todo validate the project according to gen.yml
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		buildProject(cmd, args)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return buildProject(cmd, args)
 	},
 }
 
 func Execute() {
 	currentDir, err := os.Getwd()
 	if err != nil {
-		internal.Red.Printf("Failed to execute command: %v", err)
+		color.Red("Failed to execute command: %v", err)
 		return
 	}
 	if internal.CurProject().Root() != currentDir {
-		internal.Yellow.Println("Please execute the command in the project root dir")
+		color.Red("Please execute the command in the project root dir")
 		return
 	}
 	ctx := context.Background()
@@ -63,12 +43,34 @@ func Execute() {
 	}
 }
 
+func buildProject(cmd *cobra.Command, args []string) error {
+	uArgs := lo.Uniq(args)
+	expectedActions := lo.Filter(root.BuildActions(), func(item action.CmdAction, index int) bool {
+		return lo.Contains(uArgs, item.A)
+	})
+	// Check if the folder exists
+	os.Mkdir(internal.CurProject().Target(), os.ModePerm)
+	for _, action := range expectedActions {
+		msg := fmt.Sprintf("Start %s project", action.A)
+		fmt.Printf("%-20s ...... \n", msg)
+		if err := action.B(cmd); err != nil {
+			color.Red("Failed to %s project %v \n", action.A, err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
 func init() {
-	rootCmd.SetErrPrefix(internal.Red.Sprintf("Error:"))
-	rootCmd.AddCommand(setupCmd)
+	rootCmd.SetErrPrefix(color.RedString("Error:"))
+	rootCmd.SetFlagErrorFunc(func(command *cobra.Command, err error) error {
+		return lo.IfF(err != nil, func() error {
+			return fmt.Errorf(color.RedString(err.Error()))
+		}).Else(nil)
+	})
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.Flags().BoolVar(&cleanCache, CleanCacheFlag, false, "to remove the entire go build cache")
-	rootCmd.Flags().BoolVar(&cleanTestCache, CleanTestCacheFlag, false, "to expire all test results in the go build cache")
-	rootCmd.Flags().BoolVar(&cleanModCache, CleanModCacheFlag, false, "to remove the entire module download cache")
-	rootCmd.Flags().BoolVar(&lintAll, LintAllFlag, false, "lint scan all source code, default only on changed source code")
+	rootCmd.Flags().BoolVar(&root.CleanCache, root.CleanCacheFlag, false, "to remove the entire go build cache")
+	rootCmd.Flags().BoolVar(&root.CleanTestCache, root.CleanTestCacheFlag, false, "to expire all test results in the go build cache")
+	rootCmd.Flags().BoolVar(&root.CleanModCache, root.CleanModCacheFlag, false, "to remove the entire module download cache")
+	rootCmd.Flags().BoolVar(&root.LintAll, root.LintAllFlag, false, "lint scan all source code, default only on changed source code")
 }

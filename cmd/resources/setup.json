@@ -1,10 +1,5 @@
 [
   {
-    "name": "lint",
-    "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
-    "desc": "setup golangci-lint"
-  },
-  {
     "name": "githook",
     "desc": "setup git hook"
   },

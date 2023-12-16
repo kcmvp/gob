@@ -3,6 +3,7 @@
 package main
 
 import (
+	"github.com/fatih/color"
 	"os"
 	"regexp"
 )
@@ -16,6 +17,7 @@ func main() {
 	commitMsg := regex.ReplaceAllString(string(input), "")
 	regex = regexp.MustCompile(commitMsgPattern)
 	if !regex.MatchString(commitMsg) {
+		color.Red("Error: commit message must follow %s", commitMsgPattern)
 		os.Exit(1)
 	}
 	os.Exit(0)
