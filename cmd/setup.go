@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/action"
-	"github.com/kcmvp/gob/cmd/setup"
+	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/cmd/setup"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"strings"
@@ -16,7 +16,7 @@ var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Setup useful infrastructures and tools",
 	Long: `Setup useful infrastructures and tools 
-Run 'gob setup list get full supported list'`,
+Run 'gb setup list get full supported list'`,
 	ValidArgs: func() []string {
 		return lo.Map(setup.Actions, func(item action.CmdAction, index int) string {
 			return item.A

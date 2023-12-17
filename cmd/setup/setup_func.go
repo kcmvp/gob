@@ -9,8 +9,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/kcmvp/gob/cmd/action"
-	"github.com/kcmvp/gob/internal"
+	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"log"
@@ -21,7 +21,7 @@ import (
 //go:embed setup.json
 var data []byte
 
-//go:embed commit_msg.tmpl
+//go:embed commit_msg_hook.tmpl
 var hook []byte
 
 var setups []Setup
@@ -82,16 +82,15 @@ var gitHook action.Execution = func(cmd *cobra.Command, args ...string) error {
 		color.Yellow("Project is not in the source control, please add it to source repository")
 		return err
 	}
-	config := filepath.Join(internal.CurProject().Root(), "config")
-	os.Mkdir(config, os.ModePerm)
-	err := os.WriteFile(filepath.Join(config, "commit_msg.go"), hook, os.ModePerm)
+	script := filepath.Join(internal.CurProject().Root(), "commit_msg_hook.go")
+	err := os.WriteFile(script, hook, os.ModePerm)
 	if err != nil {
 		return err
 	}
 	hookMap := map[string]string{
-		"commit-msg": fmt.Sprintf("go run %s/config/commit_msg.go $1 $2", internal.CurProject().Root()),
-		"pre-commit": "gob lint test",
-		"pre-push":   "gob lint test",
+		"commit-msg": fmt.Sprintf("go run %s $1 $2", filepath.Join(internal.CurProject().Root(), "commit_msg_hook.go")),
+		"pre-commit": "gb lint test",
+		"pre-push":   "gb lint test",
 	}
 	shell := lo.IfF(internal.Windows(), func() string {
 		return "#!/usr/bin/env pwsh\n"

@@ -66,9 +66,9 @@ func (project *Project) LoadSettings() {
 	v := viper.New()
 	v.SetConfigType("yaml")
 	path := project.Root()
-	name := "gob"
+	name := "gb"
 	if testEnv {
-		name = fmt.Sprintf("gob-%s", lo.RandomString(12, lo.AlphanumericCharset))
+		name = fmt.Sprintf("gb-%s", lo.RandomString(12, lo.AlphanumericCharset))
 		path = project.Target()
 	}
 	v.AddConfigPath(path)
@@ -76,7 +76,7 @@ func (project *Project) LoadSettings() {
 	if err := v.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
-			color.Yellow("Warning: can not find configuration gob.yaml")
+			color.Yellow("Warning: can not find configuration gb.yaml")
 		}
 	}
 	project.cfg = fmt.Sprintf("%s.yaml", filepath.Join(path, name))
@@ -201,7 +201,7 @@ func (project *Project) PluginConfigured(url string) bool {
 	return ok
 }
 
-// InstallPlugin install the tool as gob plugin save it in gob.yml
+// InstallPlugin install the tool as gb plugin save it in gb.yml
 func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) error {
 	base, name := NormalizePlugin(url)
 	gopath := os.Getenv("GOPATH")

@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/plugin"
+	"github.com/kcmvp/gb/cmd/plugin"
 	"github.com/spf13/cobra"
 )
 
@@ -16,8 +16,8 @@ var pluginCmd = &cobra.Command{
 	Short: "List all configured plugins",
 	Long:  `List all configured plugins`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// run 'gob plugin' will list all the configured plugins
-		// run 'gob plugin -u' will list all the configured plugins and install the uninstalled tools.
+		// run 'gb plugin' will list all the configured plugins
+		// run 'gb plugin -u' will list all the configured plugins and install the uninstalled tools.
 		return plugin.List(cmd)
 	},
 }
@@ -25,8 +25,8 @@ var pluginCmd = &cobra.Command{
 // installPluginCmd represents the plugin install command
 var installPluginCmd = &cobra.Command{
 	Use:   "install",
-	Short: "Install a tool as gob plugin",
-	Long:  `Install a tool as gob plugin`,
+	Short: "Install a tool as gb plugin",
+	Long:  `Install a tool as gb plugin`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 			return fmt.Errorf(color.RedString(err.Error()))

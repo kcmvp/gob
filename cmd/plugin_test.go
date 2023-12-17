@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/kcmvp/gob/internal"
+	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"os"
