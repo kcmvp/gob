@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-var v6 = "github.com/ofabry/go-callvis@v0.6.1"
-var v7 = "github.com/ofabry/go-callvis@v0.7.0"
+var v6 = "golang.org/x/tools/cmd/goimports@v0.16.0"
+var v7 = "golang.org/x/tools/cmd/goimports@v0.16.1"
 
 func TestInstallPlugin(t *testing.T) {
 	CurProject().LoadSettings()
@@ -27,7 +27,7 @@ func TestInstallPlugin(t *testing.T) {
 		return item.D == v6
 	})
 	assert.True(t, ok)
-	assert.Equal(t, "go-callvis", plugin.A)
+	assert.Equal(t, "goimports", plugin.A)
 	assert.Equal(t, "callvis", plugin.B)
 	assert.Empty(t, plugin.C)
 	assert.Equal(t, v6, plugin.D)
