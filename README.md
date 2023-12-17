@@ -25,13 +25,12 @@ Golang Project Boot
 ## Table of Contents
 
 <details>
-  <summary>Click me to Open/Close the directory listing</summary>
+  <summary>Click to Open/Close the directory listing</summary>
 
 - [1. Table of Contents](#nav-1)
 - [2. Introduction](#nav-2)
 - [3. Features](#nav-3)
-- [4. Document](#nav-4)
-- [5. FAQ](#nav-5)
+- [4. FAQ](#nav-4)
 
 </details>
 
@@ -44,38 +43,23 @@ Whenever a new Golang project is started, it requires a series of installationsã
 to complete daily project development work; 
 Whatâ€™s worse is that whenever your switch the development environment, the same work has to be repeated! 
 This project is built to solve this problem by providing a method similar to [Maven](https://maven.apache.org/) or [Gradle](https://gradle.com/) in the **Java** ecosystem.
-o
+
 <span id="nav-3"></span>
+
+## Installation
+Run below command to install this tool
+```go
+go install github.com/kcmvp/gb
+```
 
 ## Features
 
-Here are just outstanding features, for details please refer to the [documents](https://github.com/kcmvp/gb/wiki)
+### Build & Package
 
-### [Commands](https://github.com/kcmvp/gb/wiki#commands)
+### Git Hook
 
-- [x] Uniform build scripts(Test, Build and delivery) without shell on all platform (build go with go).
-  In most case, you don't need to write any code to build the project. from both command line as well as CI
-- [x] Git Hook: for code format and quality. it supports [golangci-linter](https://golangci-lint.run/) by default and
-  generate beautify report.
+### Use any tools as plugin
 
 <span id="nav-4"></span>
-
-## Document
-
-Detail can be found here  [Document](https://github.com/kcmvp/gb/wiki)
-
-<span id="nav-5"></span>
-
 ## FAQ
-
-- As we can define server side hooks easily, do I need a local git hook?
-
-  Keep the principle:Don't let the bad smell comes into code repositories.
-  As server side hooks happens after code have been pushed into repositories, a local hook can help you prevent issues
-  slipping into repository. 
-  
-- Can I call the script from git server hook or piple line?
-
-  Yes, you can call it. In fact this project's piple line is calling the **builder.go** directly. [builder workflow](https://github.com/kcmvp/gb/blob/main/.github/workflows/build.yml) 
-
 
