@@ -48,8 +48,6 @@ func buildProject(cmd *cobra.Command, args []string) error {
 	expectedActions := lo.Filter(root.BuildActions(), func(item action.CmdAction, index int) bool {
 		return lo.Contains(uArgs, item.A)
 	})
-	// Check if the folder exists
-	os.Mkdir(internal.CurProject().Target(), os.ModePerm)
 	for _, action := range expectedActions {
 		msg := fmt.Sprintf("Start %s project", action.A)
 		fmt.Printf("%-20s ...... \n", msg)

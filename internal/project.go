@@ -136,7 +136,11 @@ func (project *Project) Module() string {
 }
 
 func (project *Project) Target() string {
-	return filepath.Join(project.root, "target")
+	target := filepath.Join(project.root, "target")
+	if _, err := os.Stat(target); err != nil {
+		os.Mkdir(target, os.ModePerm)
+	}
+	return target
 }
 
 // FindGoFilesByPkg return all go source file in a package
@@ -213,18 +217,18 @@ func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) err
 		var err error
 		if !installed {
 			// install only
-			dir, _ := os.MkdirTemp("", base)
-			os.Setenv("GOPATH", dir)
+			//dir, _ := os.MkdirTemp("", base)
+			//os.Setenv("GOPATH", dir)
 			fmt.Sprintf("Installing %s ...... \n", url)
 			_, err = exec.Command("go", "install", url).CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to install %s: %v", url, err)
 			}
 			defer func() {
-				os.Setenv("GOPATH", gopath)
-				os.RemoveAll(dir)
+				//os.Setenv("GOPATH", gopath)
+				//os.RemoveAll(dir)
 			}()
-			if err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+			if err = filepath.WalkDir(gopath, func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
