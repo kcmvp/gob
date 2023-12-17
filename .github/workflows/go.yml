@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     env:
-      GOPATH: ${{ github.workspace }}
+      GOPATH: ${{ github.workspace }}/gopath
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
