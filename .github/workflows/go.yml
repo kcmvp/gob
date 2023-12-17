@@ -9,8 +9,8 @@ on:
     branches: [ "main" ]
 jobs:
   build:
-    env:
-      GOPATH: ${{ runner.temp }}/gopath
+#    env:
+#      GOPATH: ${{ runner.temp }}/gopath
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
