@@ -2,9 +2,6 @@
 Golang Project Boot
   <br/>
   <br/>
-  <a href = "https://github.com/kcmvp/gb/blob/main/LICENSE">
-   <img src="https://img.shields.io/github/license/kcmvp/gb" alt="license"/>
-  </a>
   <a href="https://github.com/kcmvp/gb/blob/master/LICENSE">
     <img alt="GitHub" src="https://img.shields.io/github/license/kcmvp/gb"/>
   </a>
