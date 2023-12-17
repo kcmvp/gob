@@ -5,6 +5,9 @@ Golang Project Boot
   <a href = "https://github.com/kcmvp/gb/blob/main/LICENSE">
    <img src="https://img.shields.io/github/license/kcmvp/gb" alt="license"/>
   </a>
+  <a href="https://github.com/kcmvp/gb/blob/master/LICENSE">
+    <img alt="GitHub" src="https://img.shields.io/github/license/kcmvp/gb"/>
+  </a>
   <a href="https://goreportcard.com/report/github.com/kcmvp/gb">
     <img src="https://goreportcard.com/badge/github.com/kcmvp/gb" />
   </a>
