@@ -51,14 +51,24 @@ Run below command to install this tool
 ```go
 go install github.com/kcmvp/gb
 ```
-
 ## Features
+This tool supply comprehensive help message, you can always get detail information & usage of each command by **-h** flag
+The main features mainly categorize as below
 
-### Build & Package
+#### Build & Package
+There are mainly 4 built-in commands for project building: **clean, test, lint, build**. 
 
-### Git Hook
+#### Setup (gb setup)
+- Setup Git Hook
+- Setup onion architecture
+- Scaffold of popular frameworks
 
-### Use any tools as plugin
+#### Plugin(gb plugin)
+If you want to chain a tool into your project phrase you can install it as a plugin. for example
+gb has builtin **golangci-lint** as the part of git hook.
+
+#### Diagram(on the roadmap)
+
 
 <span id="nav-4"></span>
 ## FAQ
