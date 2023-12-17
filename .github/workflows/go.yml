@@ -15,7 +15,7 @@ jobs:
       - name: Debug
         run: |
           pwd
-          echo ${HOME}
+          echo "${HOME}"
           echo ${GITHUB_WORKSPACE}
           echo ${GOPATH}
           echo ${GOROOT}
@@ -27,5 +27,5 @@ jobs:
           GOPATH: /home/runner/work/gb
       - name: Test
         run:
-          echo ${GOROOT}
+          echo "::debug::${GOROOT}"
 #        run: go test -v ./... -timeout 300s
