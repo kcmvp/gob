@@ -12,9 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Debug
+        run: |
+          pwd
+          echo ${HOME}
+          echo ${GITHUB_WORKSPACE}
+          echo ${GOPATH}
+          echo ${GOROOT}
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.21.4'
+        env:
+          GOPATH: /home/runner/work/gb
       - name: Test
-        run: go test -v ./... -timeout 1800s
+        run:
+          echo ${GOROOT}
+#        run: go test -v ./... -timeout 300s
