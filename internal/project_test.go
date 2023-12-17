@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-var v6 = "golang.org/x/tools/cmd/goimports@v0.16.0"
-var v7 = "golang.org/x/tools/cmd/goimports@v0.16.1"
+var v6 = "golang.org/x/tools/cmd/digraph@v0.16.0"
+var v7 = "golang.org/x/tools/cmd/digraph@v0.16.1"
 
 func TestInstallPlugin(t *testing.T) {
 	CurProject().LoadSettings()
@@ -27,7 +27,7 @@ func TestInstallPlugin(t *testing.T) {
 		return item.D == v6
 	})
 	assert.True(t, ok)
-	assert.Equal(t, "goimports", plugin.A)
+	assert.Equal(t, "digraph", plugin.A)
 	assert.Equal(t, "callvis", plugin.B)
 	assert.Empty(t, plugin.C)
 	assert.Equal(t, v6, plugin.D)

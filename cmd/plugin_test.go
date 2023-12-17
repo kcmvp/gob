@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-var v6 = "golang.org/x/tools/cmd/goimports@v0.16.0"
-var v7 = "golang.org/x/tools/cmd/goimports@v0.16.1"
+var v6 = "golang.org/x/tools/cmd/digraph@v0.16.0"
+var v7 = "golang.org/x/tools/cmd/digraph@v0.16.1"
 var golanglint = "golang.org/x/tools/cmd/fiximports@v0.16.1"
 
 func TestInstallPlugin(t *testing.T) {
@@ -29,7 +29,7 @@ func TestInstallPlugin(t *testing.T) {
 		return item.D == v6
 	})
 	assert.Truef(t, ok, "%s should be installed successsfully", v6)
-	assert.Equal(t, "goimports", plugin.A)
+	assert.Equal(t, "digraph", plugin.A)
 	assert.Equal(t, "callvis", plugin.B)
 	assert.Equal(t, "run", plugin.C)
 	assert.Equal(t, v6, plugin.D)
@@ -41,7 +41,7 @@ func TestInstallPlugin(t *testing.T) {
 		return item.D == v6
 	})
 	assert.Truef(t, ok, "%s should be installed successsfully", v6)
-	assert.Equal(t, "goimports", plugin.A)
+	assert.Equal(t, "digraph", plugin.A)
 	assert.Equal(t, "callvis", plugin.B)
 	assert.Equal(t, "run", plugin.C)
 	assert.Equal(t, v6, plugin.D)
@@ -53,7 +53,7 @@ func TestInstallPlugin(t *testing.T) {
 		return item.D == v7
 	})
 	assert.Truef(t, ok, "%s should be installed successsfully", v7)
-	assert.Equal(t, "goimports", plugin.A)
+	assert.Equal(t, "digraph", plugin.A)
 	assert.Equal(t, "callvis7", plugin.B)
 	assert.Equal(t, "run7", plugin.C)
 	assert.Equal(t, v7, plugin.D)
