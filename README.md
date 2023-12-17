@@ -6,7 +6,7 @@ Golang Project Boot
     <img alt="GitHub" src="https://img.shields.io/github/license/kcmvp/gb"/>
   </a>
   <a href="https://goreportcard.com/report/github.com/kcmvp/gb">
-    <img src="https://goreportcard.com/badge/github.com/kcmvp/gb" />
+    <img src="https://goreportcard.com/badge/github.com/kcmvp/gb"/>
   </a>
   <a href="https://pkg.go.dev/github.com/kcmvp/gb">
     <img src="https://pkg.go.dev/badge/github.com/kcmvp/gb.svg" alt="Go Reference"/>
