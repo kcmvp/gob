@@ -21,8 +21,6 @@ jobs:
       with:
         go-version: '1.20'
 
-    - name: Build
-      run: go build -v ./...
+    - name: build with gb
+      run: go run main.go clean lint test
 
-    - name: Test
-      run: go test -v ./...

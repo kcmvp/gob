@@ -1,4 +1,4 @@
-//go:build gob
+//go:build gb
 
 package main
 
