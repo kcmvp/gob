@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/action"
-	"github.com/kcmvp/gob/cmd/root"
-	"github.com/kcmvp/gob/internal"
+	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/cmd/root"
+	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
@@ -15,7 +15,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "gob",
+	Use:   "gb",
 	Short: "Go project boot",
 	Long:  `Supply most frequently used tool and best practices for go project development`,
 	ValidArgs: lo.Map(root.BuildActions(), func(item action.CmdAction, _ int) string {

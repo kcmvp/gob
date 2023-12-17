@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/internal"
+	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"io"

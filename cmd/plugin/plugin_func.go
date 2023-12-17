@@ -6,8 +6,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/kcmvp/gob/cmd/action"
-	"github.com/kcmvp/gob/internal"
+	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
@@ -15,13 +15,13 @@ import (
 	"strings"
 )
 
-// ToolAlias is the tool alias, for the convenience of run 'gob alias'
+// ToolAlias is the tool alias, for the convenience of run 'gb alias'
 var ToolAlias string
 
-// ToolCommand is the tool command, it's the default command when run 'gob alias'
+// ToolCommand is the tool command, it's the default command when run 'gb alias'
 var ToolCommand string
 
-// Install the specified tool as gob plugin
+// Install the specified tool as gb plugin
 var Install action.Execution = func(cmd *cobra.Command, args ...string) error {
 	if strings.HasSuffix(args[0], "@master") || strings.HasSuffix(args[0], "@latest") {
 		return fmt.Errorf("please use specific version instead of 'master' or 'latest'")
