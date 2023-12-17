@@ -11,8 +11,8 @@ Golang Project Boot
   <a href="https://pkg.go.dev/github.com/kcmvp/gb">
     <img src="https://pkg.go.dev/badge/github.com/kcmvp/gb.svg" alt="Go Reference"/>
   </a>
-  <a href="https://github.com/kcmvp/gb/blob/main/.github/workflows/build.yml" rel="nofollow">
-     <img src="https://img.shields.io/github/actions/workflow/status/kcmvp/gb/build.yml?branch=main" alt="Build" />
+  <a href="https://github.com/kcmvp/gb/blob/main/.github/workflows/go.yml" rel="nofollow">
+     <img src="https://img.shields.io/github/actions/workflow/status/kcmvp/gb/go.yml?branch=main" alt="Build" />
   </a>
   <a href="https://app.codecov.io/gh/kcmvp/gb" ref="nofollow">
     <img src ="https://img.shields.io/codecov/c/github/kcmvp/gb" alt="coverage"/>
