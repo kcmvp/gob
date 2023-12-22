@@ -9,7 +9,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/cmd/shared"
 	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -35,7 +35,7 @@ func init() {
 	json.Unmarshal(data, &setups)
 	// for each command there should be a action
 	if missed, ok := lo.Find(setups, func(setup Setup) bool {
-		return !lo.ContainsBy(Actions, func(action action.CmdAction) bool {
+		return !lo.ContainsBy(Actions, func(action shared.CmdAction) bool {
 			return action.A == setup.Name
 		})
 	}); ok {
@@ -43,22 +43,22 @@ func init() {
 	}
 }
 
-var Actions = []action.CmdAction{
+var Actions = []shared.CmdAction{
 	{"list", list},
 	{"githook", gitHook},
 	{"gitflow", gitflow},
 	{"onion", onion},
 }
 
-var gitflow action.Execution = func(cmd *cobra.Command, args ...string) error {
+var gitflow shared.Execution = func(cmd *cobra.Command, args ...string) error {
 	return nil
 }
 
-var onion action.Execution = func(cmd *cobra.Command, args ...string) error {
+var onion shared.Execution = func(cmd *cobra.Command, args ...string) error {
 	return nil
 }
 
-var list action.Execution = func(cmd *cobra.Command, args ...string) error {
+var list shared.Execution = func(cmd *cobra.Command, args ...string) error {
 	ct := table.Table{}
 	ct.SetTitle("Available Actions")
 	ct.AppendRow(table.Row{"#", "Name", "Description"})
@@ -73,11 +73,11 @@ var list action.Execution = func(cmd *cobra.Command, args ...string) error {
 		return table.Row{i + 1, setup.Name, setup.Desc}
 	})
 	ct.AppendRows(consoleRows)
-	action.PrintCmd(cmd, ct.Render())
+	shared.PrintCmd(cmd, ct.Render())
 	return nil
 }
 
-var gitHook action.Execution = func(cmd *cobra.Command, args ...string) error {
+var gitHook shared.Execution = func(cmd *cobra.Command, args ...string) error {
 	if _, err := git.PlainOpen(internal.CurProject().Root()); err != nil {
 		color.Yellow("Project is not in the source control, please add it to source repository")
 		return err

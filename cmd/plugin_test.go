@@ -15,7 +15,7 @@ var golanglint = "golang.org/x/tools/cmd/fiximports@v0.16.1"
 
 func TestInstallPlugin(t *testing.T) {
 	internal.CurProject().LoadSettings()
-	cfg := internal.CurProject().Config()
+	cfg := internal.CurProject().Configuration()
 	defer func() {
 		os.Remove(cfg)
 	}()

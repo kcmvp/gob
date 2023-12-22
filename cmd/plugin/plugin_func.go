@@ -6,7 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/cmd/shared"
 	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ var ToolAlias string
 var ToolCommand string
 
 // Install the specified tool as gb plugin
-var Install action.Execution = func(cmd *cobra.Command, args ...string) error {
+var Install shared.Execution = func(cmd *cobra.Command, args ...string) error {
 	if strings.HasSuffix(args[0], "@master") || strings.HasSuffix(args[0], "@latest") {
 		return fmt.Errorf("please use specific version instead of 'master' or 'latest'")
 	}
@@ -35,7 +35,7 @@ var Install action.Execution = func(cmd *cobra.Command, args ...string) error {
 }
 
 var UpdateList bool
-var List action.Execution = func(cmd *cobra.Command, _ ...string) error {
+var List shared.Execution = func(cmd *cobra.Command, _ ...string) error {
 	plugins := internal.CurProject().Plugins()
 	ct := table.Table{}
 	ct.SetTitle("Installed Plugins")
@@ -51,7 +51,7 @@ var List action.Execution = func(cmd *cobra.Command, _ ...string) error {
 		return table.Row{item.A, item.B, item.C, item.D}
 	})
 	ct.AppendRows(rows)
-	action.PrintCmd(cmd, ct.Render())
+	shared.PrintCmd(cmd, ct.Render())
 	if UpdateList {
 		for _, plugin := range plugins {
 			_, name := internal.NormalizePlugin(plugin.D)

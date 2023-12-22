@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/cmd/shared"
 	"github.com/kcmvp/gb/internal"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"io/fs"
 	"os"
@@ -26,6 +27,12 @@ const (
 	CleanModCacheFlag  = "modcache"
 	LintAllFlag        = "all"
 )
+
+var builtIn = []shared.CmdAction{
+	{"build", buildCommand},
+	{"clean", cleanCommand},
+	{"test", testCommand},
+}
 
 func findMain(dir string) (string, error) {
 	var mf string
@@ -114,7 +121,7 @@ var cleanCommand = func(cmd *cobra.Command, _ ...string) error {
 var testCommand = func(_ *cobra.Command, args ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", internal.CurProject().Target())
 	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...)
-	err := action.StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()), "FAIL:")
+	err := shared.StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()), "FAIL:")
 	if err != nil {
 		return err
 	}
@@ -124,16 +131,20 @@ var testCommand = func(_ *cobra.Command, args ...string) error {
 	return nil
 }
 
-var lintCommand = func(cmd *cobra.Command, args ...string) error {
-
-	return nil
+var pluginCommand = func(cmd *cobra.Command, args ...string) error {
+	plugin, _ := lo.Find(internal.CurProject().PluginCommands(), func(plugin lo.Tuple2[string, string]) bool {
+		return cmd.Name() == plugin.B
+	})
+	_, err := exec.Command(plugin.B).CombinedOutput()
+	return err
 }
 
-func BuildActions() []action.CmdAction {
-	return []action.CmdAction{
-		{"build", buildCommand},
-		{"clean", cleanCommand},
-		{"test", testCommand},
-		{"lint", lintCommand},
-	}
+func BuildActions() []shared.CmdAction {
+	pluginActions := lo.Map(internal.CurProject().PluginCommands(), func(item lo.Tuple2[string, string], _ int) shared.CmdAction {
+		return shared.CmdAction{
+			item.A,
+			pluginCommand,
+		}
+	})
+	return append(builtIn, pluginActions...)
 }

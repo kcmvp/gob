@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gb/cmd/action"
 	"github.com/kcmvp/gb/cmd/setup"
+	"github.com/kcmvp/gb/cmd/shared"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"strings"
@@ -18,7 +18,7 @@ var setupCmd = &cobra.Command{
 	Long: `Setup useful infrastructures and tools 
 Run 'gb setup list get full supported list'`,
 	ValidArgs: func() []string {
-		return lo.Map(setup.Actions, func(item action.CmdAction, index int) string {
+		return lo.Map(setup.Actions, func(item shared.CmdAction, index int) string {
 			return item.A
 		})
 	}(),
@@ -29,7 +29,7 @@ Run 'gb setup list get full supported list'`,
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fn, _ := lo.Find(setup.Actions, func(item action.CmdAction) bool {
+		fn, _ := lo.Find(setup.Actions, func(item shared.CmdAction) bool {
 			return item.A == args[0]
 		})
 		return fn.B(cmd, args...)
@@ -38,7 +38,7 @@ Run 'gb setup list get full supported list'`,
 
 func init() {
 	setupCmd.SetUsageFunc(func(command *cobra.Command) error {
-		keys := lo.Map(setup.Actions, func(item action.CmdAction, _ int) string {
+		keys := lo.Map(setup.Actions, func(item shared.CmdAction, _ int) string {
 			return item.A
 		})
 		color.HiYellow("Valid Arguments: %s", strings.Join(keys, ", "))

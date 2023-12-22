@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gb/cmd/action"
 	"github.com/kcmvp/gb/cmd/root"
+	"github.com/kcmvp/gb/cmd/shared"
 	"github.com/kcmvp/gb/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -18,10 +18,13 @@ var rootCmd = &cobra.Command{
 	Use:   "gb",
 	Short: "Go project boot",
 	Long:  `Supply most frequently used tool and best practices for go project development`,
-	ValidArgs: lo.Map(root.BuildActions(), func(item action.CmdAction, _ int) string {
+	ValidArgs: lo.Map(root.BuildActions(), func(item shared.CmdAction, _ int) string {
 		return item.A
 	}),
 	Args: cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		internal.CurProject().SetupHook(false)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return buildProject(cmd, args)
 	},
@@ -45,7 +48,7 @@ func Execute() {
 
 func buildProject(cmd *cobra.Command, args []string) error {
 	uArgs := lo.Uniq(args)
-	expectedActions := lo.Filter(root.BuildActions(), func(item action.CmdAction, index int) bool {
+	expectedActions := lo.Filter(root.BuildActions(), func(item shared.CmdAction, index int) bool {
 		return lo.Contains(uArgs, item.A)
 	})
 	for _, action := range expectedActions {
