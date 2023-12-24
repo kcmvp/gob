@@ -40,7 +40,7 @@ var installPluginCmd = &cobra.Command{
 
 func init() {
 	// init pluginCmd
-	rootCmd.AddCommand(pluginCmd)
+	builderCmd.AddCommand(pluginCmd)
 	pluginCmd.Flags().BoolVarP(&plugin.UpdateList, "update", "u", false, "update configured plugins")
 
 	// init installPluginCmd

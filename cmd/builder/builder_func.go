@@ -1,4 +1,4 @@
-package root
+package builder
 
 import (
 	"bufio"
@@ -6,7 +6,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/kcmvp/gb/cmd/shared"
 	"github.com/kcmvp/gb/internal"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"io/fs"
 	"os"
@@ -28,7 +27,7 @@ const (
 	LintAllFlag        = "all"
 )
 
-var builtIn = []shared.CmdAction{
+var builtinActions = []shared.CmdAction{
 	{"build", buildCommand},
 	{"clean", cleanCommand},
 	{"test", testCommand},
@@ -131,20 +130,7 @@ var testCommand = func(_ *cobra.Command, args ...string) error {
 	return nil
 }
 
-var pluginCommand = func(cmd *cobra.Command, args ...string) error {
-	plugin, _ := lo.Find(internal.CurProject().PluginCommands(), func(plugin lo.Tuple2[string, string]) bool {
-		return cmd.Name() == plugin.B
-	})
-	_, err := exec.Command(plugin.B).CombinedOutput()
-	return err
-}
-
-func BuildActions() []shared.CmdAction {
-	pluginActions := lo.Map(internal.CurProject().PluginCommands(), func(item lo.Tuple2[string, string], _ int) shared.CmdAction {
-		return shared.CmdAction{
-			item.A,
-			pluginCommand,
-		}
-	})
-	return append(builtIn, pluginActions...)
+func Actions() []shared.CmdAction {
+	pluginActions := shared.PluginActions()
+	return append(builtinActions, pluginActions...)
 }

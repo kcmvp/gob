@@ -51,6 +51,7 @@ func TestEnv() (bool, string) {
 	frames := runtime.CallersFrames(callers[:n])
 	for {
 		frame, more := frames.Next()
+		//fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
 		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, module)
 		if test || !more {
 			file, _ = lo.Last(strings.Split(frame.Function, "."))
@@ -205,16 +206,17 @@ func (project *Project) PluginConfigured(url string) bool {
 	return ok
 }
 
-func (project *Project) PluginCommands() []lo.Tuple2[string, string] {
+func (project *Project) PluginCommands() []lo.Tuple3[string, string, string] {
 	plugins := lo.Filter(CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) bool {
 		return len(strings.TrimSpace(plugin.B)) > 0
 	})
-	return lo.Map(plugins, func(plugin lo.Tuple4[string, string, string, string], _ int) lo.Tuple2[string, string] {
+	return lo.Map(plugins, func(plugin lo.Tuple4[string, string, string, string], _ int) lo.Tuple3[string, string, string] {
 		cmd, _ := lo.Last(strings.Split(plugin.D, "/"))
 		cmd = strings.ReplaceAll(cmd, "@", "-")
-		return lo.Tuple2[string, string]{
-			plugin.C,
+		return lo.Tuple3[string, string, string]{
+			plugin.B,
 			cmd,
+			plugin.C,
 		}
 	})
 }

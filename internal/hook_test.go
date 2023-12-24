@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 type GitHookTestSuite struct {
 	suite.Suite
+	gopath string
+	start  int64
 }
 
 func (suite *GitHookTestSuite) TearDownSuite() {
@@ -25,8 +28,8 @@ func (suite *GitHookTestSuite) TearDownSuite() {
 	})
 }
 
-func (suite *GitHookTestSuite) SetupTest() {
-	hooks := lo.MapToSlice(hookMap, func(key string, _ string) string {
+func (suite *GitHookTestSuite) SetupSuite() {
+	hooks := lo.MapToSlice(HookScripts, func(key string, _ string) string {
 		return key
 	})
 	filepath.WalkDir(filepath.Join(CurProject().Root(), ".git", "hooks"), func(path string, d fs.DirEntry, err error) error {
@@ -41,7 +44,10 @@ func (suite *GitHookTestSuite) SetupTest() {
 }
 
 func TestGitHookSuite(t *testing.T) {
-	suite.Run(t, new(GitHookTestSuite))
+	suite.Run(t, &GitHookTestSuite{
+		gopath: os.Getenv("GOPATH"),
+		start:  time.Now().UnixNano(),
+	})
 }
 
 func (suite *GitHookTestSuite) TestGitHook() {
@@ -52,7 +58,7 @@ func (suite *GitHookTestSuite) TestGitHook() {
 }
 
 func (suite *GitHookTestSuite) TestSetupHook() {
-	CurProject().SetupHook(true)
+	CurProject().Setup(true)
 	hook := CurProject().GitHook()
 	assert.Empty(suite.T(), hook.CommitMsg)
 	assert.Empty(suite.T(), hook.PreCommit)
@@ -73,18 +79,21 @@ func (suite *GitHookTestSuite) TestSetupHook() {
 	assert.Equal(suite.T(), []string{"lint", "test"}, hook.PreCommit)
 	assert.NotEmpty(suite.T(), hook.PreCommit)
 	assert.NotEmpty(suite.T(), hook.PrePush)
-	hooks := lo.MapToSlice(hookMap, func(key string, _ string) string {
+	hooks := lo.MapToSlice(HookScripts, func(key string, _ string) string {
 		return key
 	})
 	for _, h := range hooks {
 		_, err = os.Stat(filepath.Join(CurProject().Root(), ".git", "hooks", h))
 		assert.NoError(suite.T(), err)
 	}
+	// test executions
+	executions := project.Executions()
+	assert.Equal(suite.T(), 3, len(executions))
 	// drop last line the corresponding file should be deleted as well
 	data = strings.Join(lo.DropRight(lines, 3), "\n")
 	reader = strings.NewReader(data)
 	CurProject().viper.ReadConfig(reader)
-	CurProject().SetupHook(false)
+	CurProject().Setup(false)
 	for _, h := range hooks {
 		_, err = os.Stat(filepath.Join(CurProject().Root(), ".git", "hooks", h))
 		assert.Equal(suite.T(), err == nil, h != PrePush)
