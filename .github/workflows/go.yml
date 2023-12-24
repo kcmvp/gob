@@ -11,7 +11,7 @@ jobs:
   build:
     env:
       GOPATH: /home/runner/work/gopath
-      TMPDIR: /home/runner/tmp
+      TMPDIR: /home/runner/work/tmp
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
