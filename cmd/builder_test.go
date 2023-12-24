@@ -6,7 +6,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,18 +21,18 @@ type BuilderTestSuit struct {
 }
 
 func (suite *BuilderTestSuit) SetupSuite() {
-	hooks := lo.MapToSlice(internal.HookScripts, func(key string, _ string) string {
-		return key
-	})
-	filepath.WalkDir(hookDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if lo.Contains(hooks, d.Name()) {
-			os.Remove(path)
-		}
-		return nil
-	})
+	//hooks := lo.MapToSlice(internal.HookScripts, func(key string, _ string) string {
+	//	return key
+	//})
+	//filepath.WalkDir(hookDir, func(path string, d fs.DirEntry, err error) error {
+	//	if err != nil {
+	//		return err
+	//	}
+	//	if lo.Contains(hooks, d.Name()) {
+	//		os.Remove(path)
+	//	}
+	//	return nil
+	//})
 }
 
 func TestBuilderTestSuit(t *testing.T) {
