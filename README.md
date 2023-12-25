@@ -2,20 +2,20 @@
 Golang Project Boot
   <br/>
   <br/>
-  <a href="https://github.com/kcmvp/gb/blob/master/LICENSE">
-    <img alt="GitHub" src="https://img.shields.io/github/license/kcmvp/gb"/>
+  <a href="https://github.com/kcmvp/gob/blob/master/LICENSE">
+    <img alt="GitHub" src="https://img.shields.io/github/license/kcmvp/gob"/>
   </a>
-  <a href="https://goreportcard.com/report/github.com/kcmvp/gb">
-    <img src="https://goreportcard.com/badge/github.com/kcmvp/gb"/>
+  <a href="https://goreportcard.com/report/github.com/kcmvp/gob">
+    <img src="https://goreportcard.com/badge/github.com/kcmvp/gob"/>
   </a>
-  <a href="https://pkg.go.dev/github.com/kcmvp/gb">
-    <img src="https://pkg.go.dev/badge/github.com/kcmvp/gb.svg" alt="Go Reference"/>
+  <a href="https://pkg.go.dev/github.com/kcmvp/gob">
+    <img src="https://pkg.go.dev/badge/github.com/kcmvp/gob.svg" alt="Go Reference"/>
   </a>
-  <a href="https://github.com/kcmvp/gb/blob/main/.github/workflows/go.yml" rel="nofollow">
-     <img src="https://img.shields.io/github/actions/workflow/status/kcmvp/gb/go.yml?branch=main" alt="Build" />
+  <a href="https://github.com/kcmvp/gob/blob/main/.github/workflows/go.yml" rel="nofollow">
+     <img src="https://img.shields.io/github/actions/workflow/status/kcmvp/gob/go.yml?branch=main" alt="Build" />
   </a>
-  <a href="https://app.codecov.io/gh/kcmvp/gb" ref="nofollow">
-    <img src ="https://img.shields.io/codecov/c/github/kcmvp/gb" alt="coverage"/>
+  <a href="https://app.codecov.io/gh/kcmvp/gob" ref="nofollow">
+    <img src ="https://img.shields.io/codecov/c/github/kcmvp/gob" alt="coverage"/>
   </a>
 
 </p>
@@ -49,7 +49,7 @@ This project is built to solve this problem by providing a method similar to [Ma
 ## Installation
 Run below command to install this tool
 ```go
-go install github.com/kcmvp/gb
+go install github.com/kcmvp/gob
 ```
 ## Features
 This tool supply comprehensive help message, you can always get detail information & usage of each command by **-h** flag
@@ -58,12 +58,12 @@ The main features mainly categorize as below
 #### Build & Package
 There are mainly 4 built-in commands for project building: **clean, test, lint, build**. 
 
-#### Setup (gb setup)
+#### Setup (gob setup)
 - Setup Git Hook
 - Setup onion architecture
 - Scaffold of popular frameworks
 
-#### Plugin(gb plugin)
+#### Plugin(gob plugin)
 If you want to chain a tool into your project phrase you can install it as a plugin. for example
 gb has builtin **golangci-lint** as the part of git hook.
 

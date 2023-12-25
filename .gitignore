@@ -21,7 +21,7 @@
 # Go workspace file
 go.work
 .idea
-gb
+gob
 *.sql
 11.json
 target
