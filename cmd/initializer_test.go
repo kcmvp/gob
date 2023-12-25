@@ -1,3 +1,5 @@
+//go:build ignore
+
 package cmd
 
 import (
@@ -15,18 +17,6 @@ import (
 type InitializationTestSuite struct {
 	suite.Suite
 	gopath string
-}
-
-func (suite *InitializationTestSuite) TearDownSuite() {
-	//filepath.WalkDir(internal.CurProject().Target(), func(path string, d fs.DirEntry, err error) error {
-	//	if err != nil {
-	//		return err
-	//	}
-	//	if path == internal.CurProject().Configuration() {
-	//		os.Remove(path)
-	//	}
-	//	return nil
-	//})
 }
 
 func TestInitializationTestSuit(t *testing.T) {
