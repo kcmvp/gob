@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -73,4 +75,20 @@ func TestInstallPlugin(t *testing.T) {
 	assert.Equal(t, "lint-run", plugin.C)
 	assert.Equal(t, fiximports, plugin.D)
 	assert.Equal(t, 2, len(internal.CurProject().Plugins()))
+
+	// install golangci-lint plugin
+	builderCmd.SetArgs([]string{"plugin", "install", fmt.Sprintf("%s@v1.55.0", golangCiLinter), "-a=lint", "-c=lint-run"})
+	err = builderCmd.Execute()
+	assert.NoError(t, err)
+	builderCmd.SetArgs([]string{"plugin"})
+	err = builderCmd.Execute()
+	assert.NoError(t, err)
+	plugin, ok = lo.Find(internal.CurProject().Plugins(), func(item lo.Tuple4[string, string, string, string]) bool {
+		return strings.HasPrefix(item.D, golangCiLinter)
+	})
+	assert.Equal(t, "golangci-lint", plugin.A)
+	assert.Equal(t, "lint", plugin.B)
+	assert.Equal(t, "lint-run", plugin.C)
+	assert.True(t, strings.HasPrefix(plugin.D, golangCiLinter))
+	assert.Equal(t, 3, len(internal.CurProject().Plugins()))
 }

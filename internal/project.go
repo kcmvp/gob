@@ -51,7 +51,7 @@ func TestCallee() (bool, string) {
 	frames := runtime.CallersFrames(callers[:n])
 	for {
 		frame, more := frames.Next()
-		fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
+		//fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
 		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, module)
 		if test || !more {
 			method, _ = lo.Last(strings.Split(frame.Function, "."))
