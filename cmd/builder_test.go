@@ -27,10 +27,6 @@ func TestBuilderTestSuit(t *testing.T) {
 	})
 }
 
-//func (suite *BuilderTestSuit) SetupSuite() {
-//	internal.CurProject().Load(filepath.Join(internal.CurProject().Root(), "testdata", "gob.yaml"))
-//}
-
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
 	builderCmd.PersistentPreRun(nil, nil)
 	hooks := lo.MapToSlice(internal.HookScripts, func(key string, _ string) string {
@@ -45,9 +41,9 @@ func (suite *BuilderTestSuit) TestPersistentPreRun() {
 	//fmt.Println(internal.CurProject().Configuration())
 	fmt.Println(internal.CurProject().Plugins())
 	// test the missing plugins installation
-	//lo.ForEach(internal.CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
-	//	_, name := internal.NormalizePlugin(plugin.D)
-	//	_, err := os.Stat(filepath.Join(suite.gopath, "bin", name))
-	//	assert.NoErrorf(suite.T(), err, "plugin should be insalled")
-	//})
+	lo.ForEach(internal.CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
+		_, name := internal.NormalizePlugin(plugin.D)
+		_, err := os.Stat(filepath.Join(suite.gopath, "bin", name))
+		assert.NoErrorf(suite.T(), err, "plugin should be insalled")
+	})
 }

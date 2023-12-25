@@ -73,12 +73,6 @@ func (project *Project) HookDir() string {
 	}
 }
 
-// Load a specified file. for test only
-func (project *Project) Load(file string) {
-	f, _ := os.Open(file)
-	project.viper.ReadConfig(f)
-}
-
 func (project *Project) LoadSettings() {
 	testEnv, _ := TestCallee()
 	v := viper.New()
