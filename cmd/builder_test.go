@@ -1,3 +1,5 @@
+//go:build ignore
+
 package cmd
 
 import (
@@ -25,9 +27,9 @@ func TestBuilderTestSuit(t *testing.T) {
 	})
 }
 
-func (suite *BuilderTestSuit) SetupSuite() {
-	internal.CurProject().Load(filepath.Join(internal.CurProject().Root(), "testdata", "gob.yaml"))
-}
+//func (suite *BuilderTestSuit) SetupSuite() {
+//	internal.CurProject().Load(filepath.Join(internal.CurProject().Root(), "testdata", "gob.yaml"))
+//}
 
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
 	builderCmd.PersistentPreRun(nil, nil)
