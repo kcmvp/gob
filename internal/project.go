@@ -43,26 +43,38 @@ type Project struct {
 	cfg    string
 }
 
-func TestEnv() (bool, string) {
+func TestCallee() (bool, string) {
 	var test bool
-	var file string
+	var method string
 	callers := make([]uintptr, 20)
 	n := runtime.Callers(0, callers)
 	frames := runtime.CallersFrames(callers[:n])
 	for {
 		frame, more := frames.Next()
-		//fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
+		fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
 		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, module)
 		if test || !more {
-			file, _ = lo.Last(strings.Split(frame.Function, "."))
+			method, _ = lo.Last(strings.Split(frame.Function, "."))
 			break
 		}
 	}
-	return test, file
+	return test, method
+}
+
+func (project *Project) HookDir() string {
+	if ok, file := TestCallee(); ok {
+		mock := filepath.Join(CurProject().Target(), file)
+		if _, err := os.Stat(mock); err != nil {
+			os.Mkdir(mock, os.ModePerm)
+		}
+		return mock
+	} else {
+		return filepath.Join(CurProject().Root(), ".git", "hooks")
+	}
 }
 
 func (project *Project) LoadSettings() {
-	testEnv, _ := TestEnv()
+	testEnv, _ := TestCallee()
 	v := viper.New()
 	v.SetConfigType("yaml")
 	path := project.Root()

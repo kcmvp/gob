@@ -5,6 +5,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,27 +20,12 @@ type GitHookTestSuite struct {
 }
 
 func (suite *GitHookTestSuite) TearDownSuite() {
-	//filepath.WalkDir(CurProject().Target(), func(path string, d fs.DirEntry, err error) error {
-	//	if strings.HasPrefix(d.Name(), "gb-") && strings.HasSuffix(d.Name(), ".yaml") {
-	//		os.Remove(path)
-	//	}
-	//	return err
-	//})
-}
-
-func (suite *GitHookTestSuite) SetupSuite() {
-	//hooks := lo.MapToSlice(HookScripts, func(key string, _ string) string {
-	//	return key
-	//})
-	//filepath.WalkDir(filepath.Join(CurProject().Root(), ".git", "hooks"), func(path string, d fs.DirEntry, err error) error {
-	//	if err != nil {
-	//		return err
-	//	}
-	//	if lo.Contains(hooks, d.Name()) {
-	//		os.Remove(path)
-	//	}
-	//	return nil
-	//})
+	filepath.WalkDir(CurProject().Target(), func(path string, d fs.DirEntry, err error) error {
+		if strings.HasPrefix(d.Name(), "gb-") && strings.HasSuffix(d.Name(), ".yaml") {
+			os.Remove(path)
+		}
+		return err
+	})
 }
 
 func TestGitHookSuite(t *testing.T) {
@@ -82,7 +68,7 @@ func (suite *GitHookTestSuite) TestSetupHook() {
 		return key
 	})
 	for _, h := range hooks {
-		_, err = os.Stat(filepath.Join(CurProject().Root(), ".git", "hooks", h))
+		_, err = os.Stat(filepath.Join(CurProject().HookDir(), h))
 		assert.NoError(suite.T(), err)
 	}
 	// test executions
@@ -94,7 +80,7 @@ func (suite *GitHookTestSuite) TestSetupHook() {
 	CurProject().viper.ReadConfig(reader)
 	CurProject().Setup(false)
 	for _, h := range hooks {
-		_, err = os.Stat(filepath.Join(CurProject().Root(), ".git", "hooks", h))
+		_, err = os.Stat(filepath.Join(CurProject().HookDir(), h))
 		assert.Equal(suite.T(), err == nil, h != PrePush)
 	}
 

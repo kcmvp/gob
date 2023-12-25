@@ -8,8 +8,8 @@ import (
 )
 
 func TestActions(t *testing.T) {
-	assert.Equal(t, 3, len(validArgs))
-	assert.True(t, lo.Every(validArgs, []string{internal.CommitMsgCmd, internal.PreCommitCmd, internal.PreCommitCmd}))
+	assert.Equal(t, 3, len(execValidArgs))
+	assert.True(t, lo.Every(execValidArgs, []string{internal.CommitMsgCmd, internal.PreCommitCmd, internal.PreCommitCmd}))
 }
 
 func TestCmdArgs(t *testing.T) {

@@ -19,7 +19,7 @@ type Execution func(cmd *cobra.Command, args ...string) error
 type CmdAction lo.Tuple2[string, Execution]
 
 func PrintCmd(cmd *cobra.Command, msg string) error {
-	if ok, file := internal.TestEnv(); ok {
+	if ok, file := internal.TestCallee(); ok {
 		// Get the call stack
 		outputFile, err := os.Create(filepath.Join(internal.CurProject().Target(), file))
 		if err != nil {

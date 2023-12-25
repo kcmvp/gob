@@ -103,10 +103,9 @@ func (project *Project) Setup(init bool) {
 	shell := lo.IfF(Windows(), func() string {
 		return "#!/usr/bin/env pwsh\n"
 	}).Else("#!/bin/sh\n")
-	hookDir := filepath.Join(CurProject().Root(), ".git", "hooks")
 	for name, script := range HookScripts {
 		if lo.Contains(hooks, name) {
-			msgHook, _ := os.OpenFile(filepath.Join(hookDir, name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+			msgHook, _ := os.OpenFile(filepath.Join(CurProject().HookDir(), name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 			writer := bufio.NewWriter(msgHook)
 			writer.WriteString(shell)
 			writer.WriteString("\n")
@@ -114,7 +113,7 @@ func (project *Project) Setup(init bool) {
 			writer.Flush()
 			msgHook.Close()
 		} else {
-			os.Remove(filepath.Join(hookDir, name))
+			os.Remove(filepath.Join(CurProject().HookDir(), name))
 		}
 	}
 	// install missing plugins
