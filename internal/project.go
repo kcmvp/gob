@@ -51,7 +51,7 @@ func TestCallee() (bool, string) {
 	frames := runtime.CallersFrames(callers[:n])
 	for {
 		frame, more := frames.Next()
-		//fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
+		fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
 		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, module)
 		if test || !more {
 			method, _ = lo.Last(strings.Split(frame.Function, "."))
@@ -245,18 +245,18 @@ func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) err
 		var err error
 		if !installed {
 			// install only
-			//tempGoPath, _ := os.MkdirTemp("", base)
-			//os.Setenv("GOPATH", tempGoPath)
+			tempGoPath, _ := os.MkdirTemp("", base)
+			os.Setenv("GOPATH", tempGoPath)
 			fmt.Printf("Installing %s ...... \n", url)
 			_, err = exec.Command("go", "install", url).CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to install %s: %v", url, err)
 			}
 			defer func() {
-				//os.Setenv("GOPATH", gopath)
-				//os.RemoveAll(tempGoPath)
+				os.Setenv("GOPATH", gopath)
+				os.RemoveAll(tempGoPath)
 			}()
-			if err = filepath.WalkDir(gopath, func(path string, d fs.DirEntry, err error) error {
+			if err = filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
