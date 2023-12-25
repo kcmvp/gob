@@ -1,9 +1,7 @@
-//go:build ignore
-
 package cmd
 
 import (
-	"github.com/kcmvp/gb/internal"
+	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
