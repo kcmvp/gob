@@ -80,7 +80,7 @@ func execPlugin(cmd *cobra.Command, args ...string) error {
 	exeCmd := exec.Command(plugin.B, lo.Map(cmds, func(cmd string, _ int) string {
 		return strings.TrimSpace(cmd)
 	})...)
-	return StreamExtCmdOutput(exeCmd, filepath.Join(internal.CurProject().Target(), fmt.Sprintf("%s.log", args[0])), "")
+	return StreamExtCmdOutput(exeCmd, filepath.Join(internal.CurProject().Target(), fmt.Sprintf("%s.html", args[0])), "")
 }
 
 func PluginActions() []CmdAction {

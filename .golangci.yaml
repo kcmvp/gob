@@ -3,9 +3,9 @@ run:
   tests: false
 output:
   sort-results: true
-  format: tab
+  format: html
 linters:
-  enable-all: false
+  disable-all: true
   enable:
     - deadcode
     - errcheck
@@ -19,13 +19,3 @@ linters:
     - gofumpt
     - nosnakecase
     - goconst
-  presets:
-    - bugs
-    - comment
-    - complexity
-    - error
-    - metalinter
-    - module
-    - performance
-    - sql
-    - unused

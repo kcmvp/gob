@@ -185,7 +185,7 @@ func (project *Project) Plugins() []lo.Tuple4[string, string, string, string] {
 			attr := value.(map[string]any)
 			//@todo validate attribute for null or empty
 			return lo.Tuple4[string, string, string, string]{
-				key, attr["alias"].(string), attr["command"].(string), attr["url"].(string),
+				A: key, B: attr["alias"].(string), C: attr["command"].(string), D: attr["url"].(string),
 			}
 		})
 	} else {
@@ -226,9 +226,9 @@ func (project *Project) PluginCommands() []lo.Tuple3[string, string, string] {
 		cmd, _ := lo.Last(strings.Split(plugin.D, "/"))
 		cmd = strings.ReplaceAll(cmd, "@", "-")
 		return lo.Tuple3[string, string, string]{
-			plugin.B,
-			cmd,
-			plugin.C,
+			A: plugin.B,
+			B: cmd,
+			C: plugin.C,
 		}
 	})
 }
