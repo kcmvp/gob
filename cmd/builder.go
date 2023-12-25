@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gb/cmd/builder"
-	"github.com/kcmvp/gb/cmd/shared"
-	"github.com/kcmvp/gb/internal"
+	"github.com/kcmvp/gob/cmd/builder"
+	"github.com/kcmvp/gob/cmd/shared"
+	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
@@ -20,7 +20,7 @@ func preRun() {
 
 // builderCmd represents the base command when called without any subcommands
 var builderCmd = &cobra.Command{
-	Use:   "gb",
+	Use:   "gob",
 	Short: "Go project boot",
 	Long:  `Supply most frequently used tool and best practices for go project development`,
 	ValidArgs: lo.Map(builder.Actions(), func(item shared.CmdAction, _ int) string {

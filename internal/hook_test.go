@@ -21,7 +21,7 @@ type GitHookTestSuite struct {
 
 func (suite *GitHookTestSuite) TearDownSuite() {
 	filepath.WalkDir(CurProject().Target(), func(path string, d fs.DirEntry, err error) error {
-		if strings.HasPrefix(d.Name(), "gb-") && strings.HasSuffix(d.Name(), ".yaml") {
+		if strings.HasPrefix(d.Name(), "gob-") && strings.HasSuffix(d.Name(), ".yaml") {
 			os.Remove(path)
 		}
 		return err

@@ -6,8 +6,8 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
-	"github.com/kcmvp/gb/cmd/shared"
-	"github.com/kcmvp/gb/internal"
+	"github.com/kcmvp/gob/cmd/shared"
+	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
