@@ -28,9 +28,9 @@ const (
 )
 
 var builtinActions = []shared.CmdAction{
-	{"build", buildCommand},
-	{"clean", cleanCommand},
-	{"test", testCommand},
+	{A: "build", B: buildCommand},
+	{A: "clean", B: cleanCommand},
+	{A: "test", B: testCommand},
 }
 
 func findMain(dir string) (string, error) {

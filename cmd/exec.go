@@ -41,17 +41,18 @@ func exec(execution internal.Execution, cmd *cobra.Command, args ...string) erro
 		args = append(args, execution.Actions...)
 		return validateCommitMsg(cmd, args...)
 	} else {
+		var err error
 		for _, action := range execution.Actions {
 			for _, cmdAction := range builder.Actions() {
 				if action == cmdAction.A {
-					if err := cmdAction.B(cmd, args...); err != nil {
+					if err = cmdAction.B(cmd, args...); err != nil {
 						return err
 					}
 				}
 			}
 		}
+		return err
 	}
-	return nil
 }
 
 // execCmd represents the exec command
