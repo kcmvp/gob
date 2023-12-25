@@ -13,7 +13,7 @@ var v7 = "golang.org/x/tools/cmd/digraph@v0.16.1"
 
 func TestInstallPlugin(t *testing.T) {
 	CurProject().LoadSettings()
-	cfg := CurProject().Config()
+	cfg := CurProject().Configuration()
 	defer func() {
 		os.Remove(cfg)
 	}()

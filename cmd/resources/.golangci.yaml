@@ -1,0 +1,31 @@
+# default golangci-linter configuration, please reference https://golangci-lint.run/usage/configuration/ for details
+run:
+  tests: false
+output:
+  sort-results: true
+  format: tab
+linters:
+  enable-all: false
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - varcheck
+    - gosec
+    - gofumpt
+    - nosnakecase
+    - goconst
+  presets:
+    - bugs
+    - comment
+    - complexity
+    - error
+    - metalinter
+    - module
+    - performance
+    - sql
+    - unused

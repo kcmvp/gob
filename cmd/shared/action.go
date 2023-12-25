@@ -1,4 +1,4 @@
-package action
+package shared
 
 import (
 	"bufio"
@@ -19,7 +19,7 @@ type Execution func(cmd *cobra.Command, args ...string) error
 type CmdAction lo.Tuple2[string, Execution]
 
 func PrintCmd(cmd *cobra.Command, msg string) error {
-	if ok, file := internal.TestEnv(); ok {
+	if ok, file := internal.TestCallee(); ok {
 		// Get the call stack
 		outputFile, err := os.Create(filepath.Join(internal.CurProject().Target(), file))
 		if err != nil {
@@ -67,4 +67,27 @@ func StreamExtCmdOutput(cmd *exec.Cmd, file string, errWords ...string) error {
 	}()
 	// Wait for the command to finish
 	return cmd.Wait()
+}
+
+func execPlugin(cmd *cobra.Command, args ...string) error {
+	plugin, ok := lo.Find(internal.CurProject().PluginCommands(), func(plugin lo.Tuple3[string, string, string]) bool {
+		return plugin.A == args[0]
+	})
+	if !ok {
+		return fmt.Errorf("plugin %s is not conigured", args[0])
+	}
+	cmds := strings.Split(plugin.C, ",")
+	exeCmd := exec.Command(plugin.B, lo.Map(cmds, func(cmd string, _ int) string {
+		return strings.TrimSpace(cmd)
+	})...)
+	return StreamExtCmdOutput(exeCmd, filepath.Join(internal.CurProject().Target(), fmt.Sprintf("%s.log", args[0])), "")
+}
+
+func PluginActions() []CmdAction {
+	return lo.Map(internal.CurProject().PluginCommands(), func(plugin lo.Tuple3[string, string, string], _ int) CmdAction {
+		return CmdAction{
+			A: plugin.A,
+			B: execPlugin,
+		}
+	})
 }

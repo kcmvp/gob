@@ -1,10 +1,10 @@
-package root
+package builder
 
 import (
 	"bufio"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gb/cmd/action"
+	"github.com/kcmvp/gb/cmd/shared"
 	"github.com/kcmvp/gb/internal"
 	"github.com/spf13/cobra"
 	"io/fs"
@@ -26,6 +26,12 @@ const (
 	CleanModCacheFlag  = "modcache"
 	LintAllFlag        = "all"
 )
+
+var builtinActions = []shared.CmdAction{
+	{"build", buildCommand},
+	{"clean", cleanCommand},
+	{"test", testCommand},
+}
 
 func findMain(dir string) (string, error) {
 	var mf string
@@ -114,7 +120,7 @@ var cleanCommand = func(cmd *cobra.Command, _ ...string) error {
 var testCommand = func(_ *cobra.Command, args ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", internal.CurProject().Target())
 	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...)
-	err := action.StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()), "FAIL:")
+	err := shared.StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()), "FAIL:")
 	if err != nil {
 		return err
 	}
@@ -124,16 +130,7 @@ var testCommand = func(_ *cobra.Command, args ...string) error {
 	return nil
 }
 
-var lintCommand = func(cmd *cobra.Command, args ...string) error {
-
-	return nil
-}
-
-func BuildActions() []action.CmdAction {
-	return []action.CmdAction{
-		{"build", buildCommand},
-		{"clean", cleanCommand},
-		{"test", testCommand},
-		{"lint", lintCommand},
-	}
+func Actions() []shared.CmdAction {
+	pluginActions := shared.PluginActions()
+	return append(builtinActions, pluginActions...)
 }
