@@ -73,4 +73,5 @@ func TestInstallPlugin(t *testing.T) {
 	assert.Equal(t, "lint-run", plugin.C)
 	assert.Equal(t, fiximports, plugin.D)
 	assert.Equal(t, 2, len(internal.CurProject().Plugins()))
+
 }

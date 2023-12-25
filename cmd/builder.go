@@ -14,10 +14,6 @@ import (
 	"os"
 )
 
-func preRun() {
-	internal.CurProject().Setup(false)
-}
-
 // builderCmd represents the base command when called without any subcommands
 var builderCmd = &cobra.Command{
 	Use:   "gob",
@@ -28,7 +24,7 @@ var builderCmd = &cobra.Command{
 	}),
 	Args: cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		preRun()
+		internal.CurProject().Setup(false)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := build(cmd, args); err != nil {

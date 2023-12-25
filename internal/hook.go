@@ -117,11 +117,9 @@ func (project *Project) Setup(init bool) {
 		}
 	}
 	// install missing plugins
-	if ok, _ := TestCallee(); !ok {
-		lop.ForEach(CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
-			if !CurProject().PluginInstalled(plugin.D) {
-				CurProject().InstallPlugin(plugin.D, plugin.B, plugin.C)
-			}
-		})
-	}
+	lop.ForEach(CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
+		if !CurProject().PluginInstalled(plugin.D) {
+			CurProject().InstallPlugin(plugin.D, plugin.B, plugin.C)
+		}
+	})
 }
