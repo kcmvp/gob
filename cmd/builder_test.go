@@ -1,5 +1,3 @@
-//go:build ignore
-
 package cmd
 
 import (
@@ -28,8 +26,7 @@ func TestBuilderTestSuit(t *testing.T) {
 }
 
 func (suite *BuilderTestSuit) SetupSuite() {
-	internal.CurProject().LoadSettings()
-	// html2article
+	internal.CurProject().Load(filepath.Join(internal.CurProject().Root(), "testdata", "gob.yaml"))
 }
 
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
@@ -43,7 +40,8 @@ func (suite *BuilderTestSuit) TestPersistentPreRun() {
 			assert.True(suite.T(), info.ModTime().UnixNano() > suite.start)
 		}
 	}
-	fmt.Println(internal.CurProject().Configuration())
+	//fmt.Println(internal.CurProject().Configuration())
+	fmt.Println(internal.CurProject().Plugins())
 	// test the missing plugins installation
 	lo.ForEach(internal.CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
 		_, name := internal.NormalizePlugin(plugin.D)
