@@ -26,9 +26,9 @@ var PreCommitCmd = fmt.Sprintf("%s-hook", PreCommit)
 var PrePushCmd = fmt.Sprintf("%s-hook", PrePush)
 
 var HookScripts = map[string]string{
-	CommitMsg: fmt.Sprintf("gb exec %s $1", CommitMsgCmd),
-	PreCommit: fmt.Sprintf("gb exec %s", PreCommitCmd),
-	PrePush:   fmt.Sprintf("gb exec %s", PrePushCmd),
+	CommitMsg: fmt.Sprintf("gob exec %s $1", CommitMsgCmd),
+	PreCommit: fmt.Sprintf("gob exec %s", PreCommitCmd),
+	PrePush:   fmt.Sprintf("gob exec %s", PrePushCmd),
 }
 
 type GitHook struct {

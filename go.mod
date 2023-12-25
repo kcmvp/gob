@@ -1,4 +1,4 @@
-module github.com/kcmvp/gb
+module github.com/kcmvp/gob
 
 go 1.21.4
 
