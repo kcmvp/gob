@@ -3,7 +3,7 @@ run:
   tests: false
 output:
   sort-results: true
-  format: html
+  format: tab
 linters:
   disable-all: true
   enable:
@@ -18,3 +18,7 @@ linters:
     - gofumpt
     - goconst
     - revive
+issues:
+  new: true
+  new-from-rev: HEAD
+  fix: true

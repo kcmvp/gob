@@ -1,33 +1,33 @@
-package builder
+package action
 
 import (
 	"bufio"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/shared"
-	"github.com/kcmvp/gob/internal"
-	"github.com/spf13/cobra"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/kcmvp/gob/internal"
+	"github.com/spf13/cobra"
 )
 
-var CleanCache bool
-var CleanTestCache bool
-var CleanModCache bool
-var LintAll bool
+var (
+	CleanCache     bool
+	CleanTestCache bool
+	CleanModCache  bool
+)
 
 const (
 	CleanCacheFlag     = "cache"
 	CleanTestCacheFlag = "testcache"
 	CleanModCacheFlag  = "modcache"
-	LintAllFlag        = "all"
 )
 
-var builtinActions = []shared.CmdAction{
+var builtinActions = []CmdAction{
 	{A: "build", B: buildCommand},
 	{A: "clean", B: cleanCommand},
 	{A: "test", B: testCommand},
@@ -84,10 +84,9 @@ var buildCommand = func(_ *cobra.Command, args ...string) error {
 			output := filepath.Join(internal.CurProject().Root(), internal.CurProject().Target(), binary)
 			if _, err := exec.Command("go", "build", "-o", output, mf).CombinedOutput(); err != nil { //nolint
 				return err
-			} else {
-				fmt.Printf("Build %s to %s successfully\n", mf, output)
-				bm[binary] = output
 			}
+			fmt.Printf("Build %s to %s successfully\n", mf, output)
+			bm[binary] = output
 		} else {
 			color.Yellow("Can not find main function in package %s", dir)
 		}
@@ -98,7 +97,7 @@ var buildCommand = func(_ *cobra.Command, args ...string) error {
 var cleanCommand = func(cmd *cobra.Command, _ ...string) error {
 	// clean target folder
 	os.RemoveAll(internal.CurProject().Target())
-	os.Mkdir(internal.CurProject().Target(), os.ModePerm)
+	os.Mkdir(internal.CurProject().Target(), os.ModePerm) //nolint errcheck
 	fmt.Println("Clean target folder successfully !")
 	// clean cache
 	args := []string{"clean"}
@@ -117,20 +116,18 @@ var cleanCommand = func(cmd *cobra.Command, _ ...string) error {
 	}
 	return nil
 }
+
 var testCommand = func(_ *cobra.Command, args ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", internal.CurProject().Target())
-	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...)
-	err := shared.StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()), "FAIL:")
+	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...) //nolint
+	err := StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()), "FAIL:")
 	if err != nil {
 		return err
 	}
-	exec.Command("go", []string{"tool", "cover", fmt.Sprintf("-html=%s/cover.out", internal.CurProject().Target()), fmt.Sprintf("-o=%s/cover.html", internal.CurProject().Target())}...).CombinedOutput()
-	color.Green("Test report is generated at %s/test.log \n", internal.CurProject().Target())
-	color.Green("Coverage report is generated at %s/cover.html \n", internal.CurProject().Target())
+	_, err = exec.Command("go", []string{"tool", "cover", fmt.Sprintf("-html=%s/cover.out", internal.CurProject().Target()), fmt.Sprintf("-o=%s/cover.html", internal.CurProject().Target())}...).CombinedOutput() //nolint
+	if err == nil {
+		color.Green("Test report is generated at %s/test.log \n", internal.CurProject().Target())
+		color.Green("Coverage report is generated at %s/cover.html \n", internal.CurProject().Target())
+	}
 	return nil
-}
-
-func Actions() []shared.CmdAction {
-	pluginActions := shared.PluginActions()
-	return append(builtinActions, pluginActions...)
 }
