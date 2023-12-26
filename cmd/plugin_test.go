@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -73,5 +74,27 @@ func TestInstallPlugin(t *testing.T) {
 	assert.Equal(t, "lint-run", plugin.C)
 	assert.Equal(t, fiximports, plugin.D)
 	assert.Equal(t, 2, len(internal.CurProject().Plugins()))
+}
 
+func TestInstallPluginWithVersion(t *testing.T) {
+	ver, err := action.LatestVersion("github.com/hhatto/gocloc/cmd/gocloc", "")
+	assert.NoError(t, err)
+	tests := []struct {
+		name    string
+		url     string
+		wantErr bool
+	}{
+		{"no version", "github.com/hhatto/gocloc/cmd/gocloc", false},
+		{"latest version", "github.com/hhatto/gocloc/cmd/gocloc@latest", false},
+		{"incorrect version", "github.com/hhatto/gocloc/cmd/gocloc@abc", true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ver1, err1 := install(test.url)
+			assert.True(t, test.wantErr == (err1 != nil))
+			if err1 == nil {
+				assert.Equal(t, ver, ver1)
+			}
+		})
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
+	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -23,16 +24,24 @@ var alias string
 var command string
 
 // Install the specified tool as gob plugin
-func install(args ...string) error {
-	if strings.HasSuffix(args[0], "@master") || strings.HasSuffix(args[0], "@latest") {
-		return fmt.Errorf("please use specific version instead of 'master' or 'latest'")
+func install(args ...string) (string, error) {
+	var ver string
+	var err error
+	url := args[0]
+	parts := strings.Split(url, "@")
+	if len(parts) != 2 || strings.HasPrefix(parts[1], "latest") {
+		ver, err = action.LatestVersion(parts[0], "")
+		if err != nil {
+			return ver, fmt.Errorf("please use specific version of the tool")
+		}
+		url = fmt.Sprintf("%s@%s", parts[0], ver)
 	}
-	err := internal.CurProject().InstallPlugin(args[0], alias, command)
+	err = internal.CurProject().InstallPlugin(url, alias, command)
 	if errors.Is(err, internal.PluginExists) {
-		color.Yellow("Plugin %s exists", args[0])
+		color.Yellow("Plugin %s exists", url)
 		err = nil
 	}
-	return err
+	return ver, err
 }
 
 func list() {
@@ -57,8 +66,8 @@ func list() {
 // pluginCmd represents the plugin command
 var pluginCmd = &cobra.Command{
 	Use:   "plugin",
-	Short: "List all configured plugins",
-	Long:  `List all configured plugins`,
+	Short: "Install, update or list plugins",
+	Long:  `Install, update or list plugins`,
 	Run: func(cmd *cobra.Command, args []string) {
 		list()
 	},
@@ -76,7 +85,8 @@ var installPluginCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return install(args...)
+		_, err := install(args...)
+		return err
 	},
 }
 
