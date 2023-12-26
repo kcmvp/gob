@@ -1,13 +1,13 @@
 exec:
-    commit-msg-hook: ^#[0-9]+:\s*.{10,}$
-    pre-commit-hook:
-        - list
-        - test
-    pre-push-hook:
-        - list
-        - test
+  commit-msg-hook: ^#[0-9]+:\s*.{10,}$
+  pre-commit-hook:
+    - lint
+    - test
+  pre-push-hook:
+    - lint
+    - test
 plugins:
-    golangci-lint:
-        alias: lint
-        command: run, ./...
-        url: github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.1
+  golangci-lint:
+    alias: lint
+    command: run, ./...
+    url: github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.1

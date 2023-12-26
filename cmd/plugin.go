@@ -4,21 +4,63 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/plugin"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
+	"github.com/kcmvp/gob/internal"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
+	//nolint
+	"strings"
 )
+
+// alias is the tool alias
+var alias string
+
+// command is the tool command
+var command string
+
+// Install the specified tool as gob plugin
+func install(args ...string) error {
+	if strings.HasSuffix(args[0], "@master") || strings.HasSuffix(args[0], "@latest") {
+		return fmt.Errorf("please use specific version instead of 'master' or 'latest'")
+	}
+	err := internal.CurProject().InstallPlugin(args[0], alias, command)
+	if errors.Is(err, internal.PluginExists) {
+		color.Yellow("Plugin %s exists", args[0])
+		err = nil
+	}
+	return err
+}
+
+func list() {
+	plugins := internal.CurProject().Plugins()
+	ct := table.Table{}
+	ct.SetTitle("Installed Plugins")
+	ct.AppendRow(table.Row{"Command", "Alias", "Method", "URL"})
+	style := table.StyleDefault
+	style.Options.DrawBorder = true
+	style.Options.SeparateRows = true
+	style.Options.SeparateColumns = true
+	style.Title.Align = text.AlignCenter
+	style.HTML.CSSClass = table.DefaultHTMLCSSClass
+	ct.SetStyle(style)
+	rows := lo.Map(plugins, func(item lo.Tuple4[string, string, string, string], index int) table.Row {
+		return table.Row{item.A, item.B, item.C, item.D}
+	})
+	ct.AppendRows(rows)
+	fmt.Println(ct.Render())
+}
 
 // pluginCmd represents the plugin command
 var pluginCmd = &cobra.Command{
 	Use:   "plugin",
 	Short: "List all configured plugins",
 	Long:  `List all configured plugins`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// run 'gob plugin' will list all the configured plugins
-		// run 'gob plugin -u' will list all the configured plugins and install the uninstalled tools.
-		return plugin.List(cmd)
+	Run: func(cmd *cobra.Command, args []string) {
+		list()
 	},
 }
 
@@ -34,7 +76,7 @@ var installPluginCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return plugin.Install(cmd, args...)
+		return install(args...)
 	},
 }
 
@@ -44,6 +86,6 @@ func init() {
 
 	// init installPluginCmd
 	pluginCmd.AddCommand(installPluginCmd)
-	installPluginCmd.Flags().StringVarP(&plugin.ToolAlias, "alias", "a", "", "alias of the tool")
-	installPluginCmd.Flags().StringVarP(&plugin.ToolCommand, "command", "c", "", "default command of this tool")
+	installPluginCmd.Flags().StringVarP(&alias, "alias", "a", "", "alias of the tool")
+	installPluginCmd.Flags().StringVarP(&command, "command", "c", "", "default command of this tool")
 }

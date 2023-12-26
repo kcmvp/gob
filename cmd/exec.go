@@ -7,8 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/builder"
-	"github.com/kcmvp/gob/cmd/shared"
+	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -18,8 +17,11 @@ import (
 
 // validateCommitMsg invoked by git commit-msg hook, an error returns when it fails to validate
 // the commit message
-var validateCommitMsg shared.Execution = func(cmd *cobra.Command, args ...string) error {
-	input, _ := os.ReadFile(os.Args[1])
+var validateCommitMsg action.Execution = func(cmd *cobra.Command, args ...string) error {
+	if len(args) < 2 {
+		return fmt.Errorf("please input commit message")
+	}
+	input, _ := os.ReadFile(args[1])
 	regex := regexp.MustCompile(`\r?\n`)
 	commitMsg := regex.ReplaceAllString(string(input), "")
 	pattern, _ := lo.Last(args)
@@ -41,17 +43,13 @@ func exec(execution internal.Execution, cmd *cobra.Command, args ...string) erro
 		args = append(args, execution.Actions...)
 		return validateCommitMsg(cmd, args...)
 	} else {
-		var err error
-		for _, action := range execution.Actions {
-			for _, cmdAction := range builder.Actions() {
-				if action == cmdAction.A {
-					if err = cmdAction.B(cmd, args...); err != nil {
-						return err
-					}
-				}
+		for _, arg := range execution.Actions {
+			fmt.Printf("start %s \n", arg)
+			if err := action.Execute(cmd, arg); err != nil {
+				return errors.New(color.RedString("failed to %s the project \n", arg))
 			}
 		}
-		return err
+		return nil
 	}
 }
 
@@ -62,6 +60,9 @@ var execCmd = &cobra.Command{
 	Long:  `Execute any tool that have been setup`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
+			return errors.New(color.RedString(err.Error()))
+		}
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 			return errors.New(color.RedString(err.Error()))
 		}
 		if !lo.Contains(execValidArgs, args[0]) {
@@ -79,5 +80,4 @@ var execCmd = &cobra.Command{
 
 func init() {
 	builderCmd.AddCommand(execCmd)
-	// initialize from configuration
 }

@@ -6,7 +6,7 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
-	"github.com/kcmvp/gob/cmd/shared"
+	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ var initializerFunc = func(_ *cobra.Command, _ []string) {
 		return strings.HasPrefix(plugin.D, golangCiLinter)
 	})
 	if !ok {
-		latest, err := shared.LatestVersion(golangCiLinter, "v1.55.*")
+		latest, err := action.LatestVersion(golangCiLinter, "v1.55.*")
 		if err != nil {
 			latest = defaultVersion
 		}

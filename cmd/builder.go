@@ -6,8 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/builder"
-	"github.com/kcmvp/gob/cmd/shared"
+	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -16,13 +15,11 @@ import (
 
 // builderCmd represents the base command when called without any subcommands
 var builderCmd = &cobra.Command{
-	Use:   "gob",
-	Short: "Go project boot",
-	Long:  `Supply most frequently used tool and best practices for go project development`,
-	ValidArgs: lo.Map(builder.Actions(), func(item shared.CmdAction, _ int) string {
-		return item.A
-	}),
-	Args: cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
+	Use:       "gob",
+	Short:     "Go project boot",
+	Long:      `Supply most frequently used tool and best practices for go project development`,
+	ValidArgs: action.ValidBuilderArgs(),
+	Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		internal.CurProject().Setup(false)
 	},
@@ -35,13 +32,11 @@ var builderCmd = &cobra.Command{
 }
 
 func build(cmd *cobra.Command, args []string) error {
-	actions := lo.Filter(builder.Actions(), func(action shared.CmdAction, _ int) bool {
-		return lo.Contains(args, action.A)
-	})
-	for _, action := range actions {
-		msg := fmt.Sprintf("Start %s project", action.A)
+	args = lo.Uniq(args)
+	for _, arg := range args {
+		msg := fmt.Sprintf("Start %s project", arg)
 		fmt.Printf("%-20s ...... \n", msg)
-		if err := action.B(cmd, action.A); err != nil {
+		if err := action.Execute(cmd, arg); err != nil {
 			return err
 		}
 	}
@@ -73,8 +68,7 @@ func init() {
 		}).Else(nil)
 	})
 	builderCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	builderCmd.Flags().BoolVar(&builder.CleanCache, builder.CleanCacheFlag, false, "to remove the entire go build cache")
-	builderCmd.Flags().BoolVar(&builder.CleanTestCache, builder.CleanTestCacheFlag, false, "to expire all test results in the go build cache")
-	builderCmd.Flags().BoolVar(&builder.CleanModCache, builder.CleanModCacheFlag, false, "to remove the entire module download cache")
-	builderCmd.Flags().BoolVar(&builder.LintAll, builder.LintAllFlag, false, "lint scan all source code, default only on changed source code")
+	builderCmd.Flags().BoolVar(&action.CleanCache, action.CleanCacheFlag, false, "to remove the entire go build cache")
+	builderCmd.Flags().BoolVar(&action.CleanTestCache, action.CleanTestCacheFlag, false, "to expire all test results in the go build cache")
+	builderCmd.Flags().BoolVar(&action.CleanModCache, action.CleanModCacheFlag, false, "to remove the entire module download cache")
 }

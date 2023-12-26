@@ -3,7 +3,7 @@ run:
   tests: false
 output:
   sort-results: true
-  format: html
+  format: tab
 linters:
   disable-all: true
   enable:
@@ -14,8 +14,11 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-    - varcheck
     - gosec
     - gofumpt
-    - nosnakecase
     - goconst
+    - revive
+issues:
+  new: true
+  new-from-rev: HEAD
+  fix: true
