@@ -63,7 +63,7 @@ func TestInstallPlugin(t *testing.T) {
 	builderCmd.SetArgs([]string{"plugin", "install", fiximports, "-a=lint", "-c=lint-run"})
 	err = builderCmd.Execute()
 	assert.NoError(t, err)
-	builderCmd.SetArgs([]string{"plugin"})
+	builderCmd.SetArgs([]string{"plugin", "list"})
 	err = builderCmd.Execute()
 	assert.NoError(t, err)
 	plugin, ok = lo.Find(internal.CurProject().Plugins(), func(item lo.Tuple4[string, string, string, string]) bool {
@@ -77,7 +77,7 @@ func TestInstallPlugin(t *testing.T) {
 }
 
 func TestInstallPluginWithVersion(t *testing.T) {
-	ver, err := action.LatestVersion("github.com/hhatto/gocloc/cmd/gocloc", "")
+	_, err := action.LatestVersion("github.com/hhatto/gocloc/cmd/gocloc", "")
 	assert.NoError(t, err)
 	tests := []struct {
 		name    string
@@ -90,11 +90,43 @@ func TestInstallPluginWithVersion(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ver1, err1 := install(test.url)
+			err1 := install(nil, "", test.url)
 			assert.True(t, test.wantErr == (err1 != nil))
-			if err1 == nil {
-				assert.Equal(t, ver, ver1)
-			}
+		})
+	}
+}
+
+func TestPluginArgs(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{
+			"no args",
+			[]string{},
+			true,
+		},
+		{
+			"first not match",
+			[]string{"def", "list"},
+			true,
+		},
+		{
+			"install without url",
+			[]string{"install", ""},
+			true,
+		},
+		{
+			"install with url",
+			[]string{"install", v6},
+			false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := pluginCmd.Args(nil, test.args)
+			assert.True(t, test.wantErr == (err != nil))
 		})
 	}
 }

@@ -24,15 +24,15 @@ var alias string
 var command string
 
 // Install the specified tool as gob plugin
-func install(args ...string) (string, error) {
+func install(_ *cobra.Command, args ...string) error {
 	var ver string
 	var err error
-	url := args[0]
+	url := args[1]
 	parts := strings.Split(url, "@")
 	if len(parts) != 2 || strings.HasPrefix(parts[1], "latest") {
 		ver, err = action.LatestVersion(parts[0], "")
 		if err != nil {
-			return ver, fmt.Errorf("please use specific version of the tool")
+			return fmt.Errorf("please use specific version of the tool")
 		}
 		url = fmt.Sprintf("%s@%s", parts[0], ver)
 	}
@@ -41,10 +41,10 @@ func install(args ...string) (string, error) {
 		color.Yellow("Plugin %s exists", url)
 		err = nil
 	}
-	return ver, err
+	return err
 }
 
-func list() {
+func list(_ *cobra.Command, _ ...string) error {
 	plugins := internal.CurProject().Plugins()
 	ct := table.Table{}
 	ct.SetTitle("Installed Plugins")
@@ -61,41 +61,56 @@ func list() {
 	})
 	ct.AppendRows(rows)
 	fmt.Println(ct.Render())
+	return nil
+}
+
+var pluginCmdAction = []action.CmdAction{
+	{
+		A: "list",
+		B: list,
+	},
+	{
+		A: "install",
+		B: install,
+	},
 }
 
 // pluginCmd represents the plugin command
 var pluginCmd = &cobra.Command{
 	Use:   "plugin",
-	Short: "Install, update or list plugins",
-	Long:  `Install, update or list plugins`,
-	Run: func(cmd *cobra.Command, args []string) {
-		list()
-	},
-}
-
-// installPluginCmd represents the plugin install command
-var installPluginCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install a tool as gob plugin",
-	Long:  `Install a tool as gob plugin`,
+	Short: "Install a new plugin or list installed plugins",
+	Long: `Install a new plugin or list installed plugins
+you can update the plugin by edit gob.yaml directly
+`,
 	Args: func(cmd *cobra.Command, args []string) error {
-		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-			return fmt.Errorf(color.RedString(err.Error()))
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		if !lo.Contains(lo.Map(pluginCmdAction, func(item action.CmdAction, _ int) string {
+			return item.A
+		}), args[0]) {
+			return fmt.Errorf("invalid argument %s", args[0])
+		}
+		if "install" == args[0] && (len(args) < 2 || strings.TrimSpace(args[1]) == "") {
+			return errors.New("miss the mandatory tool url")
 		}
 		return nil
 	},
+	ValidArgs: lo.Map(pluginCmdAction, func(item action.CmdAction, _ int) string {
+		return item.A
+	}),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, err := install(args...)
-		return err
+		cmdAction, _ := lo.Find(pluginCmdAction, func(cmdAction action.CmdAction) bool {
+			return cmdAction.A == args[0]
+		})
+		return cmdAction.B(cmd, args...)
 	},
 }
 
 func init() {
 	// init pluginCmd
 	builderCmd.AddCommand(pluginCmd)
-
 	// init installPluginCmd
-	pluginCmd.AddCommand(installPluginCmd)
-	installPluginCmd.Flags().StringVarP(&alias, "alias", "a", "", "alias of the tool")
-	installPluginCmd.Flags().StringVarP(&command, "command", "c", "", "default command of this tool")
+	pluginCmd.Flags().StringVarP(&alias, "alias", "a", "", "alias of the tool")
+	pluginCmd.Flags().StringVarP(&command, "command", "c", "", "default command of this tool")
 }
