@@ -100,8 +100,6 @@ func Execute(cmd *cobra.Command, args ...string) error {
 		err = exeCmd.Wait()
 		if err != nil {
 			color.Red("%s report is generated at %s \n", args[0], filepath.Join(internal.CurProject().Target(), fmt.Sprintf("%s.log", args[0])))
-		} else {
-			color.Green("execute %s successfully on project \n", args[0])
 		}
 		return err
 	}
