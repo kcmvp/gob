@@ -99,7 +99,7 @@ func init() {
 	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}:{{.Path}}")
 	output, err := cmd.Output()
 	if err != nil || len(string(output)) == 0 {
-		log.Fatal(color.RedString("Error executing command: %v", err))
+		log.Fatal(color.RedString("Error: please execute command in project root directory"))
 	}
 
 	item := strings.Split(strings.TrimSpace(string(output)), ":")
@@ -112,7 +112,7 @@ func init() {
 	cmd = exec.Command("go", "list", "-f", "{{if not .Standard}}{{.ImportPath}}{{end}}", "-deps")
 	output, err = cmd.Output()
 	if err != nil {
-		log.Fatal(color.RedString("Error executing command: %v", err))
+		log.Fatal(color.RedString("Error: please execute command in project root directory"))
 	}
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	var deps []string
