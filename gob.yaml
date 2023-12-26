@@ -4,7 +4,6 @@ exec:
         - lint
         - test
     pre-push-hook:
-        - lint
         - test
 plugins:
     gocloc:
