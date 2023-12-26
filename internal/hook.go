@@ -18,7 +18,6 @@ const (
 	CommitMsg = "commit-msg"
 	PreCommit = "pre-commit"
 	PrePush   = "pre-push"
-	////exec command name
 )
 
 var CommitMsgCmd = fmt.Sprintf("%s-hook", CommitMsg)
@@ -73,7 +72,7 @@ func (project *Project) Setup(init bool) {
 		hook := map[string]any{
 			fmt.Sprintf("%s.%s", ExecKey, CommitMsgCmd): "^#[0-9]+:\\s*.{10,}$",
 			fmt.Sprintf("%s.%s", ExecKey, PreCommitCmd): []string{"lint", "test"},
-			fmt.Sprintf("%s.%s", ExecKey, PrePushCmd):   []string{"lint", "test"},
+			fmt.Sprintf("%s.%s", ExecKey, PrePushCmd):   []string{"test"},
 		}
 		project.viper.MergeConfigMap(hook)
 		project.viper.WriteConfigAs(project.Configuration())
