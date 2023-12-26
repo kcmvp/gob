@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/go-git/go-git/v5"
 	"github.com/samber/lo"
 	lop "github.com/samber/lo/parallel"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -79,7 +79,7 @@ func (project *Project) Setup(init bool) {
 		project.viper.WriteConfigAs(project.Configuration())
 	}
 	// always generate hook script
-	if _, err := git.PlainOpen(CurProject().Root()); err != nil {
+	if _, err := exec.Command("git", "status").CombinedOutput(); err != nil {
 		if init {
 			color.Yellow("Project is not in the source control")
 		}
