@@ -29,7 +29,7 @@ func setupVersion() {
 	// create version.go
 	infra := filepath.Join(internal.CurProject().Root(), "infra")
 	if _, err := os.Stat(infra); err != nil {
-		os.Mkdir(infra, os.ModePerm) // nolint
+		os.Mkdir(infra, 0700) // nolint
 	}
 	ver := filepath.Join(infra, "version.go")
 	if _, err := os.Stat(ver); err != nil {
