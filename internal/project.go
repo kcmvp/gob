@@ -294,6 +294,27 @@ func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) err
 	}
 }
 
+func InGit() bool {
+	_, err := exec.Command("git", "status").CombinedOutput()
+	return err == nil
+}
+
+func Version() string {
+	ver := "unknown"
+	if InGit() {
+		if output, err := exec.Command("git", "rev-parse", "HEAD").CombinedOutput(); err == nil {
+			hash := strings.ReplaceAll(string(output), "\n", "")
+			tag, err := exec.Command("git", "describe", "--tag", hash).CombinedOutput()
+			if err == nil {
+				if date, err := exec.Command("git", "show", "--format=%cd", "--date=format:%Y/%m/%d", hash).CombinedOutput(); err == nil {
+					ver = fmt.Sprintf("%s@%s", strings.ReplaceAll(string(tag), "\n", ""), strings.ReplaceAll(string(date), "\n", ""))
+				}
+			}
+		}
+	}
+	return ver
+}
+
 // Windows return true when current os is Windows
 func Windows() bool {
 	return runtime.GOOS == "windows"

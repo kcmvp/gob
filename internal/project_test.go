@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -46,4 +47,9 @@ func TestInstallPlugin(t *testing.T) {
 	assert.Equal(t, 1, len(CurProject().Plugins()))
 	assert.Equal(t, plugin.B, "callvisv7")
 	assert.Equal(t, plugin.C, "run")
+}
+
+func TestVersion(t *testing.T) {
+	assert.True(t, strings.HasPrefix(Version(), "v0.0.2"))
+	assert.True(t, strings.Contains(Version(), "@"))
 }
