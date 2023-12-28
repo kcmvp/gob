@@ -299,20 +299,30 @@ func InGit() bool {
 	return err == nil
 }
 
+var unknownVersion = "unknown"
+
 func Version() string {
-	ver := "unknown"
-	if InGit() {
-		if output, err := exec.Command("git", "rev-parse", "HEAD").CombinedOutput(); err == nil {
-			hash := strings.ReplaceAll(string(output), "\n", "")
-			tag, err := exec.Command("git", "describe", "--tag", hash).CombinedOutput()
-			if err == nil {
-				if date, err := exec.Command("git", "show", "--format=%cd", "--date=format:%Y/%m/%d", hash).CombinedOutput(); err == nil {
-					ver = fmt.Sprintf("%s@%s", strings.ReplaceAll(string(tag), "\n", ""), strings.ReplaceAll(string(date), "\n", ""))
-				}
-			}
+	if output, err := exec.Command("git", "rev-parse", "HEAD").CombinedOutput(); err == nil {
+		hash := strings.ReplaceAll(string(output), "\n", "")
+		output, err = exec.Command("git", "describe", "--tag", hash).CombinedOutput()
+		if err != nil {
+			return unknownVersion
+		}
+		tag := strings.ReplaceAll(string(output), "\n", "")
+		output, _ = exec.Command("git", "status", "--short").CombinedOutput()
+		if lo.ContainsBy(strings.Split(string(output), "\n"), func(line string) bool {
+			line = strings.TrimSpace(strings.ToUpper(line))
+			return strings.HasPrefix(line, "M ") ||
+				strings.HasSuffix(line, "D ") ||
+				strings.HasSuffix(line, "?? ")
+		}) {
+			return fmt.Sprintf("%s@stage", tag)
+		}
+		if output, err = exec.Command("git", "show", "--format=%cd", "--date=format:%Y/%m/%d", hash).CombinedOutput(); err == nil {
+			return fmt.Sprintf("%s@%s", tag, strings.ReplaceAll(string(output), "\n", ""))
 		}
 	}
-	return ver
+	return unknownVersion
 }
 
 // Windows return true when current os is Windows

@@ -2,6 +2,7 @@ package action
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -82,13 +83,9 @@ var buildCommand = func(_ *cobra.Command, args ...string) error {
 				return fmt.Errorf("file %s has already built as %s, please rename %s", f, binary, mainFile)
 			}
 			output := filepath.Join(internal.CurProject().Target(), binary)
-			versionFlag := fmt.Sprintf("-X 'main.buildVersion=%s'", internal.Version())
-			// try to build the binary with version first
+			versionFlag := fmt.Sprintf("-X '%s/infra.buildVersion=%s'", internal.CurProject().Module(), internal.Version())
 			if _, err := exec.Command("go", "build", "-ldflags", versionFlag, "-o", output, mainFile).CombinedOutput(); err != nil { //nolint
-				color.Yellow("no version variable 'buildVersion' defined in the main package")
-				if _, err := exec.Command("go", "build", "-o", output, mainFile).CombinedOutput(); err != nil {
-					return err
-				}
+				return errors.New(color.RedString("failed to build the project: %s", err.Error()))
 			}
 			fmt.Printf("Build %s to %s successfully\n", mainFile, output)
 			bm[binary] = output

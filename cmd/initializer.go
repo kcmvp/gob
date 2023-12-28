@@ -21,6 +21,22 @@ const defaultVersion = "v1.55.1"
 //go:embed resources/.golangci.yaml
 var golangci []byte
 
+//go:embed resources/version.tmpl
+var versionTmp []byte
+
+func setupVersion() {
+	// check config folder
+	// create version.go
+	infra := filepath.Join(internal.CurProject().Root(), "infra")
+	if _, err := os.Stat(infra); err != nil {
+		os.Mkdir(infra, os.ModePerm) // nolint
+	}
+	ver := filepath.Join(infra, "version.go")
+	if _, err := os.Stat(ver); err != nil {
+		os.WriteFile(ver, versionTmp, 0o666) //nolint
+	}
+}
+
 var initializerFunc = func(_ *cobra.Command, _ []string) {
 	fmt.Println("Initialize configuration ......")
 	_, ok := lo.Find(internal.CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string]) bool {
@@ -38,6 +54,7 @@ var initializerFunc = func(_ *cobra.Command, _ []string) {
 		}
 	}
 	internal.CurProject().Setup(true)
+	setupVersion()
 }
 
 // initializerCmd represents the init command
