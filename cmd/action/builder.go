@@ -2,6 +2,7 @@ package action
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -71,26 +72,28 @@ var buildCommand = func(_ *cobra.Command, args ...string) error {
 	}
 	bm := map[string]string{}
 	for _, dir := range dirs {
-		mf, err := findMain(dir)
+		mainFile, err := findMain(dir)
 		if err != nil {
 			return err
 		}
-		if len(mf) > 0 {
+		if len(mainFile) > 0 {
 			// action
-			binary := strings.TrimSuffix(filepath.Base(mf), ".go")
+			binary := strings.TrimSuffix(filepath.Base(mainFile), ".go")
 			if f, exists := bm[binary]; exists {
-				return fmt.Errorf("file %s has already built as %s, please rename %s", f, binary, mf)
+				return fmt.Errorf("file %s has already built as %s, please rename %s", f, binary, mainFile)
 			}
-			output := filepath.Join(internal.CurProject().Root(), internal.CurProject().Target(), binary)
-			if _, err := exec.Command("go", "build", "-o", output, mf).CombinedOutput(); err != nil { //nolint
-				return err
+			output := filepath.Join(internal.CurProject().Target(), binary)
+			versionFlag := fmt.Sprintf("-X '%s/infra.buildVersion=%s'", internal.CurProject().Module(), internal.Version())
+			if _, err := exec.Command("go", "build", "-ldflags", versionFlag, "-o", output, mainFile).CombinedOutput(); err != nil { //nolint
+				return errors.New(color.RedString("failed to build the project: %s", err.Error()))
 			}
-			fmt.Printf("Build %s to %s successfully\n", mf, output)
+			fmt.Printf("Build %s to %s successfully\n", mainFile, output)
 			bm[binary] = output
 		} else {
 			color.Yellow("Can not find main function in package %s", dir)
 		}
 	}
+	//
 	return nil
 }
 

@@ -294,6 +294,37 @@ func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) err
 	}
 }
 
+func InGit() bool {
+	_, err := exec.Command("git", "status").CombinedOutput()
+	return err == nil
+}
+
+var unknownVersion = "unknown"
+
+func Version() string {
+	if output, err := exec.Command("git", "rev-parse", "HEAD").CombinedOutput(); err == nil {
+		hash := strings.ReplaceAll(string(output), "\n", "")
+		output, err = exec.Command("git", "describe", "--tag", hash).CombinedOutput()
+		if err != nil {
+			return unknownVersion
+		}
+		tag := strings.ReplaceAll(string(output), "\n", "")
+		output, _ = exec.Command("git", "status", "--short").CombinedOutput()
+		if lo.ContainsBy(strings.Split(string(output), "\n"), func(line string) bool {
+			line = strings.TrimSpace(strings.ToUpper(line))
+			return strings.HasPrefix(line, "M ") ||
+				strings.HasSuffix(line, "D ") ||
+				strings.HasSuffix(line, "?? ")
+		}) {
+			return fmt.Sprintf("%s@stage", tag)
+		}
+		if output, err = exec.Command("git", "show", "--format=%cd", "--date=format:%Y/%m/%d", hash).CombinedOutput(); err == nil {
+			return fmt.Sprintf("%s@%s", tag, strings.ReplaceAll(string(output), "\n", ""))
+		}
+	}
+	return unknownVersion
+}
+
 // Windows return true when current os is Windows
 func Windows() bool {
 	return runtime.GOOS == "windows"
