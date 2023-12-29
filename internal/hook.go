@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/samber/lo"
-	lop "github.com/samber/lo/parallel"
 	"os"
 	"path/filepath"
 	"strings"
@@ -114,8 +113,10 @@ func (project *Project) Setup(init bool) {
 			os.Remove(filepath.Join(CurProject().HookDir(), name))
 		}
 	}
-	// install missing plugins
-	lop.ForEach(CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
+	if !init {
+		color.Cyan("checking plugins ......")
+	}
+	lo.ForEach(CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
 		if !CurProject().PluginInstalled(plugin.D) {
 			CurProject().InstallPlugin(plugin.D, plugin.B, plugin.C)
 		}

@@ -45,20 +45,25 @@ type Project struct {
 
 func TestCallee() (bool, string) {
 	var test bool
-	var method string
+	var file string
 	callers := make([]uintptr, 20)
 	n := runtime.Callers(0, callers)
 	frames := runtime.CallersFrames(callers[:n])
 	for {
 		frame, more := frames.Next()
-		//fmt.Printf("file name %s:%d\n", frame.File, frame.Line)
 		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, module)
+		// fmt.Printf("%s - %s \n", frame.File, frame.Function)
 		if test || !more {
-			method, _ = lo.Last(strings.Split(frame.Function, "."))
+			items := strings.Split(frame.File, "/")
+			items = lo.Map(items[len(items)-2:], func(item string, _ int) string {
+				return strings.ReplaceAll(item, ".go", "")
+			})
+			file = strings.Join(items, "-")
 			break
 		}
 	}
-	return test, method
+	// fmt.Println("****************")
+	return test, file
 }
 
 func (project *Project) HookDir() string {
@@ -207,7 +212,8 @@ func NormalizePlugin(url string) (base string, name string) {
 // PluginInstalled return true if the plugin is installed
 func (project *Project) PluginInstalled(url string) bool {
 	_, name := NormalizePlugin(url)
-	_, err := os.Stat(filepath.Join(os.Getenv("GOPATH"), "bin", name))
+	gopath := GoPath()
+	_, err := os.Stat(filepath.Join(gopath, name))
 	return err == nil
 }
 
@@ -236,7 +242,6 @@ func (project *Project) PluginCommands() []lo.Tuple3[string, string, string] {
 // InstallPlugin install the tool as gob plugin save it in gob.yml
 func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) error {
 	base, name := NormalizePlugin(url)
-	gopath := os.Getenv("GOPATH")
 	installed := project.PluginInstalled(url)
 	configured := project.PluginConfigured(url)
 	if installed && configured {
@@ -244,16 +249,20 @@ func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) err
 	} else {
 		var err error
 		if !installed {
-			// install only
-			tempGoPath, _ := os.MkdirTemp("", base)
-			os.Setenv("GOPATH", tempGoPath)
+			tempGoPath := TemporaryGoPath()
 			fmt.Printf("Installing %s ...... \n", url)
-			_, err = exec.Command("go", "install", url).CombinedOutput()
+			cmd := exec.Command("go", "install", url)
+			cmd.Env = lo.Map(os.Environ(), func(pair string, _ int) string {
+				if strings.HasPrefix(pair, "GOPATH=") {
+					return fmt.Sprintf("%s=%s", "GOPATH", tempGoPath)
+				}
+				return pair
+			})
+			_, err = cmd.CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to install %s: %v", url, err)
 			}
 			defer func() {
-				os.Setenv("GOPATH", gopath)
 				os.RemoveAll(tempGoPath)
 			}()
 			if err = filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
@@ -261,7 +270,7 @@ func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) err
 					return err
 				}
 				if !d.IsDir() && strings.HasPrefix(d.Name(), base) {
-					err = os.Rename(path, filepath.Join(gopath, "bin", name))
+					err = os.Rename(path, filepath.Join(GoPath(), name))
 					if err != nil {
 						return err
 					}
@@ -323,6 +332,20 @@ func Version() string {
 		}
 	}
 	return unknownVersion
+}
+
+func TemporaryGoPath() string {
+	dir, _ := os.MkdirTemp("", "test")
+	return dir
+}
+
+func GoPath() string {
+	if ok, method := TestCallee(); ok {
+		dir := filepath.Join(os.TempDir(), method, "bin")
+		os.MkdirAll(dir, 0o700) //nolint
+		return dir
+	}
+	return filepath.Join(os.Getenv("GOPATH"), "bin")
 }
 
 // Windows return true when current os is Windows

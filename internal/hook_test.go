@@ -30,7 +30,7 @@ func (suite *GitHookTestSuite) TearDownSuite() {
 
 func TestGitHookSuite(t *testing.T) {
 	suite.Run(t, &GitHookTestSuite{
-		gopath: os.Getenv("GOPATH"),
+		gopath: GoPath(),
 		start:  time.Now().UnixNano(),
 	})
 }

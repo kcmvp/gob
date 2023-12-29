@@ -13,6 +13,10 @@ import (
 	"os"
 )
 
+//func persistentPreRun(_ *cobra.Command, _ []string) {
+//	internal.CurProject().Setup(false)
+//}
+
 // builderCmd represents the base command when called without any subcommands
 var builderCmd = &cobra.Command{
 	Use:       "gob",
