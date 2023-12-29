@@ -1,9 +1,6 @@
-//go:build ignore
-
 package cmd
 
 import (
-	"fmt"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -23,8 +20,12 @@ type BuilderTestSuit struct {
 func TestBuilderTestSuit(t *testing.T) {
 	suite.Run(t, &BuilderTestSuit{
 		start:  time.Now().UnixNano(),
-		gopath: os.Getenv("GOPATH"),
+		gopath: internal.GoPath(),
 	})
+}
+
+func (suite *BuilderTestSuit) SetupTest() {
+	os.RemoveAll(suite.gopath)
 }
 
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
@@ -38,12 +39,9 @@ func (suite *BuilderTestSuit) TestPersistentPreRun() {
 			assert.True(suite.T(), info.ModTime().UnixNano() > suite.start)
 		}
 	}
-	//fmt.Println(internal.CurProject().Configuration())
-	fmt.Println(internal.CurProject().Plugins())
-	// test the missing plugins installation
 	lo.ForEach(internal.CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
 		_, name := internal.NormalizePlugin(plugin.D)
-		_, err := os.Stat(filepath.Join(suite.gopath, "bin", name))
+		_, err := os.Stat(filepath.Join(suite.gopath, name))
 		assert.NoErrorf(suite.T(), err, "plugin should be insalled")
 	})
 }

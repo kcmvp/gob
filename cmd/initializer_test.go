@@ -20,8 +20,12 @@ type InitializationTestSuite struct {
 
 func TestInitializationTestSuit(t *testing.T) {
 	suite.Run(t, &InitializationTestSuite{
-		gopath: os.Getenv("GOPATH"),
+		gopath: internal.GoPath(),
 	})
+}
+
+func (suite *InitializationTestSuite) SetupTest() {
+	os.RemoveAll(suite.gopath)
 }
 
 func (suite *InitializationTestSuite) TestInitializeHook() {
@@ -48,7 +52,7 @@ func (suite *InitializationTestSuite) TestInitializeHook() {
 	assert.True(suite.T(), hasAlias)
 	// verify plugin
 	var installed bool
-	filepath.WalkDir(filepath.Join(suite.gopath, "bin"), func(path string, d fs.DirEntry, err error) error {
+	filepath.WalkDir(suite.gopath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
