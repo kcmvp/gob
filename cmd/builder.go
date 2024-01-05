@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
@@ -13,29 +14,36 @@ import (
 	"os"
 )
 
-//func persistentPreRun(_ *cobra.Command, _ []string) {
-//	internal.CurProject().Setup(false)
-//}
+//go:embed resources
+var resources embed.FS
 
 // builderCmd represents the base command when called without any subcommands
 var builderCmd = &cobra.Command{
-	Use:       "gob",
-	Short:     "Go project boot",
-	Long:      `Supply most frequently used tool and best practices for go project development`,
-	ValidArgs: action.ValidBuilderArgs(),
-	Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.MinimumNArgs(1)),
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		internal.CurProject().Setup(false)
+	Use:   "gob",
+	Short: "Go project boot",
+	Long:  `Supply most frequently used tool and best practices for go project development`,
+	// ValidArgs: action.ValidBuilderArgs(),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return action.ValidBuilderArgs(), cobra.ShellCompDirectiveError
+	},
+	Args: func(cmd *cobra.Command, args []string) error {
+		if !lo.Every(action.ValidBuilderArgs(), args) {
+			return fmt.Errorf("valid args are : %s", action.ValidBuilderArgs())
+		}
+		return cobra.MinimumNArgs(1)(cmd, args)
+	},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return internal.CurProject().Validate()
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := build(cmd, args); err != nil {
+		if err := execute(cmd, args); err != nil {
 			return errors.New(color.RedString("%s \n", err.Error()))
 		}
 		return nil
 	},
 }
 
-func build(cmd *cobra.Command, args []string) error {
+func execute(cmd *cobra.Command, args []string) error {
 	args = lo.Uniq(args)
 	for _, arg := range args {
 		msg := fmt.Sprintf("Start %s project", arg)

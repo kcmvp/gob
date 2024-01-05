@@ -7,7 +7,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
-	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -46,13 +45,13 @@ type Project struct {
 func TestCallee() (bool, string) {
 	var test bool
 	var file string
-	callers := make([]uintptr, 20)
+	callers := make([]uintptr, 10)
 	n := runtime.Callers(0, callers)
 	frames := runtime.CallersFrames(callers[:n])
 	for {
 		frame, more := frames.Next()
+		// fmt.Printf("%s->%s:%d\n", frame.File, frame.Function, frame.Line)
 		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, module)
-		// fmt.Printf("%s - %s \n", frame.File, frame.Function)
 		if test || !more {
 			items := strings.Split(frame.File, "/")
 			items = lo.Map(items[len(items)-2:], func(item string, _ int) string {
@@ -62,7 +61,6 @@ func TestCallee() (bool, string) {
 			break
 		}
 	}
-	// fmt.Println("****************")
 	return test, file
 }
 
@@ -79,14 +77,19 @@ func (project *Project) HookDir() string {
 }
 
 func (project *Project) LoadSettings() {
-	testEnv, _ := TestCallee()
+	testEnv, file := TestCallee()
+	// fmt.Printf("caller %s \n", file)
 	v := viper.New()
 	v.SetConfigType("yaml")
 	path := project.Root()
 	name := "gob"
 	if testEnv {
-		name = fmt.Sprintf("gob-%s", lo.RandomString(12, lo.AlphanumericCharset))
-		path = project.Target()
+		path = filepath.Join(project.Target(), file)
+		if _, err := os.Stat(path); err != nil {
+			if err = os.Mkdir(path, os.ModePerm); err != nil {
+				color.Red("failed to create temporary directory %s", path)
+			}
+		}
 	}
 	v.AddConfigPath(path)
 	v.SetConfigName(name)
@@ -182,125 +185,48 @@ func FindGoFilesByPkg(pkg string) ([]string, error) {
 	return dirs, nil
 }
 
-// Plugins all the configured plugins
-func (project *Project) Plugins() []lo.Tuple4[string, string, string, string] {
+func (project *Project) Plugins() []Plugin {
 	if v := project.viper.Get(pluginKey); v != nil {
 		plugins := v.(map[string]any)
-		return lo.MapToSlice(plugins, func(key string, value any) lo.Tuple4[string, string, string, string] {
-			attr := value.(map[string]any)
-			//@todo validate attribute for null or empty
-			return lo.Tuple4[string, string, string, string]{
-				A: key, B: attr["alias"].(string), C: attr["command"].(string), D: attr["url"].(string),
+		return lo.MapToSlice(plugins, func(key string, _ any) Plugin {
+			var plugin Plugin
+			key = fmt.Sprintf("%s.%s", pluginKey, key)
+			if err := project.viper.UnmarshalKey(key, &plugin); err != nil {
+				color.Yellow("failed to parse plugin %s: %s", key, err.Error())
 			}
+			if err := plugin.init(); err != nil {
+				color.Red("failed to init plugin %s", plugin.name)
+			}
+			return plugin
 		})
 	} else {
-		return []lo.Tuple4[string, string, string, string]{}
+		return []Plugin{}
 	}
 }
 
-// NormalizePlugin returns the base name and versioned name of the plugin
-func NormalizePlugin(url string) (base string, name string) {
-	name, _ = lo.Last(strings.Split(url, "/"))
-	base = strings.Split(name, "@")[0]
-	name = strings.ReplaceAll(name, "@", "-")
-	if Windows() {
-		name = fmt.Sprintf("%s.exe", name)
+func (project *Project) SetupPlugin(plugin Plugin) {
+	if !project.isSetup(plugin) {
+		if plugin.setup() != nil {
+			color.Red("failed to setup plugin %s", plugin.name)
+		}
 	}
-	return
-}
-
-// PluginInstalled return true if the plugin is installed
-func (project *Project) PluginInstalled(url string) bool {
-	_, name := NormalizePlugin(url)
-	gopath := GoPath()
-	_, err := os.Stat(filepath.Join(gopath, name))
-	return err == nil
-}
-
-func (project *Project) PluginConfigured(url string) bool {
-	_, ok := lo.Find(CurProject().Plugins(), func(item lo.Tuple4[string, string, string, string]) bool {
-		return item.D == strings.TrimSpace(url)
-	})
-	return ok
-}
-
-func (project *Project) PluginCommands() []lo.Tuple3[string, string, string] {
-	plugins := lo.Filter(CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) bool {
-		return len(strings.TrimSpace(plugin.B)) > 0
-	})
-	return lo.Map(plugins, func(plugin lo.Tuple4[string, string, string, string], _ int) lo.Tuple3[string, string, string] {
-		cmd, _ := lo.Last(strings.Split(plugin.D, "/"))
-		cmd = strings.ReplaceAll(cmd, "@", "-")
-		return lo.Tuple3[string, string, string]{
-			A: plugin.B,
-			B: cmd,
-			C: plugin.C,
-		}
-	})
-}
-
-// InstallPlugin install the tool as gob plugin save it in gob.yml
-func (project *Project) InstallPlugin(url string, aliasAndCommand ...string) error {
-	base, name := NormalizePlugin(url)
-	installed := project.PluginInstalled(url)
-	configured := project.PluginConfigured(url)
-	if installed && configured {
-		return PluginExists
-	} else {
-		var err error
-		if !installed {
-			tempGoPath := TemporaryGoPath()
-			fmt.Printf("Installing %s ...... \n", url)
-			cmd := exec.Command("go", "install", url)
-			cmd.Env = lo.Map(os.Environ(), func(pair string, _ int) string {
-				if strings.HasPrefix(pair, "GOPATH=") {
-					return fmt.Sprintf("%s=%s", "GOPATH", tempGoPath)
-				}
-				return pair
-			})
-			_, err = cmd.CombinedOutput()
-			if err != nil {
-				return fmt.Errorf("failed to install %s: %v", url, err)
-			}
-			defer func() {
-				os.RemoveAll(tempGoPath)
-			}()
-			if err = filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-				if !d.IsDir() && strings.HasPrefix(d.Name(), base) {
-					err = os.Rename(path, filepath.Join(GoPath(), name))
-					if err != nil {
-						return err
-					}
-					fmt.Printf("%s is installed successfully \n", url)
-					return filepath.SkipAll
-				}
-				return err
-			}); err != nil {
-				return err
-			}
-		}
-		if !configured {
-			// install & update configuration
-			fmt.Printf("Configuration is generated at %s \n", CurProject().Configuration())
-			var alias, command string
-			if len(aliasAndCommand) > 0 {
-				alias = aliasAndCommand[0]
-			}
-			if len(aliasAndCommand) > 1 {
-				command = aliasAndCommand[1]
-			}
-			project.viper.Set(fmt.Sprintf("%s.%s.%s", pluginKey, base, "alias"), alias)
-			project.viper.Set(fmt.Sprintf("%s.%s.%s", pluginKey, base, "command"), command)
-			project.viper.Set(fmt.Sprintf("%s.%s.%s", pluginKey, base, "url"), url)
-			if err = project.viper.WriteConfigAs(project.Configuration()); err != nil {
-				color.Red(err.Error())
-			}
-		}
-		return err
+	if plugin.install() != nil {
+		color.Red("failed to install plugin %s", plugin.name)
 	}
+}
+
+func (project *Project) isSetup(plugin Plugin) bool {
+	return lo.ContainsBy(project.Plugins(), func(item Plugin) bool {
+		return plugin.Module() == item.Module()
+	})
+}
+
+func (project *Project) Validate() error {
+	project.SetupHooks(false)
+	lo.ForEach(project.Plugins(), func(plugin Plugin, _ int) {
+		plugin.install() //nolint
+	})
+	return nil
 }
 
 func InGit() bool {

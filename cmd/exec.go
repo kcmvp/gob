@@ -32,11 +32,11 @@ var validateCommitMsg action.Execution = func(cmd *cobra.Command, args ...string
 	return nil
 }
 
-var execValidArgs = func() []string {
+func execValidArgs() []string {
 	return lo.Map(internal.CurProject().Executions(), func(exec internal.Execution, _ int) string {
 		return exec.CmdKey
 	})
-}()
+}
 
 func exec(execution internal.Execution, cmd *cobra.Command, args ...string) error {
 	if execution.CmdKey == internal.CommitMsgCmd {
@@ -66,7 +66,7 @@ var execCmd = &cobra.Command{
 		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 			return errors.New(color.RedString(err.Error()))
 		}
-		if !lo.Contains(execValidArgs, args[0]) {
+		if !lo.Contains(execValidArgs(), args[0]) {
 			return errors.New(color.RedString("invalid arg %s", args[0]))
 		}
 		return nil

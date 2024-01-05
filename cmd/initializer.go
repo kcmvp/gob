@@ -5,56 +5,57 @@ package cmd
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
-	"github.com/kcmvp/gob/cmd/action"
+	"github.com/fatih/color"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
+	"github.com/tidwall/gjson"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-const golangCiLinter = "github.com/golangci/golangci-lint/cmd/golangci-lint"
-const defaultVersion = "v1.55.1"
+func builtinPlugins() []internal.Plugin {
+	data, err := resources.ReadFile("resources/config.json")
+	var plugins []internal.Plugin
+	if err == nil {
+		v := gjson.GetBytes(data, "plugins")
+		if err = json.Unmarshal([]byte(v.Raw), &plugins); err != nil {
+			color.Red("failed to parse plugin %s", err.Error())
+		}
+	}
+	return plugins
+}
 
-//go:embed resources/.golangci.yaml
-var golangci []byte
-
-//go:embed resources/version.tmpl
-var versionTmp []byte
-
-func setupVersion() {
-	// check config folder
-	// create version.go
+func initBuildVersion() {
 	infra := filepath.Join(internal.CurProject().Root(), "infra")
 	if _, err := os.Stat(infra); err != nil {
 		os.Mkdir(infra, 0700) // nolint
 	}
 	ver := filepath.Join(infra, "version.go")
 	if _, err := os.Stat(ver); err != nil {
-		os.WriteFile(ver, versionTmp, 0o666) //nolint
+		data, _ := resources.ReadFile("resources/version.tmpl")
+		os.WriteFile(ver, data, 0666) //nolint
 	}
 }
 
-var initializerFunc = func(_ *cobra.Command, _ []string) {
+func initializerFunc(_ *cobra.Command, _ []string) {
 	fmt.Println("Initialize configuration ......")
-	_, ok := lo.Find(internal.CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string]) bool {
-		return strings.HasPrefix(plugin.D, golangCiLinter)
+	initBuildVersion()
+	lo.ForEach(builtinPlugins(), func(plugin internal.Plugin, index int) {
+		internal.CurProject().SetupPlugin(plugin)
+		if len(plugin.Config) > 0 {
+			if _, err := os.Stat(filepath.Join(internal.CurProject().Root(), plugin.Config)); err != nil {
+				data, _ := resources.ReadFile(filepath.Join("resource", plugin.Config))
+				err = os.WriteFile(filepath.Join(internal.CurProject().Root(), plugin.Config), data, os.ModePerm)
+				if err != nil {
+					color.Red("failed to create configuration %s", plugin.Config)
+				}
+			}
+		}
 	})
-	if !ok {
-		latest, err := action.LatestVersion(golangCiLinter, "v1.55.*")
-		if err != nil {
-			latest = defaultVersion
-		}
-		internal.CurProject().InstallPlugin(fmt.Sprintf("%s@%s", golangCiLinter, latest), "lint", "run, ./...")
-		cfg := filepath.Join(internal.CurProject().Root(), ".golangci.yaml")
-		if _, err := os.Stat(cfg); err != nil {
-			os.WriteFile(cfg, golangci, 0666)
-		}
-	}
-	internal.CurProject().Setup(true)
-	setupVersion()
+	internal.CurProject().SetupHooks(true)
 }
 
 // initializerCmd represents the init command
