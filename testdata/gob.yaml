@@ -1,0 +1,17 @@
+exec:
+    commit-msg-hook: ^#[0-9]+:\s*.{10,}$
+    pre-commit-hook:
+        - lint
+        - test
+    pre-push-hook:
+        - test
+plugins:
+    depth:
+        alias: depth
+        args: run ./...
+        url: github.com/KyleBanks/depth/cmd/depth@latest
+    gotestsum:
+        alias: test
+        args: --format testname -- -coverprofile=target/cover.out ./...
+        url: gotest.tools/gotestsum@v1.11.0
+
