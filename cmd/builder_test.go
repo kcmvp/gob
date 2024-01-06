@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +30,7 @@ func (suite *BuilderTestSuit) TearDownTest() {
 }
 
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
-	builderCmd.PersistentPreRun(nil, nil)
+	builderCmd.PersistentPreRunE(nil, nil)
 	hooks := lo.MapToSlice(internal.HookScripts(), func(key string, _ string) string {
 		return key
 	})
@@ -49,7 +48,7 @@ func (suite *BuilderTestSuit) TestPersistentPreRun() {
 
 func (suite *BuilderTestSuit) TestValidArgsFunction() {
 	initializerFunc(nil, nil)
-	args := action.ValidBuilderArgs()
+	args := validBuilderArgs()
 	assert.Equal(suite.T(), 4, len(args))
 	assert.Equal(suite.T(), []string{"build", "clean", "test", "lint"}, args)
 }

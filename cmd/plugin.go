@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -52,7 +51,7 @@ func list(_ *cobra.Command, _ ...string) error {
 	return nil
 }
 
-var pluginCmdAction = []action.CmdAction{
+var pluginCmdAction = []Action{
 	{
 		A: "list",
 		B: list,
@@ -74,7 +73,7 @@ you can update the plugin by edit gob.yaml directly
 		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 			return err
 		}
-		if !lo.Contains(lo.Map(pluginCmdAction, func(item action.CmdAction, _ int) string {
+		if !lo.Contains(lo.Map(pluginCmdAction, func(item Action, _ int) string {
 			return item.A
 		}), args[0]) {
 			return fmt.Errorf("invalid argument %s", args[0])
@@ -84,11 +83,11 @@ you can update the plugin by edit gob.yaml directly
 		}
 		return nil
 	},
-	ValidArgs: lo.Map(pluginCmdAction, func(item action.CmdAction, _ int) string {
+	ValidArgs: lo.Map(pluginCmdAction, func(item Action, _ int) string {
 		return item.A
 	}),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cmdAction, _ := lo.Find(pluginCmdAction, func(cmdAction action.CmdAction) bool {
+		cmdAction, _ := lo.Find(pluginCmdAction, func(cmdAction Action) bool {
 			return cmdAction.A == args[0]
 		})
 		return cmdAction.B(cmd, args[1:]...)

@@ -3,12 +3,14 @@ module github.com/kcmvp/gob
 go 1.21.4
 
 require (
+	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.16.0
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/samber/lo v1.38.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
+	github.com/tidwall/gjson v1.17.0
 )
 
 require (
@@ -33,8 +35,6 @@ require (
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/thedevsaddam/gojsonq/v2 v2.5.2 // indirect
-	github.com/tidwall/gjson v1.17.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect

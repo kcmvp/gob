@@ -7,7 +7,6 @@ output:
 linters:
   disable-all: true
   enable:
-    - deadcode
     - errcheck
     - gosimple
     - govet
@@ -18,9 +17,6 @@ linters:
     - gofumpt
     - goconst
     - revive
-    - goimports
-    - gofmt
-    - gofumpt
 issues:
   new: true
   new-from-rev: HEAD

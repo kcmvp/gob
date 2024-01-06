@@ -1,10 +1,10 @@
 package internal
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kcmvp/gob/cmd/shared" //nolint
 	"io/fs"
 	"os"
 	"os/exec"
@@ -166,34 +166,6 @@ func (plugin Plugin) install() error {
 }
 
 func (plugin Plugin) Execute() error {
-	exeCmd := exec.Command(plugin.Binary(), plugin.Command, plugin.Args) //nolint:gosec
-	stdout, err := exeCmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.Name())))
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if info, _ := log.Stat(); info.Size() == 0 {
-			os.Remove(log.Name())
-		} else {
-			log.Close()
-			fmt.Printf("log is generated at %s \n", log.Name())
-		}
-	}()
-	err = exeCmd.Start()
-	if err != nil {
-		return err
-	}
-	scanner := bufio.NewScanner(stdout)
-	go func() {
-		for scanner.Scan() {
-			line := scanner.Text()
-			fmt.Fprintln(log, line)
-		}
-	}()
-	// Wait for the command to finish
-	return exeCmd.Wait()
+	exeCmd := exec.Command(plugin.Binary(), strings.Split(plugin.Args, " ")...) //nolint #gosec
+	return shared.StreamExtCmdOutput(exeCmd, filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.Name())))
 }

@@ -1,9 +1,11 @@
-package action
+package cmd
 
 import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/kcmvp/gob/cmd/shared" //nolint
+	"github.com/samber/lo"            //nolint
 	"io/fs"
 	"os"
 	"os/exec"
@@ -28,10 +30,22 @@ const (
 	CleanModCacheFlag  = "modcache"
 )
 
-var builtinActions = []CmdAction{
+var builtinActions = []Action{
 	{A: "build", B: buildCommand},
 	{A: "clean", B: cleanCommand},
 	{A: "test", B: testCommand},
+}
+
+func validBuilderArgs() []string {
+	builtIn := lo.Map(builtinActions, func(action Action, _ int) string {
+		return action.A
+	})
+	lo.ForEach(internal.CurProject().Plugins(), func(item internal.Plugin, _ int) {
+		if !lo.Contains(builtIn, item.Alias) {
+			builtIn = append(builtIn, item.Alias)
+		}
+	})
+	return builtIn
 }
 
 func findMain(dir string) (string, error) {
@@ -123,7 +137,7 @@ var cleanCommand = func(cmd *cobra.Command, _ ...string) error {
 var testCommand = func(_ *cobra.Command, args ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", internal.CurProject().Target())
 	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...) //nolint
-	err := StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()), "FAIL:")
+	err := shared.StreamExtCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()))
 	if err != nil {
 		return err
 	}

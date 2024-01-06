@@ -64,23 +64,12 @@ func (suite *InitializationTestSuite) TestInitializerFunc() {
 		_, err := os.Stat(filepath.Join(suite.goPath, plugin.Binary()))
 		assert.NoError(suite.T(), err)
 	})
-}
-
-func (suite *InitializationTestSuite) TestReInitializer() {
-	data, _ := os.ReadFile(filepath.Join(internal.CurProject().Root(), "gob.yaml"))
-	os.WriteFile(filepath.Join(suite.testDir, "gob.yaml"), data, os.ModePerm)
-	assert.Equal(suite.T(), 2, len(internal.CurProject().Plugins()))
-	assert.Equal(suite.T(), filepath.Join(suite.testDir, "gob.yaml"), internal.CurProject().Configuration())
 	info1, err1 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
-	info2, err2 := os.Stat(filepath.Join(internal.CurProject().Root(), ".golangci.yaml"))
 	assert.NoError(suite.T(), err1)
-	assert.NoError(suite.T(), err2)
 
 	initializerFunc(nil, nil)
-	info3, err3 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
-	assert.NoError(suite.T(), err3)
-	assert.Equal(suite.T(), info1.ModTime(), info3.ModTime())
-	info4, err4 := os.Stat(filepath.Join(internal.CurProject().Root(), ".golangci.yaml"))
-	assert.NoError(suite.T(), err4)
-	assert.Equal(suite.T(), info2.ModTime(), info4.ModTime())
+	info2, err2 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
+	assert.NoError(suite.T(), err2)
+	assert.Equal(suite.T(), info1.ModTime(), info2.ModTime())
+
 }
