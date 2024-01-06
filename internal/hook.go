@@ -7,11 +7,10 @@ import (
 	"github.com/samber/lo"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const (
-	ExecKey = "exec"
+	execCfgKey = "exec"
 	//hook script name
 	CommitMsg = "commit-msg"
 	PreCommit = "pre-commit"
@@ -22,10 +21,12 @@ var CommitMsgCmd = fmt.Sprintf("%s-hook", CommitMsg)
 var PreCommitCmd = fmt.Sprintf("%s-hook", PreCommit)
 var PrePushCmd = fmt.Sprintf("%s-hook", PrePush)
 
-var HookScripts = map[string]string{
-	CommitMsg: fmt.Sprintf("gob exec %s $1", CommitMsgCmd),
-	PreCommit: fmt.Sprintf("gob exec %s", PreCommitCmd),
-	PrePush:   fmt.Sprintf("gob exec %s", PrePushCmd),
+func HookScripts() map[string]string {
+	return map[string]string{
+		CommitMsg: fmt.Sprintf("gob exec %s $1", CommitMsgCmd),
+		PreCommit: fmt.Sprintf("gob exec %s", PreCommitCmd),
+		PrePush:   fmt.Sprintf("gob exec %s", PrePushCmd),
+	}
 }
 
 type GitHook struct {
@@ -36,7 +37,7 @@ type GitHook struct {
 
 func (project *Project) GitHook() GitHook {
 	var hook GitHook
-	project.viper.UnmarshalKey(ExecKey, &hook)
+	project.config().UnmarshalKey(execCfgKey, &hook) //nolint
 	return hook
 }
 
@@ -46,7 +47,7 @@ type Execution struct {
 }
 
 func (project *Project) Executions() []Execution {
-	values := project.viper.Get(ExecKey).(map[string]any)
+	values := project.config().Get(execCfgKey).(map[string]any)
 	return lo.MapToSlice(values, func(key string, v any) Execution {
 		var actions []string
 		if _, ok := v.(string); ok {
@@ -60,48 +61,39 @@ func (project *Project) Executions() []Execution {
 	})
 }
 
-// Setup git hooks and re-install missing plugins
-func (project *Project) Setup(init bool) {
-	// generate configuration
-	gitHook := CurProject().GitHook()
-	noHook := len(strings.TrimSpace(gitHook.CommitMsg)) == 0 && len(gitHook.PreCommit) == 0 &&
-		len(gitHook.PrePush) == 0
-	if init && noHook {
+// SetupHooks setup git local hooks for project. force means always update gob.yaml
+func (project *Project) SetupHooks(force bool) {
+	if force {
 		hook := map[string]any{
-			fmt.Sprintf("%s.%s", ExecKey, CommitMsgCmd): "^#[0-9]+:\\s*.{10,}$",
-			fmt.Sprintf("%s.%s", ExecKey, PreCommitCmd): []string{"lint", "test"},
-			fmt.Sprintf("%s.%s", ExecKey, PrePushCmd):   []string{"test"},
+			fmt.Sprintf("%s.%s", execCfgKey, CommitMsgCmd): "^#[0-9]+:\\s*.{10,}$",
+			fmt.Sprintf("%s.%s", execCfgKey, PreCommitCmd): []string{"lint", "test"},
+			fmt.Sprintf("%s.%s", execCfgKey, PrePushCmd):   []string{"test"},
 		}
-		project.viper.MergeConfigMap(hook)
-		project.viper.WriteConfigAs(project.Configuration())
+		if err := project.mergeConfig(hook); err != nil {
+			color.Red("failed to setup hook")
+		}
 	}
-	// always generate hook script
 	if !InGit() {
-		if init {
-			color.Yellow("Project is not in the source control")
-		}
+		color.Yellow("project is not in the source control")
 		return
 	}
-	hooks := lo.If(init, lo.MapToSlice(HookScripts, func(key string, _ string) string {
-		return key
-	})).ElseF(func() []string {
-		var scripts []string
-		if len(gitHook.CommitMsg) > 0 {
-			scripts = append(scripts, CommitMsg)
-		}
-		if len(gitHook.PreCommit) > 0 {
-			scripts = append(scripts, PreCommit)
-		}
-		if len(gitHook.PrePush) > 0 {
-			scripts = append(scripts, PrePush)
-		}
-		return scripts
-	})
+	_ = project.config().ReadInConfig()
+	gitHook := CurProject().GitHook()
+	var hooks []string
+	if len(gitHook.CommitMsg) > 0 {
+		hooks = append(hooks, CommitMsg)
+	}
+	if len(gitHook.PreCommit) > 0 {
+		hooks = append(hooks, PreCommit)
+	}
+	if len(gitHook.PrePush) > 0 {
+		hooks = append(hooks, PrePush)
+	}
 	shell := lo.IfF(Windows(), func() string {
 		return "#!/usr/bin/env pwsh\n"
 	}).Else("#!/bin/sh\n")
-	for name, script := range HookScripts {
-		if lo.Contains(hooks, name) {
+	for name, script := range HookScripts() {
+		if lo.Contains(hooks, name) || force {
 			msgHook, _ := os.OpenFile(filepath.Join(CurProject().HookDir(), name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 			writer := bufio.NewWriter(msgHook)
 			writer.WriteString(shell)
@@ -113,12 +105,4 @@ func (project *Project) Setup(init bool) {
 			os.Remove(filepath.Join(CurProject().HookDir(), name))
 		}
 	}
-	if !init {
-		color.Cyan("checking plugins ......")
-	}
-	lo.ForEach(CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
-		if !CurProject().PluginInstalled(plugin.D) {
-			CurProject().InstallPlugin(plugin.D, plugin.B, plugin.C)
-		}
-	})
 }

@@ -1,0 +1,15 @@
+{
+  "plugins": [
+    {
+      "alias": "lint",
+      "command": "run ./...",
+      "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
+      "config": ".golangci.yaml"
+    },
+    {
+      "alias": "test",
+      "args": "--format testname -- -coverprofile=target/cover.out ./...",
+      "url": "gotest.tools/gotestsum"
+    }
+  ]
+}

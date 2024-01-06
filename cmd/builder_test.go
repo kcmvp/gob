@@ -8,40 +8,69 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 type BuilderTestSuit struct {
 	suite.Suite
-	start  int64
-	gopath string
+	gopath  string
+	testDir string
 }
 
 func TestBuilderTestSuit(t *testing.T) {
+	_, file := internal.TestCallee()
 	suite.Run(t, &BuilderTestSuit{
-		start:  time.Now().UnixNano(),
-		gopath: internal.GoPath(),
+		gopath:  internal.GoPath(),
+		testDir: filepath.Join(internal.CurProject().Target(), file),
 	})
 }
 
-func (suite *BuilderTestSuit) SetupTest() {
+func (suite *BuilderTestSuit) SetupSuite() {
 	os.RemoveAll(suite.gopath)
+	os.RemoveAll(suite.testDir)
+}
+
+func (suite *BuilderTestSuit) TearDownTest() {
+	os.RemoveAll(suite.gopath)
+	os.RemoveAll(suite.testDir)
 }
 
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
-	builderCmd.PersistentPreRun(nil, nil)
-	hooks := lo.MapToSlice(internal.HookScripts, func(key string, _ string) string {
+	builderCmd.PersistentPreRunE(nil, nil)
+	hooks := lo.MapToSlice(internal.HookScripts(), func(key string, _ string) string {
 		return key
 	})
 	for _, hook := range hooks {
-		info, err := os.Stat(filepath.Join(internal.CurProject().HookDir(), hook))
-		if err == nil {
-			assert.True(suite.T(), info.ModTime().UnixNano() > suite.start)
-		}
+		_, err := os.Stat(filepath.Join(internal.CurProject().HookDir(), hook))
+		assert.Error(suite.T(), err)
 	}
-	lo.ForEach(internal.CurProject().Plugins(), func(plugin lo.Tuple4[string, string, string, string], index int) {
-		_, name := internal.NormalizePlugin(plugin.D)
-		_, err := os.Stat(filepath.Join(suite.gopath, name))
-		assert.NoErrorf(suite.T(), err, "plugin should be insalled")
+	internal.CurProject().SetupHooks(true)
+	for _, hook := range hooks {
+		_, err := os.Stat(filepath.Join(internal.CurProject().HookDir(), hook))
+		assert.NoError(suite.T(), err)
+	}
+
+}
+
+func (suite *BuilderTestSuit) TestBuiltinPlugins() {
+	plugins := builtinPlugins()
+	assert.Equal(suite.T(), 2, len(plugins))
+	plugin, ok := lo.Find(plugins, func(plugin internal.Plugin) bool {
+		return plugin.Url == "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	})
+	assert.True(suite.T(), ok)
+	assert.Equal(suite.T(), "v1.55.2", plugin.Version())
+	assert.Equal(suite.T(), "golangci-lint", plugin.Name())
+	assert.Equal(suite.T(), "github.com/golangci/golangci-lint", plugin.Module())
+	assert.Equal(suite.T(), "lint", plugin.Alias)
+	assert.Equal(suite.T(), "run ./...", plugin.Command)
+	plugin, ok = lo.Find(plugins, func(plugin internal.Plugin) bool {
+		return plugin.Url == "gotest.tools/gotestsum"
+	})
+	assert.True(suite.T(), ok)
+	assert.Equal(suite.T(), "v1.11.0", plugin.Version())
+	assert.Equal(suite.T(), "gotestsum", plugin.Name())
+	assert.Equal(suite.T(), "gotest.tools/gotestsum", plugin.Module())
+	assert.Equal(suite.T(), "test", plugin.Alias)
+	assert.Equal(suite.T(), "", plugin.Command)
+
 }

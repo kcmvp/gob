@@ -6,11 +6,12 @@ exec:
     pre-push-hook:
         - test
 plugins:
-    golangci-lint:
-        alias: lint
+    depth:
+        alias: depth
         args: run ./...
-        url: github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+        url: github.com/KyleBanks/depth/cmd/depth@latest
     gotestsum:
         alias: test
         args: --format testname -- -coverprofile=target/cover.out ./...
         url: gotest.tools/gotestsum@v1.11.0
+

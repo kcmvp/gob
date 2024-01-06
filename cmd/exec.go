@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/action"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -17,7 +16,7 @@ import (
 
 // validateCommitMsg invoked by git commit-msg hook, an error returns when it fails to validate
 // the commit message
-var validateCommitMsg action.Execution = func(cmd *cobra.Command, args ...string) error {
+var validateCommitMsg Execution = func(cmd *cobra.Command, args ...string) error {
 	if len(args) < 2 {
 		return fmt.Errorf("please input commit message")
 	}
@@ -32,20 +31,20 @@ var validateCommitMsg action.Execution = func(cmd *cobra.Command, args ...string
 	return nil
 }
 
-var execValidArgs = func() []string {
+func execValidArgs() []string {
 	return lo.Map(internal.CurProject().Executions(), func(exec internal.Execution, _ int) string {
 		return exec.CmdKey
 	})
-}()
+}
 
-func exec(execution internal.Execution, cmd *cobra.Command, args ...string) error {
+func do(execution internal.Execution, cmd *cobra.Command, args ...string) error {
 	if execution.CmdKey == internal.CommitMsgCmd {
 		args = append(args, execution.Actions...)
 		return validateCommitMsg(cmd, args...)
 	} else {
 		for _, arg := range execution.Actions {
 			fmt.Printf("start %s \n", arg)
-			if err := action.Execute(cmd, arg); err != nil {
+			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))
 			}
 			color.Green("execute %s successfully", arg)
@@ -66,7 +65,7 @@ var execCmd = &cobra.Command{
 		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
 			return errors.New(color.RedString(err.Error()))
 		}
-		if !lo.Contains(execValidArgs, args[0]) {
+		if !lo.Contains(execValidArgs(), args[0]) {
 			return errors.New(color.RedString("invalid arg %s", args[0]))
 		}
 		return nil
@@ -75,7 +74,7 @@ var execCmd = &cobra.Command{
 		execution, _ := lo.Find(internal.CurProject().Executions(), func(exec internal.Execution) bool {
 			return exec.CmdKey == args[0]
 		})
-		return exec(execution, cmd, args...)
+		return do(execution, cmd, args...)
 	},
 }
 

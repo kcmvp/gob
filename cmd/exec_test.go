@@ -4,16 +4,44 @@ import (
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+	"io"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestActions(t *testing.T) {
-	assert.Equal(t, 3, len(execValidArgs))
-	assert.True(t, lo.Every(execValidArgs, []string{internal.CommitMsgCmd, internal.PreCommitCmd, internal.PreCommitCmd}))
+type ExecTestSuite struct {
+	suite.Suite
+	testDir string
 }
 
-func TestCmdArgs(t *testing.T) {
+func (suite *ExecTestSuite) SetupSuite() {
+	s, _ := os.Open(filepath.Join(internal.CurProject().Root(), "testdata", "gob.yaml"))
+	os.MkdirAll(suite.testDir, os.ModePerm)
+	t, _ := os.Create(filepath.Join(suite.testDir, "gob.yaml"))
+	io.Copy(t, s)
+	s.Close()
+	t.Close()
+}
+
+func (suite *ExecTestSuite) TearDownSuite() {
+	os.RemoveAll(suite.testDir)
+}
+
+func TestExecSuite(t *testing.T) {
+	_, file := internal.TestCallee()
+	suite.Run(t, &ExecTestSuite{
+		testDir: filepath.Join(internal.CurProject().Target(), file),
+	})
+}
+
+func (suite *ExecTestSuite) TestActions() {
+	assert.Equal(suite.T(), 3, len(execValidArgs()))
+	assert.True(suite.T(), lo.Every(execValidArgs(), []string{internal.CommitMsgCmd, internal.PreCommitCmd, internal.PreCommitCmd}))
+}
+
+func (suite *ExecTestSuite) TestCmdArgs() {
 	tests := []struct {
 		name    string
 		args    []string
@@ -30,7 +58,7 @@ func TestCmdArgs(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		suite.T().Run(test.name, func(t *testing.T) {
 			err := execCmd.Args(execCmd, test.args)
 			assert.True(t, test.wantErr == (err != nil))
 		})
