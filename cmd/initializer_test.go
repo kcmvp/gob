@@ -45,6 +45,7 @@ func (suite *InitializationTestSuite) TestBuiltInPlugins() {
 
 func (suite *InitializationTestSuite) TestInitializerFunc() {
 	initializerFunc(nil, nil)
+	internal.CurProject().LoadSettings()
 	plugins := internal.CurProject().Plugins()
 	assert.Equal(suite.T(), 2, len(plugins))
 	_, ok := lo.Find(plugins, func(plugin internal.Plugin) bool {
