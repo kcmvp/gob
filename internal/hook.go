@@ -7,11 +7,10 @@ import (
 	"github.com/samber/lo"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const (
-	ExecKey = "exec"
+	execCfgKey = "exec"
 	//hook script name
 	CommitMsg = "commit-msg"
 	PreCommit = "pre-commit"
@@ -38,7 +37,7 @@ type GitHook struct {
 
 func (project *Project) GitHook() GitHook {
 	var hook GitHook
-	project.viper.UnmarshalKey(ExecKey, &hook)
+	project.config().UnmarshalKey(execCfgKey, &hook) //nolint
 	return hook
 }
 
@@ -48,7 +47,7 @@ type Execution struct {
 }
 
 func (project *Project) Executions() []Execution {
-	values := project.viper.Get(ExecKey).(map[string]any)
+	values := project.config().Get(execCfgKey).(map[string]any)
 	return lo.MapToSlice(values, func(key string, v any) Execution {
 		var actions []string
 		if _, ok := v.(string); ok {
@@ -64,23 +63,22 @@ func (project *Project) Executions() []Execution {
 
 // SetupHooks setup git local hooks for project. force means always update gob.yaml
 func (project *Project) SetupHooks(force bool) {
-	gitHook := CurProject().GitHook()
-	noHook := len(strings.TrimSpace(gitHook.CommitMsg)) == 0 && len(gitHook.PreCommit) == 0 &&
-		len(gitHook.PrePush) == 0
-	if noHook && force {
+	if force {
 		hook := map[string]any{
-			fmt.Sprintf("%s.%s", ExecKey, CommitMsgCmd): "^#[0-9]+:\\s*.{10,}$",
-			fmt.Sprintf("%s.%s", ExecKey, PreCommitCmd): []string{"lint", "test"},
-			fmt.Sprintf("%s.%s", ExecKey, PrePushCmd):   []string{"test"},
+			fmt.Sprintf("%s.%s", execCfgKey, CommitMsgCmd): "^#[0-9]+:\\s*.{10,}$",
+			fmt.Sprintf("%s.%s", execCfgKey, PreCommitCmd): []string{"lint", "test"},
+			fmt.Sprintf("%s.%s", execCfgKey, PrePushCmd):   []string{"test"},
 		}
-		project.viper.MergeConfigMap(hook)
-		project.viper.WriteConfigAs(project.Configuration())
+		if err := project.mergeConfig(hook); err != nil {
+			color.Red("failed to setup hook")
+		}
 	}
 	if !InGit() {
 		color.Yellow("project is not in the source control")
 		return
 	}
-
+	_ = project.config().ReadInConfig()
+	gitHook := CurProject().GitHook()
 	var hooks []string
 	if len(gitHook.CommitMsg) > 0 {
 		hooks = append(hooks, CommitMsg)
@@ -95,7 +93,7 @@ func (project *Project) SetupHooks(force bool) {
 		return "#!/usr/bin/env pwsh\n"
 	}).Else("#!/bin/sh\n")
 	for name, script := range HookScripts() {
-		if lo.Contains(hooks, name) || (noHook && force) {
+		if lo.Contains(hooks, name) || force {
 			msgHook, _ := os.OpenFile(filepath.Join(CurProject().HookDir(), name), os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 			writer := bufio.NewWriter(msgHook)
 			writer.WriteString(shell)

@@ -17,13 +17,12 @@ type ExecTestSuite struct {
 }
 
 func (suite *ExecTestSuite) SetupSuite() {
-	s, _ := os.Open(filepath.Join(internal.CurProject().Root(), "gob.yaml"))
+	s, _ := os.Open(filepath.Join(internal.CurProject().Root(), "testdata", "gob.yaml"))
 	os.MkdirAll(suite.testDir, os.ModePerm)
 	t, _ := os.Create(filepath.Join(suite.testDir, "gob.yaml"))
 	io.Copy(t, s)
 	s.Close()
 	t.Close()
-	internal.CurProject().LoadSettings()
 }
 
 func (suite *ExecTestSuite) TearDownSuite() {

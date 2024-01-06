@@ -24,6 +24,11 @@ func TestBuilderTestSuit(t *testing.T) {
 	})
 }
 
+func (suite *BuilderTestSuit) SetupSuite() {
+	os.RemoveAll(suite.gopath)
+	os.RemoveAll(suite.testDir)
+}
+
 func (suite *BuilderTestSuit) TearDownTest() {
 	os.RemoveAll(suite.gopath)
 	os.RemoveAll(suite.testDir)
@@ -44,13 +49,6 @@ func (suite *BuilderTestSuit) TestPersistentPreRun() {
 		assert.NoError(suite.T(), err)
 	}
 
-}
-
-func (suite *BuilderTestSuit) TestValidArgsFunction() {
-	initializerFunc(nil, nil)
-	args := validBuilderArgs()
-	assert.Equal(suite.T(), 4, len(args))
-	assert.Equal(suite.T(), []string{"build", "clean", "test", "lint"}, args)
 }
 
 func (suite *BuilderTestSuit) TestBuiltinPlugins() {

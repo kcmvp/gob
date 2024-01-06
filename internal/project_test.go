@@ -11,7 +11,8 @@ import (
 	"testing"
 )
 
-const golanglinturl = "github.com/golangci/golangci-lint/cmd/golangci-lint"
+const depth = "github.com/KyleBanks/depth/cmd/depth"
+const testsum = "gotest.tools/gotestsum"
 
 type ProjectTestSuite struct {
 	suite.Suite
@@ -20,13 +21,12 @@ type ProjectTestSuite struct {
 }
 
 func (suite *ProjectTestSuite) SetupSuite() {
-	s, _ := os.Open(filepath.Join(CurProject().Root(), "gob.yaml"))
+	s, _ := os.Open(filepath.Join(CurProject().Root(), "testdata", "gob.yaml"))
 	os.MkdirAll(suite.testDir, os.ModePerm)
 	t, _ := os.Create(filepath.Join(suite.testDir, "gob.yaml"))
 	io.Copy(t, s)
 	s.Close()
 	t.Close()
-	CurProject().LoadSettings()
 }
 
 func (suite *ProjectTestSuite) TearDownSuite() {
@@ -34,9 +34,8 @@ func (suite *ProjectTestSuite) TearDownSuite() {
 	os.RemoveAll(suite.goPath)
 }
 
-func TestSuite(t *testing.T) {
+func TestProjectSuite(t *testing.T) {
 	_, file := TestCallee()
-	CurProject().LoadSettings()
 	suite.Run(t, &ProjectTestSuite{
 		goPath:  GoPath(),
 		testDir: filepath.Join(CurProject().Target(), file),
@@ -44,24 +43,27 @@ func TestSuite(t *testing.T) {
 }
 
 func (suite *ProjectTestSuite) TestPlugins() {
+	_, err := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
+	assert.NoError(suite.T(), err)
 	plugins := CurProject().Plugins()
+	fmt.Println(plugins)
 	assert.Equal(suite.T(), 2, len(plugins))
 	plugin, ok := lo.Find(plugins, func(plugin Plugin) bool {
-		return plugin.Url == "gotest.tools/gotestsum"
+		return plugin.Url == testsum
 	})
 	assert.True(suite.T(), ok)
-	assert.Equal(suite.T(), "gotest.tools/gotestsum", plugin.Module())
+	assert.Equal(suite.T(), testsum, plugin.Module())
 	assert.Equal(suite.T(), "v1.11.0", plugin.Version())
 	assert.Equal(suite.T(), "gotestsum", plugin.Name())
 	assert.Equal(suite.T(), "test", plugin.Alias)
 	plugin, ok = lo.Find(plugins, func(plugin Plugin) bool {
-		return plugin.Url == golanglinturl
+		return plugin.Url == depth
 	})
 	assert.True(suite.T(), ok)
-	assert.Equal(suite.T(), "github.com/golangci/golangci-lint", plugin.Module())
-	assert.Equal(suite.T(), "v1.55.2", plugin.Version())
-	assert.Equal(suite.T(), "golangci-lint", plugin.Name())
-	assert.Equal(suite.T(), "lint", plugin.Alias)
+	assert.Equal(suite.T(), "github.com/KyleBanks/depth", plugin.Module())
+	assert.Equal(suite.T(), "v1.2.1", plugin.Version())
+	assert.Equal(suite.T(), "depth", plugin.Name())
+	assert.Equal(suite.T(), "depth", plugin.Alias)
 }
 
 func (suite *ProjectTestSuite) TestIsSetup() {
@@ -72,17 +74,17 @@ func (suite *ProjectTestSuite) TestIsSetup() {
 	}{
 		{
 			name:    "no version",
-			url:     golanglinturl,
+			url:     depth,
 			settled: true,
 		},
 		{
 			name:    "with version",
-			url:     fmt.Sprintf("%s@latest", golanglinturl),
+			url:     fmt.Sprintf("%s@latest", depth),
 			settled: true,
 		},
 		{
 			name:    "specified version",
-			url:     fmt.Sprintf("%s@v1.1.1", golanglinturl),
+			url:     fmt.Sprintf("%s@v1.1.1", depth),
 			settled: true,
 		},
 		{

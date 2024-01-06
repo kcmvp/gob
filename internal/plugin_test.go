@@ -75,7 +75,7 @@ func TestUnmarshalJSON(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(plugins))
 	plugin, ok := lo.Find(plugins, func(plugin Plugin) bool {
-		return plugin.Url == golanglinturl
+		return plugin.Url == "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	})
 	assert.True(t, ok)
 	assert.Equal(t, "v1.55.2", plugin.Version())

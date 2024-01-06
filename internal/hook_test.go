@@ -13,6 +13,10 @@ type GitHookTestSuite struct {
 	testDir string
 }
 
+func (suite *GitHookTestSuite) SetupSuite() {
+	os.RemoveAll(suite.testDir)
+}
+
 func (suite *GitHookTestSuite) TearDownSuite() {
 	os.RemoveAll(suite.testDir)
 }
@@ -30,8 +34,6 @@ func (suite *GitHookTestSuite) TestSetupHook() {
 	CurProject().SetupHooks(true)
 	info1, err := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
 	assert.NoError(suite.T(), err)
-	//
-	CurProject().LoadSettings()
 	hook := CurProject().GitHook()
 	assert.NotEmpty(suite.T(), hook.CommitMsg)
 	assert.Equal(suite.T(), []string([]string{"lint", "test"}), hook.PreCommit)

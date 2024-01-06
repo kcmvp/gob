@@ -16,30 +16,18 @@ import (
 	"sync"
 )
 
-const pluginKey = "plugins"
+const pluginCfgKey = "plugins"
 
 var (
-	once    sync.Once
 	project Project
-	module  string
 )
-
-var PluginExists = PluginExistsError{"plugin exists"}
-
-type PluginExistsError struct {
-	errorString string
-}
-
-func (p PluginExistsError) Error() string {
-	return p.errorString
-}
 
 type Project struct {
 	root   string
 	module string
 	deps   []string
-	viper  *viper.Viper
-	cfg    string
+	// cfg    map[string]*viper.Viper
+	cfg sync.Map
 }
 
 func TestCallee() (bool, string) {
@@ -51,7 +39,7 @@ func TestCallee() (bool, string) {
 	for {
 		frame, more := frames.Next()
 		// fmt.Printf("%s->%s:%d\n", frame.File, frame.Function, frame.Line)
-		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, module)
+		test = strings.HasSuffix(frame.File, "_test.go") && strings.HasPrefix(frame.Function, project.module)
 		if test || !more {
 			items := strings.Split(frame.File, "/")
 			items = lo.Map(items[len(items)-2:], func(item string, _ int) string {
@@ -64,43 +52,52 @@ func TestCallee() (bool, string) {
 	return test, file
 }
 
-func (project *Project) HookDir() string {
-	if ok, file := TestCallee(); ok {
-		mock := filepath.Join(CurProject().Target(), file)
-		if _, err := os.Stat(mock); err != nil {
-			os.Mkdir(mock, os.ModePerm)
-		}
-		return mock
-	} else {
-		return filepath.Join(CurProject().Root(), ".git", "hooks")
-	}
-}
-
-func (project *Project) LoadSettings() {
+func (project *Project) config() *viper.Viper {
 	testEnv, file := TestCallee()
-	// fmt.Printf("caller %s \n", file)
+	key := lo.If(testEnv, file).Else("_default_")
+	obj, ok := project.cfg.Load(key)
+	if ok {
+		return obj.(*viper.Viper)
+	}
 	v := viper.New()
-	v.SetConfigType("yaml")
-	path := project.Root()
-	name := "gob"
-	if testEnv {
-		path = filepath.Join(project.Target(), file)
-		if _, err := os.Stat(path); err != nil {
-			if err = os.Mkdir(path, os.ModePerm); err != nil {
-				color.Red("failed to create temporary directory %s", path)
+	path := lo.If(!testEnv, project.Root()).ElseF(func() string {
+		tp := filepath.Join(project.Target(), file)
+		if _, err := os.Stat(tp); err != nil {
+			if err = os.Mkdir(tp, os.ModePerm); err != nil {
+				color.Red("failed to create temporary directory %s", tp)
 			}
 		}
-	}
-	v.AddConfigPath(path)
-	v.SetConfigName(name)
+		return tp
+	})
+
+	v.SetConfigFile(filepath.Join(path, "gob.yaml"))
 	if err := v.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
 			color.Yellow("Warning: can not find configuration gob.yaml")
 		}
 	}
-	project.cfg = fmt.Sprintf("%s.yaml", filepath.Join(path, name))
-	project.viper = v
+	project.cfg.Store(key, v)
+	return v
+}
+
+func (project *Project) mergeConfig(cfg map[string]any) error {
+	err := project.config().MergeConfigMap(cfg)
+	if err != nil {
+		return err
+	}
+	return project.config().WriteConfigAs(project.config().ConfigFileUsed())
+}
+
+func (project *Project) HookDir() string {
+	if ok, file := TestCallee(); ok {
+		mock := filepath.Join(CurProject().Target(), file)
+		if _, err := os.Stat(mock); err != nil {
+			os.Mkdir(mock, os.ModePerm) //nolint
+		}
+		return mock
+	}
+	return filepath.Join(CurProject().Root(), ".git", "hooks")
 }
 
 func init() {
@@ -111,11 +108,10 @@ func init() {
 	}
 
 	item := strings.Split(strings.TrimSpace(string(output)), ":")
-	//root = item[0]
-	module = item[1]
 	project = Project{
 		root:   item[0],
-		module: module,
+		module: item[1],
+		cfg:    sync.Map{},
 	}
 	cmd = exec.Command("go", "list", "-f", "{{if not .Standard}}{{.ImportPath}}{{end}}", "-deps")
 	output, err = cmd.Output()
@@ -135,15 +131,7 @@ func init() {
 
 // CurProject return Project struct
 func CurProject() *Project {
-	once.Do(func() {
-		project.LoadSettings()
-	})
 	return &project
-}
-
-// Configuration gob configuration file
-func (project *Project) Configuration() string {
-	return project.cfg
 }
 
 // Root return root dir of the project
@@ -186,16 +174,16 @@ func FindGoFilesByPkg(pkg string) ([]string, error) {
 }
 
 func (project *Project) Plugins() []Plugin {
-	if v := project.viper.Get(pluginKey); v != nil {
+	if v := project.config().Get(pluginCfgKey); v != nil {
 		plugins := v.(map[string]any)
 		return lo.MapToSlice(plugins, func(key string, _ any) Plugin {
 			var plugin Plugin
-			key = fmt.Sprintf("%s.%s", pluginKey, key)
-			if err := project.viper.UnmarshalKey(key, &plugin); err != nil {
+			key = fmt.Sprintf("%s.%s", pluginCfgKey, key)
+			if err := project.config().UnmarshalKey(key, &plugin); err != nil {
 				color.Yellow("failed to parse plugin %s: %s", key, err.Error())
 			}
 			if err := plugin.init(); err != nil {
-				color.Red("failed to init plugin %s", plugin.name)
+				color.Red("failed to init plugin %s: %s", plugin.name, err.Error())
 			}
 			return plugin
 		})
@@ -206,19 +194,28 @@ func (project *Project) Plugins() []Plugin {
 
 func (project *Project) SetupPlugin(plugin Plugin) {
 	if !project.isSetup(plugin) {
-		if plugin.setup() != nil {
-			color.Red("failed to setup plugin %s", plugin.name)
+		values := lo.MapEntries(map[string]string{
+			"alias":   plugin.Alias,
+			"command": plugin.Command,
+			"args":    plugin.Args,
+			"url":     fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()),
+		}, func(key string, value string) (string, any) {
+			return fmt.Sprintf("%s.%s.%s", pluginCfgKey, plugin.Name(), key), value
+		})
+		if err := project.mergeConfig(values); err != nil {
+			color.Red("faialed to setup plugin %s", err.Error())
+			return
 		}
+		_ = project.config().ReadInConfig()
 	}
 	if plugin.install() != nil {
 		color.Red("failed to install plugin %s", plugin.name)
 	}
 }
 
+// @todo code refactor can be checked by viper.getKey
 func (project *Project) isSetup(plugin Plugin) bool {
-	return lo.ContainsBy(project.Plugins(), func(item Plugin) bool {
-		return plugin.Module() == item.Module()
-	})
+	return project.config().Get(fmt.Sprintf("plugins.%s.url", plugin.name)) != nil
 }
 
 func (project *Project) Validate() error {

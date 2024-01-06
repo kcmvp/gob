@@ -30,6 +30,7 @@ func TestInitializationTestSuit(t *testing.T) {
 
 func (suite *InitializationTestSuite) TearDownSuite() {
 	os.RemoveAll(suite.goPath)
+	os.RemoveAll(suite.testDir)
 }
 
 func (suite *InitializationTestSuite) TestBuiltInPlugins() {
@@ -45,7 +46,6 @@ func (suite *InitializationTestSuite) TestBuiltInPlugins() {
 
 func (suite *InitializationTestSuite) TestInitializerFunc() {
 	initializerFunc(nil, nil)
-	internal.CurProject().LoadSettings()
 	plugins := internal.CurProject().Plugins()
 	assert.Equal(suite.T(), 2, len(plugins))
 	_, ok := lo.Find(plugins, func(plugin internal.Plugin) bool {
@@ -63,4 +63,5 @@ func (suite *InitializationTestSuite) TestInitializerFunc() {
 	})
 	_, err1 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
 	assert.NoError(suite.T(), err1)
+	assert.Equal(suite.T(), []string{"build", "clean", "test", "lint"}, validBuilderArgs())
 }

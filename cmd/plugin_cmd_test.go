@@ -18,6 +18,11 @@ type PluginTestSuit struct {
 	goPath  string
 }
 
+func (suite *PluginTestSuit) SetupSuite() {
+	os.RemoveAll(suite.goPath)
+	os.RemoveAll(suite.testDir)
+}
+
 func (suite *PluginTestSuit) TearDownSuite() {
 	os.RemoveAll(suite.goPath)
 	os.RemoveAll(suite.testDir)

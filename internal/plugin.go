@@ -110,23 +110,6 @@ func (plugin Plugin) Binary() string {
 	}).Else(fmt.Sprintf("%s-%s", plugin.Name(), plugin.Version()))
 }
 
-func (plugin Plugin) setup() error {
-	for k, v := range map[string]string{
-		"alias":   plugin.Alias,
-		"command": plugin.Command,
-		"args":    plugin.Args,
-		"url":     fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()),
-	} {
-		if len(v) > 0 {
-			project.viper.Set(fmt.Sprintf("%s.%s.%s", pluginKey, plugin.Name(), k), v)
-		}
-	}
-	if err := project.viper.WriteConfigAs(project.Configuration()); err != nil {
-		return errors.New(color.RedString(err.Error()))
-	}
-	return nil
-}
-
 // install a plugin when it does not exist
 func (plugin Plugin) install() error {
 	gopath := GoPath()
