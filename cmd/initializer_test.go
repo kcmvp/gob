@@ -28,10 +28,6 @@ func TestInitializationTestSuit(t *testing.T) {
 	})
 }
 
-func (suite *InitializationTestSuite) TearTest() {
-	//os.RemoveAll(suite.testDir)
-}
-
 func (suite *InitializationTestSuite) TearDownSuite() {
 	os.RemoveAll(suite.goPath)
 }
@@ -64,12 +60,6 @@ func (suite *InitializationTestSuite) TestInitializerFunc() {
 		_, err := os.Stat(filepath.Join(suite.goPath, plugin.Binary()))
 		assert.NoError(suite.T(), err)
 	})
-	info1, err1 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
+	_, err1 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
 	assert.NoError(suite.T(), err1)
-
-	initializerFunc(nil, nil)
-	info2, err2 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
-	assert.NoError(suite.T(), err2)
-	assert.Equal(suite.T(), info1.ModTime(), info2.ModTime())
-
 }

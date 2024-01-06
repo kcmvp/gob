@@ -157,7 +157,7 @@ func (project *Project) Module() string {
 }
 
 func (project *Project) Target() string {
-	target := filepath.Join(project.root, "target")
+	target := filepath.Join(project.Root(), "target")
 	if _, err := os.Stat(target); err != nil {
 		os.Mkdir(target, os.ModePerm)
 	}
