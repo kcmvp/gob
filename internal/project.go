@@ -256,9 +256,8 @@ func Version() string {
 	return unknownVersion
 }
 
-func TemporaryGoPath() string {
+func temporaryGoPath() string {
 	dir, _ := os.MkdirTemp("", "gob-build-")
-	os.Chmod(dir, 0700) //nolint
 	return dir
 }
 
