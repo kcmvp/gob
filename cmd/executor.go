@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-
+	"github.com/fatih/color"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -15,7 +15,7 @@ type (
 
 func execute(cmd *cobra.Command, arg string) error {
 	msg := fmt.Sprintf("Start %s project", arg)
-	fmt.Printf("%-20s ...... \n", msg)
+	color.Cyan("%-20s ...... \n", msg)
 	if plugin, ok := lo.Find(internal.CurProject().Plugins(), func(plugin internal.Plugin) bool {
 		return plugin.Alias == arg
 	}); ok {

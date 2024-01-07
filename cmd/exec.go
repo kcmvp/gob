@@ -43,11 +43,10 @@ func do(execution internal.Execution, cmd *cobra.Command, args ...string) error 
 		return validateCommitMsg(cmd, args...)
 	} else {
 		for _, arg := range execution.Actions {
-			fmt.Printf("start %s \n", arg)
 			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))
 			}
-			color.Green("execute %s successfully", arg)
+			color.Green("%s successfully", arg)
 		}
 		return nil
 	}
