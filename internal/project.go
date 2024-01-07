@@ -26,8 +26,7 @@ type Project struct {
 	root   string
 	module string
 	deps   []string
-	// cfg    map[string]*viper.Viper
-	cfg sync.Map
+	cfg    sync.Map
 }
 
 func TestCallee() (bool, string) {
@@ -258,13 +257,13 @@ func Version() string {
 }
 
 func TemporaryGoPath() string {
-	dir, _ := os.MkdirTemp("", "test")
+	dir, _ := os.MkdirTemp("", "gob-test")
 	return dir
 }
 
 func GoPath() string {
 	if ok, method := TestCallee(); ok {
-		dir := filepath.Join(os.TempDir(), method, "bin")
+		dir := filepath.Join(os.TempDir(), method)
 		os.MkdirAll(dir, 0o700) //nolint
 		return dir
 	}
