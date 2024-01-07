@@ -116,7 +116,7 @@ func (plugin Plugin) install() error {
 	if _, err := os.Stat(filepath.Join(gopath, plugin.Binary())); err == nil {
 		return nil
 	}
-	tempGoPath := TemporaryGoPath()
+	tempGoPath := temporaryGoPath()
 	defer os.RemoveAll(tempGoPath)
 	fmt.Printf("Installing %s ...... \n", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()))
 	cmd := exec.Command("go", "install", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version())) //nolint:gosec
@@ -139,7 +139,9 @@ func (plugin Plugin) install() error {
 				return err
 			}
 			fmt.Printf("%s is installed successfully \n", plugin.Url)
-			return filepath.SkipAll
+		} else {
+			// change the permission for deletion
+			os.Chmod(path, 0o766) //nolint
 		}
 		return err
 	})

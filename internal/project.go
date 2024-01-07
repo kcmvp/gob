@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/samber/lo"
-	"github.com/spf13/viper"
+	"github.com/fatih/color" //nolint
+	"github.com/samber/lo"   //nolint
+	"github.com/spf13/viper" //nolint
 	"log"
 	"os"
 	"os/exec"
@@ -26,8 +26,7 @@ type Project struct {
 	root   string
 	module string
 	deps   []string
-	// cfg    map[string]*viper.Viper
-	cfg sync.Map
+	cfg    sync.Map
 }
 
 func TestCallee() (bool, string) {
@@ -257,14 +256,14 @@ func Version() string {
 	return unknownVersion
 }
 
-func TemporaryGoPath() string {
-	dir, _ := os.MkdirTemp("", "test")
+func temporaryGoPath() string {
+	dir, _ := os.MkdirTemp("", "gob-build-")
 	return dir
 }
 
 func GoPath() string {
 	if ok, method := TestCallee(); ok {
-		dir := filepath.Join(os.TempDir(), method, "bin")
+		dir := filepath.Join(os.TempDir(), method)
 		os.MkdirAll(dir, 0o700) //nolint
 		return dir
 	}
