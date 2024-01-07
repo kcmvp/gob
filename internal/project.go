@@ -4,9 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/samber/lo"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"os/exec"
@@ -14,6 +11,11 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/fatih/color" //nolint
+	"github.com/samber/lo"   //nolint
+	"github.com/spf13/viper" //nolint
 )
 
 const pluginCfgKey = "plugins"
@@ -257,7 +259,8 @@ func Version() string {
 }
 
 func temporaryGoPath() string {
-	dir, _ := os.MkdirTemp("", "gob-build-")
+	dir := filepath.Join(os.TempDir(), fmt.Sprintf("go-build-%d", time.Now().UnixNano()))
+	os.MkdirAll(dir, 0700) //nolint
 	return dir
 }
 

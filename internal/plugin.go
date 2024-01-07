@@ -118,8 +118,7 @@ func (plugin Plugin) install() error {
 	}
 	tempGoPath := temporaryGoPath()
 	defer func() {
-		os.Chmod(tempGoPath, 0o700) //nolint
-		os.RemoveAll(tempGoPath)    //nolint
+		os.RemoveAll(tempGoPath) //nolint
 	}()
 	fmt.Printf("Installing %s ...... \n", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()))
 	cmd := exec.Command("go", "install", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version())) //nolint:gosec
