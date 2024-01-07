@@ -117,9 +117,7 @@ func (plugin Plugin) install() error {
 		return nil
 	}
 	tempGoPath := temporaryGoPath()
-	defer func() {
-		os.RemoveAll(tempGoPath) //nolint
-	}()
+	defer os.RemoveAll(tempGoPath)
 	fmt.Printf("Installing %s ...... \n", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()))
 	cmd := exec.Command("go", "install", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version())) //nolint:gosec
 	cmd.Env = lo.Map(os.Environ(), func(pair string, _ int) string {
@@ -141,7 +139,9 @@ func (plugin Plugin) install() error {
 				return err
 			}
 			fmt.Printf("%s is installed successfully \n", plugin.Url)
-			return filepath.SkipAll
+		} else {
+			// change the permission for deletion
+			os.Chmod(path, 0o766) //nolint
 		}
 		return err
 	})
