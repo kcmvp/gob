@@ -42,10 +42,11 @@ func do(execution internal.Execution, cmd *cobra.Command, args ...string) error 
 		args = append(args, execution.Actions...)
 		return validateCommitMsg(cmd, args...)
 	} else {
-		if execution.CmdKey == internal.PrePushCmd && args[3] == internal.PushDeleteHash {
-			color.Yellow("bypass the checking when deleting a remote braanch")
-			return nil
-		}
+		fmt.Printf("** push variable %v \n", args)
+		//if execution.CmdKey == internal.PrePushCmd && args[3] == internal.PushDeleteHash {
+		//	color.Yellow("bypass the checking when deleting a remote braanch")
+		//	return nil
+		//}
 		for _, arg := range execution.Actions {
 			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))
