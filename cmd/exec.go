@@ -4,6 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
@@ -12,7 +13,10 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"regexp"
+	"strings"
 )
+
+const pushDeleteHash = "0000000000000000000000000000000000000000"
 
 // validateCommitMsg invoked by git commit-msg hook, an error returns when it fails to validate
 // the commit message
@@ -37,16 +41,27 @@ func execValidArgs() []string {
 	})
 }
 
+func pushDelete(cmd string) bool {
+	if cmd == internal.PrePushCmd {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.Contains(line, pushDeleteHash) && strings.Contains(line, "delete") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func do(execution internal.Execution, cmd *cobra.Command, args ...string) error {
 	if execution.CmdKey == internal.CommitMsgCmd {
 		args = append(args, execution.Actions...)
 		return validateCommitMsg(cmd, args...)
 	} else {
-		fmt.Printf("** push variable %v \n", args)
-		//if execution.CmdKey == internal.PrePushCmd && args[3] == internal.PushDeleteHash {
-		//	color.Yellow("bypass the checking when deleting a remote braanch")
-		//	return nil
-		//}
+		if pushDelete(execution.CmdKey) {
+			return nil
+		}
 		for _, arg := range execution.Actions {
 			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))

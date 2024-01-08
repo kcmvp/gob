@@ -12,10 +12,9 @@ import (
 const (
 	execCfgKey = "exec"
 	//hook script name
-	commitMsg      = "commit-msg"
-	preCommit      = "pre-commit"
-	prePush        = "pre-push"
-	PushDeleteHash = "0000000000000000000000000000000000000000"
+	commitMsg = "commit-msg"
+	preCommit = "pre-commit"
+	prePush   = "pre-push"
 )
 
 var (
@@ -28,7 +27,7 @@ func HookScripts() map[string]string {
 	return map[string]string{
 		commitMsg: fmt.Sprintf("gob exec %s $1", CommitMsgCmd),
 		preCommit: fmt.Sprintf("gob exec %s", PreCommitCmd),
-		prePush:   fmt.Sprintf("gob exec %s $1 $2 $3 $4", PrePushCmd),
+		prePush:   fmt.Sprintf("gob exec %s $1 $2", PrePushCmd),
 	}
 }
 
