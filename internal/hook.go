@@ -12,20 +12,21 @@ import (
 const (
 	execCfgKey = "exec"
 	//hook script name
-	CommitMsg = "commit-msg"
-	PreCommit = "pre-commit"
-	PrePush   = "pre-push"
+	commitMsg      = "commit-msg"
+	preCommit      = "pre-commit"
+	prePush        = "pre-push"
+	PushDeleteHash = "0000000000000000000000000000000000000000"
 )
 
-var CommitMsgCmd = fmt.Sprintf("%s-hook", CommitMsg)
-var PreCommitCmd = fmt.Sprintf("%s-hook", PreCommit)
-var PrePushCmd = fmt.Sprintf("%s-hook", PrePush)
+var CommitMsgCmd = fmt.Sprintf("%s-hook", commitMsg)
+var PreCommitCmd = fmt.Sprintf("%s-hook", preCommit)
+var PrePushCmd = fmt.Sprintf("%s-hook", prePush)
 
 func HookScripts() map[string]string {
 	return map[string]string{
-		CommitMsg: fmt.Sprintf("gob exec %s $1", CommitMsgCmd),
-		PreCommit: fmt.Sprintf("gob exec %s", PreCommitCmd),
-		PrePush:   fmt.Sprintf("gob exec %s", PrePushCmd),
+		commitMsg: fmt.Sprintf("gob exec %s $1", CommitMsgCmd),
+		preCommit: fmt.Sprintf("gob exec %s", PreCommitCmd),
+		prePush:   fmt.Sprintf("gob exec %s $1 $2 $3 $4", PrePushCmd),
 	}
 }
 
@@ -81,13 +82,13 @@ func (project *Project) SetupHooks(force bool) {
 	gitHook := CurProject().GitHook()
 	var hooks []string
 	if len(gitHook.CommitMsg) > 0 {
-		hooks = append(hooks, CommitMsg)
+		hooks = append(hooks, commitMsg)
 	}
 	if len(gitHook.PreCommit) > 0 {
-		hooks = append(hooks, PreCommit)
+		hooks = append(hooks, preCommit)
 	}
 	if len(gitHook.PrePush) > 0 {
-		hooks = append(hooks, PrePush)
+		hooks = append(hooks, prePush)
 	}
 	shell := lo.IfF(Windows(), func() string {
 		return "#!/usr/bin/env pwsh\n"

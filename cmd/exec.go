@@ -42,6 +42,10 @@ func do(execution internal.Execution, cmd *cobra.Command, args ...string) error 
 		args = append(args, execution.Actions...)
 		return validateCommitMsg(cmd, args...)
 	} else {
+		if execution.CmdKey == internal.PrePushCmd && args[3] == internal.PushDeleteHash {
+			color.Yellow("bypass the checking when deleting a remote braanch")
+			return nil
+		}
 		for _, arg := range execution.Actions {
 			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))
@@ -55,8 +59,8 @@ func do(execution internal.Execution, cmd *cobra.Command, args ...string) error 
 // execCmd represents the exec command
 var execCmd = &cobra.Command{
 	Use:   "exec",
-	Short: "Execute any tool that have been setup",
-	Long:  `Execute any tool that have been setup`,
+	Short: "Execute any tools that have been setup",
+	Long:  `Execute any tools that have been setup`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.MaximumNArgs(3)(cmd, args); err != nil {
 			return errors.New(color.RedString(err.Error()))
