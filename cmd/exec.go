@@ -42,10 +42,12 @@ func execValidArgs() []string {
 }
 
 func pushDelete(cmd string) bool {
+	fmt.Printf(" -> cmd %s  %s\n", cmd, internal.PrePushCmd)
 	if cmd == internal.PrePushCmd {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			line := scanner.Text()
+			fmt.Printf(" -> line %s \n", line)
 			if strings.Contains(line, pushDeleteHash) && strings.Contains(line, "delete") {
 				return true
 			}
@@ -62,6 +64,7 @@ func do(execution internal.Execution, cmd *cobra.Command, args ...string) error 
 		if pushDelete(execution.CmdKey) {
 			return nil
 		}
+		//return fmt.Errorf("hello")
 		for _, arg := range execution.Actions {
 			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))
