@@ -115,3 +115,9 @@ func (suite *ProjectTestSuite) TestValidate() {
 		assert.NoError(suite.T(), err)
 	}
 }
+
+func (suite *ProjectTestSuite) TestMainFiles() {
+	mainFiles := CurProject().MainFiles()
+	assert.Equal(suite.T(), 1, len(mainFiles))
+	assert.True(suite.T(), lo.Contains(mainFiles, filepath.Join(CurProject().Root(), "gob.go")))
+}

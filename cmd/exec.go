@@ -22,7 +22,7 @@ const pushDeleteHash = "0000000000000000000000000000000000000000"
 // the commit message
 var validateCommitMsg Execution = func(cmd *cobra.Command, args ...string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("please input commit message")
+		return fmt.Errorf(color.RedString("please input commit message"))
 	}
 	input, _ := os.ReadFile(args[1])
 	regex := regexp.MustCompile(`\r?\n`)
@@ -30,7 +30,7 @@ var validateCommitMsg Execution = func(cmd *cobra.Command, args ...string) error
 	pattern, _ := lo.Last(args)
 	regex = regexp.MustCompile(pattern)
 	if !regex.MatchString(commitMsg) {
-		return fmt.Errorf("error: commit message must follow %s", pattern)
+		return fmt.Errorf(color.RedString("commit message must follow %s", pattern))
 	}
 	return nil
 }

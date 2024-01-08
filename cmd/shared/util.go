@@ -10,7 +10,7 @@ import (
 	"github.com/creack/pty"
 )
 
-func StreamExtCmdOutput(cmd *exec.Cmd, file string) error {
+func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 	// Start the command with a pty
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
