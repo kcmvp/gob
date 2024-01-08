@@ -66,7 +66,7 @@ func do(execution internal.Execution, cmd *cobra.Command, args ...string) error 
 			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))
 			}
-			color.Green("%s successfully", arg)
+			color.Green("%s successfully", strings.ToUpper(string(arg[0]))+arg[1:])
 		}
 		return nil
 	}
