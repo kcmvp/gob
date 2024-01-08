@@ -18,9 +18,11 @@ const (
 	PushDeleteHash = "0000000000000000000000000000000000000000"
 )
 
-var CommitMsgCmd = fmt.Sprintf("%s-hook", commitMsg)
-var PreCommitCmd = fmt.Sprintf("%s-hook", preCommit)
-var PrePushCmd = fmt.Sprintf("%s-hook", prePush)
+var (
+	CommitMsgCmd = fmt.Sprintf("%s-hook", commitMsg)
+	PreCommitCmd = fmt.Sprintf("%s-hook", preCommit)
+	PrePushCmd   = fmt.Sprintf("%s-hook", prePush)
+)
 
 func HookScripts() map[string]string {
 	return map[string]string{
