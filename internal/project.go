@@ -7,10 +7,12 @@ import (
 	"github.com/fatih/color" //nolint
 	"github.com/samber/lo"   //nolint
 	"github.com/spf13/viper" //nolint
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -151,8 +153,9 @@ func (project *Project) Target() string {
 	return target
 }
 
-// FindGoFilesByPkg return all go source file in a package
-func FindGoFilesByPkg(pkg string) ([]string, error) {
+// sourceFileInPkg return all go source file in a package
+func (project *Project) sourceFileInPkg(pkg string) ([]string, error) {
+	_ = os.Chdir(project.Root())
 	cmd := exec.Command("go", "list", "-f", fmt.Sprintf("{{if eq .Name \"%s\"}}{{.Dir}}{{end}}", pkg), "./...")
 	output, err := cmd.Output()
 	if err != nil {
@@ -170,6 +173,40 @@ func FindGoFilesByPkg(pkg string) ([]string, error) {
 		return []string{}, err
 	}
 	return dirs, nil
+}
+
+func (project *Project) MainFiles() []string {
+	var mainFiles []string
+	dirs, _ := project.sourceFileInPkg("main")
+	re := regexp.MustCompile(`func\s+main\s*\(\s*\)`)
+	lo.ForEach(dirs, func(dir string, _ int) {
+		_ = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() && dir != path {
+				return filepath.SkipDir
+			}
+			if d.IsDir() || !strings.HasSuffix(d.Name(), ".go") || strings.HasSuffix(d.Name(), "_test.go") {
+				return nil
+			}
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				if re.MatchString(line) {
+					mainFiles = append(mainFiles, path)
+					return filepath.SkipDir
+				}
+			}
+			return scanner.Err()
+		})
+	})
+	return mainFiles
 }
 
 func (project *Project) Plugins() []Plugin {
@@ -212,7 +249,6 @@ func (project *Project) SetupPlugin(plugin Plugin) {
 	}
 }
 
-// @todo code refactor can be checked by viper.getKey
 func (project *Project) isSetup(plugin Plugin) bool {
 	return project.config().Get(fmt.Sprintf("plugins.%s.url", plugin.name)) != nil
 }

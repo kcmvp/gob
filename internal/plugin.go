@@ -104,6 +104,10 @@ func (plugin Plugin) Name() string {
 	return plugin.name
 }
 
+func (plugin Plugin) logName() string {
+	return lo.If(len(plugin.Alias) > 0, plugin.Alias).Else(plugin.Name())
+}
+
 func (plugin Plugin) Binary() string {
 	return lo.IfF(Windows(), func() string {
 		return fmt.Sprintf("%s-%s.exe", plugin.Name(), plugin.Version())
@@ -149,5 +153,5 @@ func (plugin Plugin) install() error {
 
 func (plugin Plugin) Execute() error {
 	exeCmd := exec.Command(plugin.Binary(), strings.Split(plugin.Args, " ")...) //nolint #gosec
-	return shared.StreamExtCmdOutput(exeCmd, filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.Name())))
+	return shared.StreamCmdOutput(exeCmd, filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.logName())))
 }

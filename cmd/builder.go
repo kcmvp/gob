@@ -43,25 +43,6 @@ var builderCmd = &cobra.Command{
 	},
 }
 
-//func execute(cmd *cobra.Command, args []string) error {
-//	args = lo.Uniq(args)
-//	for _, arg := range args {
-//		msg := fmt.Sprintf("Start %s project", arg)
-//		fmt.Printf("%-20s ...... \n", msg)
-//		if plugin, ok := lo.Find(internal.CurProject().Plugins(), func(plugin internal.Plugin) bool {
-//			return plugin.Alias == args[0]
-//		}); ok {
-//			return plugin.Execute()
-//		} else if action, ok := lo.Find(builtinActions, func(action CmdAction) bool {
-//			return action.A == args[0]
-//		}); ok {
-//			return action.B(cmd, args...)
-//		}
-//		return fmt.Errorf("can not find command %s", args[0])
-//	}
-//	return nil
-//}
-
 func Execute() {
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -87,7 +68,7 @@ func init() {
 		}).Else(nil)
 	})
 	builderCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	builderCmd.Flags().BoolVar(&CleanCache, CleanCacheFlag, false, "to remove the entire go build cache")
-	builderCmd.Flags().BoolVar(&CleanTestCache, CleanTestCacheFlag, false, "to expire all test results in the go build cache")
-	builderCmd.Flags().BoolVar(&CleanModCache, CleanModCacheFlag, false, "to remove the entire module download cache")
+	builderCmd.Flags().BoolVar(&CleanCache, cleanCacheFlag, false, "to remove the entire go build cache")
+	builderCmd.Flags().BoolVar(&CleanTestCache, cleanTestCacheFlag, false, "to expire all test results in the go build cache")
+	builderCmd.Flags().BoolVar(&CleanModCache, cleanModCacheFlag, false, "to remove the entire module download cache")
 }
