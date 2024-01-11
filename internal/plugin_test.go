@@ -82,7 +82,7 @@ func TestUnmarshalJSON(t *testing.T) {
 	assert.Equal(t, "golangci-lint", plugin.Name())
 	assert.Equal(t, "github.com/golangci/golangci-lint", plugin.Module())
 	assert.Equal(t, "lint", plugin.Alias)
-	assert.Equal(t, "run ./...", plugin.Command)
+	// no command
 	plugin, ok = lo.Find(plugins, func(plugin Plugin) bool {
 		return plugin.Url == "gotest.tools/gotestsum"
 	})
@@ -91,6 +91,5 @@ func TestUnmarshalJSON(t *testing.T) {
 	assert.Equal(t, "gotestsum", plugin.Name())
 	assert.Equal(t, "gotest.tools/gotestsum", plugin.Module())
 	assert.Equal(t, "test", plugin.Alias)
-	assert.Equal(t, "", plugin.Command)
 
 }

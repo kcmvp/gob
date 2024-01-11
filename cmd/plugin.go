@@ -44,7 +44,7 @@ func list(_ *cobra.Command, _ ...string) error {
 	style.HTML.CSSClass = table.DefaultHTMLCSSClass
 	ct.SetStyle(style)
 	rows := lo.Map(plugins, func(plugin internal.Plugin, index int) table.Row {
-		return table.Row{plugin.Name(), plugin.Command, plugin.Args, plugin.Url}
+		return table.Row{plugin.Name(), plugin.Alias, plugin.Args, plugin.Url}
 	})
 	ct.AppendRows(rows)
 	fmt.Println(ct.Render())

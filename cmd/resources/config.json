@@ -2,7 +2,7 @@
   "plugins": [
     {
       "alias": "lint",
-      "command": "run ./...",
+      "args": "run ./...",
       "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
       "config": ".golangci.yaml"
     },

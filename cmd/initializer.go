@@ -35,7 +35,7 @@ func initBuildVersion() {
 	}
 	ver := filepath.Join(infra, "version.go")
 	if _, err := os.Stat(ver); err != nil {
-		data, _ := resources.ReadFile("resources/version.tmpl")
+		data, _ := resources.ReadFile(filepath.Join(resourceDir, "version.tmpl"))
 		os.WriteFile(ver, data, 0666) //nolint
 	}
 }
@@ -47,10 +47,12 @@ func initializerFunc(_ *cobra.Command, _ []string) {
 		internal.CurProject().SetupPlugin(plugin)
 		if len(plugin.Config) > 0 {
 			if _, err := os.Stat(filepath.Join(internal.CurProject().Root(), plugin.Config)); err != nil {
-				data, _ := resources.ReadFile(filepath.Join("resource", plugin.Config))
-				err = os.WriteFile(filepath.Join(internal.CurProject().Root(), plugin.Config), data, os.ModePerm)
-				if err != nil {
-					color.Red("failed to create configuration %s", plugin.Config)
+				if data, err := resources.ReadFile(filepath.Join(resourceDir, plugin.Config)); err == nil {
+					if err = os.WriteFile(filepath.Join(internal.CurProject().Root(), plugin.Config), data, os.ModePerm); err != nil {
+						color.Red("failed to create configuration %s", plugin.Config)
+					}
+				} else {
+					color.Red("can not find the configuration %s", plugin.Config)
 				}
 			}
 		}

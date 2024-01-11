@@ -20,7 +20,6 @@ const modulePattern = `^[^@]+@?[^@\s]+$`
 
 type Plugin struct {
 	Alias   string `json:"alias" mapstructure:"alias"`
-	Command string `json:"command" mapstructure:"command"`
 	Args    string `json:"args" mapstructure:"args"`
 	Url     string `json:"url" mapstructure:"url"` //nolint
 	Config  string `json:"config" mapstructure:"config"`
@@ -78,13 +77,9 @@ func (plugin *Plugin) UnmarshalJSON(data []byte) error {
 }
 
 func NewPlugin(url string, options ...string) (Plugin, error) {
-	plugin := Plugin{Url: url}
-	for i, option := range options {
-		if i == 2 {
-			plugin.Command = option
-		} else if i == 3 {
-			plugin.Args = option
-		}
+	plugin := Plugin{
+		Url:  url,
+		Args: strings.Join(options, " "),
 	}
 	if err := plugin.init(); err != nil {
 		return Plugin{}, err

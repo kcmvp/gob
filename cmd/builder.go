@@ -13,8 +13,10 @@ import (
 	"os"
 )
 
-//go:embed resources
+//go:embed resources/*
 var resources embed.FS
+
+const resourceDir = "resources"
 
 // builderCmd represents the base command when called without any subcommands
 var builderCmd = &cobra.Command{
