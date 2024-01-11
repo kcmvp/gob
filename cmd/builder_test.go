@@ -62,7 +62,6 @@ func (suite *BuilderTestSuit) TestBuiltinPlugins() {
 	assert.Equal(suite.T(), "golangci-lint", plugin.Name())
 	assert.Equal(suite.T(), "github.com/golangci/golangci-lint", plugin.Module())
 	assert.Equal(suite.T(), "lint", plugin.Alias)
-	assert.Equal(suite.T(), "run ./...", plugin.Command)
 	plugin, ok = lo.Find(plugins, func(plugin internal.Plugin) bool {
 		return plugin.Url == "gotest.tools/gotestsum"
 	})
@@ -71,6 +70,5 @@ func (suite *BuilderTestSuit) TestBuiltinPlugins() {
 	assert.Equal(suite.T(), "gotestsum", plugin.Name())
 	assert.Equal(suite.T(), "gotest.tools/gotestsum", plugin.Module())
 	assert.Equal(suite.T(), "test", plugin.Alias)
-	assert.Equal(suite.T(), "", plugin.Command)
 
 }

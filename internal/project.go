@@ -231,10 +231,9 @@ func (project *Project) Plugins() []Plugin {
 func (project *Project) SetupPlugin(plugin Plugin) {
 	if !project.isSetup(plugin) {
 		values := lo.MapEntries(map[string]string{
-			"alias":   plugin.Alias,
-			"command": plugin.Command,
-			"args":    plugin.Args,
-			"url":     fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()),
+			"alias": plugin.Alias,
+			"args":  plugin.Args,
+			"url":   fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()),
 		}, func(key string, value string) (string, any) {
 			return fmt.Sprintf("%s.%s.%s", pluginCfgKey, plugin.Name(), key), value
 		})
