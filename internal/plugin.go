@@ -126,13 +126,13 @@ func (plugin Plugin) install() error {
 		return pair
 	})
 	if err := cmd.Run(); err != nil {
-		return errors.New(color.RedString("failed to install the plugin %s:%s", plugin.Url, err.Error()))
+		return errors.New(color.RedString(err.Error()))
 	}
 	return filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && strings.HasPrefix(d.Name(), plugin.name) {
+		if !d.IsDir() && strings.HasSuffix(filepath.Dir(path), "bin") && strings.HasPrefix(d.Name(), plugin.name) {
 			err = os.Rename(path, filepath.Join(gopath, plugin.Binary()))
 			if err != nil {
 				return err
