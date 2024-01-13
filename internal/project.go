@@ -243,8 +243,8 @@ func (project *Project) SetupPlugin(plugin Plugin) {
 		}
 		_ = project.config().ReadInConfig()
 	}
-	if plugin.install() != nil {
-		color.Red("failed to install plugin %s", plugin.name)
+	if err := plugin.install(); err != nil {
+		color.Red("failed to install plugin %s: %s", plugin.name, err.Error())
 	}
 }
 
