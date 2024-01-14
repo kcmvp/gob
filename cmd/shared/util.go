@@ -3,6 +3,7 @@ package shared
 import (
 	"bufio"
 	"fmt"
+	"github.com/fatih/color" //nolint
 	"os"
 	"os/exec"
 	"regexp"
@@ -12,12 +13,18 @@ import (
 
 func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 	// Start the command with a pty
-	ptmx, err := pty.Start(cmd)
-	if err != nil {
-		fmt.Println("Error starting command:", err)
-		return err
+	var scanner *bufio.Scanner
+	if ptmx, err := pty.Start(cmd); err == nil {
+		scanner = bufio.NewScanner(ptmx)
+		defer ptmx.Close()
+	} else {
+		color.Yellow("device not support tty will fall back plain model")
+		if rd, err := cmd.StdoutPipe(); err == nil {
+			scanner = bufio.NewScanner(rd)
+		} else {
+			return err
+		}
 	}
-	defer ptmx.Close()
 
 	// Create a file to save the output
 	log, err := os.Create(file)
@@ -31,7 +38,6 @@ func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 	colorRegex := regexp.MustCompile(`\x1b\[[0-9;]*m`)
 	// Goroutine to remove color escape sequences, print the colored output, and write the modified output to the file
 	go func() {
-		scanner := bufio.NewScanner(ptmx)
 		for scanner.Scan() {
 			line := scanner.Text()
 
