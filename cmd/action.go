@@ -47,7 +47,6 @@ func execute(cmd *cobra.Command, arg string) error {
 		if err := plugin.Execute(); err != nil {
 			return err
 		}
-		reportAction(cmd, arg)
 		return nil
 	} else if action, ok := lo.Find(builtinActions, func(action Action) bool {
 		return action.A == arg

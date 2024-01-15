@@ -252,12 +252,8 @@ func (project *Project) isSetup(plugin Plugin) bool {
 	return project.config().Get(fmt.Sprintf("plugins.%s.url", plugin.name)) != nil
 }
 
-func (project *Project) Validate() error {
+func (project *Project) Validate() {
 	project.SetupHooks(false)
-	lo.ForEach(project.Plugins(), func(plugin Plugin, _ int) {
-		plugin.install() //nolint
-	})
-	return nil
 }
 
 func InGit() bool {

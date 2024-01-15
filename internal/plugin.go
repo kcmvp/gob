@@ -147,6 +147,9 @@ func (plugin Plugin) install() error {
 }
 
 func (plugin Plugin) Execute() error {
+	if err := plugin.install(); err != nil {
+		return err
+	}
 	exeCmd := exec.Command(plugin.Binary(), strings.Split(plugin.Args, " ")...) //nolint #gosec
 	return shared.StreamCmdOutput(exeCmd, filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.logName())))
 }
