@@ -64,11 +64,11 @@ This command will do below initializations:
  ```shell
 gob test
 ```
->![gob_test](./docs/gob_test.png)
+>![gob_test](./docs/gob_test.png =100x50)
 
 - Try to commit your code see what will happen
 git commit will trigger hooks
->![gob_test](./docs/gob_commit.png)
+>![gob_test](./docs/gob_commit.png =100x50)
 
 
 It's just the beginning, gob can do more than this! 
