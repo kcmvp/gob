@@ -60,15 +60,15 @@ This command will do below initializations:
 >     2. pre-commit 
 >     3. pre-push
 
-- Execute `gob test` from project home directory 
+- Execute `gob test` from project home directory  
  ```shell
 gob test
 ```
-![gob_test](./docs/gob_test.png)
+>![gob_test](./docs/gob_test.png)
 
 - Try to commit your code see what will happen
 git commit will trigger hooks
-![gob_test](./docs/gob_commit.png)
+>![gob_test](./docs/gob_commit.png)
 
 
 It's just the beginning, gob can do more than this! 
