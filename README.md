@@ -64,11 +64,11 @@ This command will do below initializations:
  ```shell
 gob test
 ```
->![gob_test](./docs/gob_test.png)
+> <img src="https://github.com/kcmvp/gob/blob/main/docs/gob_test.png" height="50" width="100">
 
 - Try to commit your code see what will happen
 git commit will trigger hooks
->![gob_test](./docs/gob_commit.png)
+> <img src="https://github.com/kcmvp/gob/blob/main/docs/gob_commit.png" height="50" width="100">
 
 
 It's just the beginning, gob can do more than this! 
