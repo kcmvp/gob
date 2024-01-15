@@ -41,6 +41,7 @@ or [Gradle](https://gradle.com/) in the **Java** ecosystem.
 2. Build a tool chain and workflow without line code.
 3. Better interaction user experience
 
+Please refer [document](./docs/document.md) for details
 
 ## Quick Start
 - Install `gob` with below command
@@ -72,7 +73,7 @@ git commit will trigger hooks
 
 
 It's just the beginning, gob can do more than this! 
-please refer [document](./docs/document.md) for details
+
 
 
 ## FAQ
