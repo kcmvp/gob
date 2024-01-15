@@ -22,18 +22,6 @@ Golang Project Boot
 
 <span id="nav-1"></span>
 
-## Table of Contents
-
-<details>
-  <summary>Click to Open/Close the directory listing</summary>
-
-- [1. Table of Contents](#nav-1)
-- [2. Introduction](#nav-2)
-- [3. Features](#nav-3)
-- [4. FAQ](#nav-4)
-
-</details>
-
 <span id="nav-2"></span>
 
 ## Introduction
@@ -49,108 +37,43 @@ or [Gradle](https://gradle.com/) in the **Java** ecosystem.
 
 ## Features
 
-**Everything is a plugin, simple yet powerful !**
+1. **Everything is a plugin, simple yet powerful !**
+2. Build a tool chain and workflow without line code.
+3. Better interaction user experience
 
-You just need to use **three** commands to achieve whatever you want
-
-1. Initialization project with
-
-```shell
-gob init
-```
-
-2. Install a tool as a plugin
-
-```shell
-gob install github.com/golangci/golangci-lint/cmd/golangci-lint lint
-``` 
-
-- This command install the **latest**  [golangci-lint](https://golangci-lint.run/) as a plugin with alias **lint**
-- You can also install a tool with specified version as
-
-```shell
-gob install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.0 lint
-```
-
-- Compare to go default ```go install```, gob support multiple version tool installation. eg
-
-```shell
-ls -althr golangci-lint-v1.55*
--rwxr-xr-x@ 1 kcmvp  staff    40M Dec 25 16:08 golangci-lint-v1.55.1
--rwxr-xr-x  1 kcmvp  staff    41M Dec 25 16:10 golangci-lint-v1.55.0
-```
-
-This will make your project is build with constant tools set
-
-3. Execute the tool as a gob plugin(execute golangci-lint)
-
-```shell
-gob lint
-```
-
-4. Run `gob -h` get comprehensive and beauty help information
 
 ## Quick Start
-
 - Install `gob` with below command
-
-```go
+```shell
     go install github.com/kcmvp/gob
 ```
-
-- Navigate to project directory, initialize project with below command
-
-```go
+- Initialize project with below comman d(in the project home directory)
+```shell
   gob init
 ```
 
-This command will create a configuration named `gob.yaml` in the project root directory as below:
+This command will do below initializations:
+>  1. generate gob's configuration [gob.yaml](https://github.com/kcmvp/gob/blob/main/gob.yaml)
+>  2. install gob's builtin plugins: [golangci-lint](https://golangci-lint.run/) & [gotestsum](https://github.com/gotestyourself/gotestsum)
+>  3. setup three git hooks 
+>     1. commit-msg 
+>     2. pre-commit 
+>     3. pre-push
 
-```yaml
-exec:
-  commit-msg-hook: ^#[0-9]+:\s*.{10,}$
-  pre-commit-hook:
-    - lint
-    - test
-  pre-push-hook:
-    - test
-plugins:
-  golangci-lint:
-    alias: lint
-    command: run, ./...
-    url: github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.1
+- Execute `gob test` from project home directory 
+ ```shell
+gob test
 ```
+![gob_test](./docs/gob_test.png)
 
-1. The `exec` section is designed to be executed by external; the `init` command will setup three
-   git local hook: `commit-msg-hook`, `pre-commit-hook` and `pre-push-hook`
-2. The `plugins` section define all the plugins(tools) used by this project. **Any tool can be installed as a gob plugin
-   **,
-   `init` command would install [golangci-lint](https://golangci-lint.run/) as a gob `plugin`
+- Try to commit your code see what will happen
+git commit will trigger hooks
+![gob_test](./docs/gob_commit.png)
 
-## Features
 
-This tool supply comprehensive help message, you can always get detail information & usage of each command by **-h**
-flag
-The main features mainly categorize as below
+It's just the beginning, gob can do more than this! 
+please refer [document](./docs/document.md) for details
 
-#### Build & Package
-
-There are mainly 4 built-in commands for project building: **clean, test, lint, build**.
-
-#### Setup (gob setup)
-
-- Setup Git Hook
-- Setup onion architecture
-- Scaffold of popular frameworks
-
-#### Plugin(gob plugin)
-
-If you want to chain a tool into your project phrase you can install it as a plugin. for example
-gb has builtin **golangci-lint** as the part of git hook.
-
-#### Diagram(on the roadmap)
-
-<span id="nav-4"></span>
 
 ## FAQ
 
