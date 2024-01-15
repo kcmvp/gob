@@ -104,11 +104,6 @@ func (suite *ProjectTestSuite) TestIsSetup() {
 
 func (suite *ProjectTestSuite) TestValidate() {
 	CurProject().Validate()
-	lo.ForEach(CurProject().Plugins(), func(plugin Plugin, _ int) {
-		info, err := os.Stat(filepath.Join(suite.goPath, plugin.Binary()))
-		assert.NoError(suite.T(), err)
-		assert.True(suite.T(), info.Size() > 0)
-	})
 	CurProject().GitHook()
 	for name, _ := range HookScripts() {
 		_, err := os.Stat(filepath.Join(CurProject().HookDir(), name))

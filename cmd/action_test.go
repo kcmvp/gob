@@ -24,9 +24,10 @@ func TestActionSuite(t *testing.T) {
 func (suite *ActionTestSuite) SetupSuite() {
 	os.Remove(suite.binary)
 }
-func (suite *ActionTestSuite) TearDownSuite() {
-	os.Remove(suite.binary)
-}
+
+//func (suite *ActionTestSuite) TearDownSuite() {
+//	os.Remove(suite.binary)
+//}
 
 func (suite *ActionTestSuite) TestBuildClean() {
 	err := buildAction(nil)

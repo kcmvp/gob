@@ -35,7 +35,7 @@ func (suite *BuilderTestSuit) TearDownTest() {
 }
 
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
-	builderCmd.PersistentPreRunE(nil, nil)
+	builderCmd.PersistentPreRun(nil, nil)
 	hooks := lo.MapToSlice(internal.HookScripts(), func(key string, _ string) string {
 		return key
 	})

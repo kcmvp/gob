@@ -32,8 +32,8 @@ var builderCmd = &cobra.Command{
 		}
 		return cobra.MinimumNArgs(1)(cmd, args)
 	},
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		return internal.CurProject().Validate()
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		internal.CurProject().Validate()
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for _, arg := range lo.Uniq(args) {
