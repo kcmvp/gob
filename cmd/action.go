@@ -3,13 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/kcmvp/gob/shared" //nolint
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/shared" //nolint
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo" //nolint
 	"github.com/spf13/cobra"

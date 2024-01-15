@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gob/cmd/shared" //nolint
+	"github.com/kcmvp/gob/shared" //nolint
 	"io/fs"
 	"os"
 	"os/exec"
