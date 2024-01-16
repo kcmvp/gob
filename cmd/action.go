@@ -27,37 +27,66 @@ const (
 	cleanModCacheFlag  = "modcache"
 )
 
-var builtinActions = []Action{
-	{A: "build", B: buildAction},
-	{A: "clean", B: cleanAction},
-	{A: "test", B: testAction},
-}
-
 type (
 	Execution func(cmd *cobra.Command, args ...string) error
 	Action    lo.Tuple2[string, Execution]
 )
 
+func builtinActions() []Action {
+	return []Action{
+		{A: "build", B: buildAction},
+		{A: "clean", B: cleanAction},
+		{A: "test", B: testAction},
+		{A: "after_test", B: coverReport},
+	}
+}
+
+func beforeExecution(cmd *cobra.Command, arg string) error {
+	if action, ok := lo.Find(builtinActions(), func(action Action) bool {
+		return action.A == fmt.Sprintf("before_%s", arg)
+	}); ok {
+		return action.B(cmd, arg)
+	}
+	return nil
+}
+
+func afterExecution(cmd *cobra.Command, arg string) error {
+	if action, ok := lo.Find(builtinActions(), func(action Action) bool {
+		return action.A == fmt.Sprintf("after_%s", arg)
+	}); ok {
+		return action.B(cmd, arg)
+	}
+	return nil
+}
+
 func execute(cmd *cobra.Command, arg string) error {
+	err := beforeExecution(cmd, arg)
+	if err != nil {
+		return err
+	}
 	msg := fmt.Sprintf("Start %s project", arg)
 	color.Cyan("%-20s ...... \n", msg)
 	if plugin, ok := lo.Find(internal.CurProject().Plugins(), func(plugin internal.Plugin) bool {
 		return plugin.Alias == arg
 	}); ok {
-		if err := plugin.Execute(); err != nil {
-			return err
-		}
-		return nil
-	} else if action, ok := lo.Find(builtinActions, func(action Action) bool {
+		err = plugin.Execute()
+	} else if action, ok := lo.Find(builtinActions(), func(action Action) bool {
 		return action.A == arg
 	}); ok {
-		return action.B(cmd, arg)
+		err = action.B(cmd, arg)
+	} else {
+		return fmt.Errorf("can not find command %s", arg)
 	}
-	return fmt.Errorf("Can not find command %s", arg)
+	if err == nil {
+		return afterExecution(cmd, arg)
+	}
+	return nil
 }
 
 func validBuilderArgs() []string {
-	builtIn := lo.Map(builtinActions, func(action Action, _ int) string {
+	builtIn := lo.Map(lo.Filter(builtinActions(), func(item Action, _ int) bool {
+		return !strings.Contains(item.A, "_")
+	}), func(action Action, _ int) string {
 		return action.A
 	})
 	lo.ForEach(internal.CurProject().Plugins(), func(item internal.Plugin, _ int) {
@@ -115,25 +144,19 @@ func cleanAction(_ *cobra.Command, _ ...string) error {
 func testAction(_ *cobra.Command, args ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", internal.CurProject().Target())
 	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...) //nolint
-	err := shared.StreamCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()))
-	if err != nil {
-		return err
-	}
-	_, err = exec.Command("go", []string{"tool", "cover", fmt.Sprintf("-html=%s/cover.out", internal.CurProject().Target()), fmt.Sprintf("-o=%s/cover.html", internal.CurProject().Target())}...).CombinedOutput() //nolint
-	if err == nil {
-		fmt.Printf("Test log is generated at %s/test.log \n", internal.CurProject().Target())
-	}
-	reportAction(nil, args...)
-	return nil
+	return shared.StreamCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()))
 }
 
-func reportAction(_ *cobra.Command, _ ...string) {
+func coverReport(_ *cobra.Command, _ ...string) error {
 	target := internal.CurProject().Target()
-	if _, err := os.Stat(filepath.Join(target, "cover.out")); err == nil {
+	_, err := os.Stat(filepath.Join(target, "cover.out"))
+	if err == nil {
 		if _, err = exec.Command("go", []string{"tool", "cover", fmt.Sprintf("-html=%s/cover.out", target), fmt.Sprintf("-o=%s/cover.html", target)}...).CombinedOutput(); err == nil { //nolint
 			fmt.Printf("Coverage report is generated at %s/cover.html \n", target)
+			return nil
 		} else {
-			color.Red("Failed to generate coverage report")
+			return fmt.Errorf(color.RedString("Failed to generate coverage report %s", err.Error()))
 		}
 	}
+	return fmt.Errorf(color.RedString("Failed to generate coverage report %s", err.Error()))
 }
