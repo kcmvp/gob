@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -34,6 +35,12 @@ func (suite *GitHookTestSuite) TestSetupHook() {
 	CurProject().SetupHooks(true)
 	info1, err := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
 	assert.NoError(suite.T(), err)
+	executions := CurProject().Executions()
+	assert.Equal(suite.T(), 3, len(executions))
+	rs := lo.Every([]string{"commit-msg-hook", "pre-commit-hook", "pre-push-hook"}, lo.Map(executions, func(item Execution, _ int) string {
+		return item.CmdKey
+	}))
+	assert.True(suite.T(), rs)
 	hook := CurProject().GitHook()
 	assert.NotEmpty(suite.T(), hook.CommitMsg)
 	assert.Equal(suite.T(), []string([]string{"lint", "test"}), hook.PreCommit)

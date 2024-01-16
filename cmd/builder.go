@@ -20,17 +20,18 @@ const resourceDir = "resources"
 
 // builderCmd represents the base command when called without any subcommands
 var builderCmd = &cobra.Command{
-	Use:   "gob",
-	Short: "Go project boot",
-	Long:  `Supply most frequently used tool and best practices for go project development`,
-	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return validBuilderArgs(), cobra.ShellCompDirectiveError
-	},
+	Use:       "gob",
+	Short:     "Go project boot",
+	Long:      `Go pluggable toolchain and best practice`,
+	ValidArgs: validBuilderArgs(),
 	Args: func(cmd *cobra.Command, args []string) error {
 		if !lo.Every(validBuilderArgs(), args) {
-			return fmt.Errorf("valid args are : %s", validBuilderArgs())
+			return fmt.Errorf(color.RedString("valid args are : %s", validBuilderArgs()))
 		}
-		return cobra.MinimumNArgs(1)(cmd, args)
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return fmt.Errorf(color.RedString(err.Error()))
+		}
+		return nil
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		internal.CurProject().Validate()

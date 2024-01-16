@@ -18,7 +18,10 @@ import (
 	"sync"
 )
 
-const pluginCfgKey = "plugins"
+const (
+	pluginCfgKey  = "plugins"
+	defaultCfgKey = "_default_"
+)
 
 var (
 	project Project
@@ -28,7 +31,7 @@ type Project struct {
 	root   string
 	module string
 	deps   []string
-	cfg    sync.Map
+	cfg    sync.Map // store all the configuration
 }
 
 func TestCallee() (bool, string) {
@@ -55,7 +58,7 @@ func TestCallee() (bool, string) {
 
 func (project *Project) config() *viper.Viper {
 	testEnv, file := TestCallee()
-	key := lo.If(testEnv, file).Else("_default_")
+	key := lo.If(testEnv, file).Else(defaultCfgKey)
 	obj, ok := project.cfg.Load(key)
 	if ok {
 		return obj.(*viper.Viper)
