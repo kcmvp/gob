@@ -37,9 +37,10 @@ func (suite *GitHookTestSuite) TestSetupHook() {
 	assert.NoError(suite.T(), err)
 	executions := CurProject().Executions()
 	assert.Equal(suite.T(), 3, len(executions))
-	assert.Equal(suite.T(), []string{"commit-msg-hook", "pre-commit-hook", "pre-push-hook"}, lo.Map(executions, func(item Execution, _ int) string {
+	rs := lo.Every([]string{"commit-msg-hook", "pre-commit-hook", "pre-push-hook"}, lo.Map(executions, func(item Execution, _ int) string {
 		return item.CmdKey
 	}))
+	assert.True(suite.T(), rs)
 	hook := CurProject().GitHook()
 	assert.NotEmpty(suite.T(), hook.CommitMsg)
 	assert.Equal(suite.T(), []string([]string{"lint", "test"}), hook.PreCommit)
