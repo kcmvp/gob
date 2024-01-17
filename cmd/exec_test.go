@@ -38,7 +38,7 @@ func TestExecSuite(t *testing.T) {
 
 func (suite *ExecTestSuite) TestActions() {
 	assert.Equal(suite.T(), 3, len(execValidArgs()))
-	assert.True(suite.T(), lo.Every(execValidArgs(), []string{internal.CommitMsgCmd, internal.PreCommitCmd, internal.PreCommitCmd}))
+	assert.True(suite.T(), lo.Every(execValidArgs(), []string{internal.CommitMsg, internal.PreCommit, internal.PreCommit}))
 }
 
 func (suite *ExecTestSuite) TestCmdArgs() {
@@ -49,9 +49,9 @@ func (suite *ExecTestSuite) TestCmdArgs() {
 	}{
 		{"no args", []string{}, true},
 		{"no match", []string{lo.RandomString(10, lo.LettersCharset)}, true},
-		{"first match", []string{internal.CommitMsgCmd, lo.RandomString(10, lo.LettersCharset)}, false},
+		{"first match", []string{internal.CommitMsg, lo.RandomString(10, lo.LettersCharset)}, false},
 		{"second match", []string{lo.RandomString(10, lo.LettersCharset), "msghook"}, true},
-		{"more than 3", []string{internal.CommitMsgCmd, lo.RandomString(10, lo.AlphanumericCharset),
+		{"more than 3", []string{internal.CommitMsg, lo.RandomString(10, lo.AlphanumericCharset),
 			lo.RandomString(10, lo.AlphanumericCharset),
 			lo.RandomString(10, lo.AlphanumericCharset)},
 			true,

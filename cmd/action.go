@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gob/shared" //nolint
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,8 +63,6 @@ func execute(cmd *cobra.Command, arg string) error {
 	if err != nil {
 		return err
 	}
-	msg := fmt.Sprintf("Start %s project", arg)
-	color.Cyan("%-20s ...... \n", msg)
 	if plugin, ok := lo.Find(internal.CurProject().Plugins(), func(plugin internal.Plugin) bool {
 		return plugin.Alias == arg
 	}); ok {
@@ -75,7 +72,7 @@ func execute(cmd *cobra.Command, arg string) error {
 	}); ok {
 		err = action.B(cmd, arg)
 	} else {
-		return fmt.Errorf("can not find command %s", arg)
+		return fmt.Errorf(color.RedString("can not find command %s", arg))
 	}
 	if err == nil {
 		return afterExecution(cmd, arg)
@@ -144,7 +141,7 @@ func cleanAction(_ *cobra.Command, _ ...string) error {
 func testAction(_ *cobra.Command, args ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", internal.CurProject().Target())
 	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...) //nolint
-	return shared.StreamCmdOutput(testCmd, fmt.Sprintf("%s/test.log", internal.CurProject().Target()))
+	return internal.StreamCmdOutput(testCmd, "test")
 }
 
 func coverReport(_ *cobra.Command, _ ...string) error {

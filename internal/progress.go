@@ -1,4 +1,4 @@
-package shared
+package internal
 
 import (
 	"fmt"
@@ -15,9 +15,6 @@ func NewProgress() *progressbar.ProgressBar {
 		progressbar.OptionSpinnerCustom(lo.Map(spinner, func(item string, idx int) string {
 			return fmt.Sprintf("[yellow]%s", item)
 		})),
-		progressbar.OptionOnCompletion(func() {
-			fmt.Printf("\r%-50s\n", " ")
-		}),
 		progressbar.OptionFullWidth(),
 		progressbar.OptionSetRenderBlankState(true),
 		progressbar.OptionEnableColorCodes(true),

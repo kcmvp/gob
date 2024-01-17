@@ -1,10 +1,11 @@
-package shared
+package internal
 
 import (
 	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -15,7 +16,7 @@ import (
 	"github.com/creack/pty"
 )
 
-func StreamCmdOutput(cmd *exec.Cmd, file string) error {
+func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 	// Start the command with a pty
 	var scanner *bufio.Scanner
 	if ptmx, err := pty.Start(cmd); err == nil {
@@ -29,9 +30,9 @@ func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 			return err
 		}
 	}
-
+	color.HiCyan("Start %s ......\n", task)
 	// Create a file to save the output
-	log, err := os.Create(file)
+	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", task)))
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return err
@@ -46,7 +47,7 @@ func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 	go func() {
 		for scanner.Scan() {
 			line := strings.TrimSpace(scanner.Text())
-			if len(line) > 0 {
+			if len(line) > 1 {
 				ch <- line
 			}
 		}
@@ -56,7 +57,7 @@ func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 		}
 	}()
 	ticker := time.NewTicker(150 * time.Millisecond)
-	inProgress := false
+	overwrite := true
 	progress := NewProgress()
 	for !eof {
 		select {
@@ -64,8 +65,8 @@ func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 			progress.Reset()
 			lineWithoutColor := colorRegex.ReplaceAllString(line, "")
 			_, err = log.WriteString(lineWithoutColor + "\n")
-			line = lo.IfF(inProgress, func() string {
-				inProgress = false
+			line = lo.IfF(overwrite, func() string {
+				overwrite = false
 				return fmt.Sprintf("\r%-20s", line)
 			}).Else(line)
 			fmt.Println(line)
@@ -74,13 +75,14 @@ func StreamCmdOutput(cmd *exec.Cmd, file string) error {
 				break
 			}
 		case <-ticker.C:
-			if !inProgress {
-				inProgress = true
+			if !overwrite {
+				overwrite = true
 			}
 			_ = progress.Add(1)
 		}
 	}
 	_ = progress.Finish()
+	color.HiCyan("\rFinish %s ......\n", task)
 	ticker.Stop()
 	return cmd.Wait()
 }

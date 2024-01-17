@@ -12,29 +12,23 @@ import (
 const (
 	execCfgKey = "exec"
 	//hook script name
-	commitMsg = "commit-msg"
-	preCommit = "pre-commit"
-	prePush   = "pre-push"
-)
-
-var (
-	CommitMsgCmd = fmt.Sprintf("%s-hook", commitMsg)
-	PreCommitCmd = fmt.Sprintf("%s-hook", preCommit)
-	PrePushCmd   = fmt.Sprintf("%s-hook", prePush)
+	CommitMsg = "commit-msg"
+	PreCommit = "pre-commit"
+	PrePush   = "pre-push"
 )
 
 func HookScripts() map[string]string {
 	return map[string]string{
-		commitMsg: fmt.Sprintf("gob exec %s $1", CommitMsgCmd),
-		preCommit: fmt.Sprintf("gob exec %s", PreCommitCmd),
-		prePush:   fmt.Sprintf("gob exec %s $1 $2", PrePushCmd),
+		CommitMsg: fmt.Sprintf("gob exec %s $1", CommitMsg),
+		PreCommit: fmt.Sprintf("gob exec %s", PreCommit),
+		PrePush:   fmt.Sprintf("gob exec %s $1 $2", PrePush),
 	}
 }
 
 type GitHook struct {
-	CommitMsg string   `mapstructure:"commit-msg-hook"`
-	PreCommit []string `mapstructure:"pre-commit-hook"`
-	PrePush   []string `mapstructure:"pre-push-hook"`
+	CommitMsg string   `mapstructure:"commit-msg"`
+	PreCommit []string `mapstructure:"pre-commit"`
+	PrePush   []string `mapstructure:"pre-push"`
 }
 
 func (project *Project) GitHook() GitHook {
@@ -67,9 +61,9 @@ func (project *Project) Executions() []Execution {
 func (project *Project) SetupHooks(force bool) {
 	if force {
 		hook := map[string]any{
-			fmt.Sprintf("%s.%s", execCfgKey, CommitMsgCmd): "^#[0-9]+:\\s*.{10,}$",
-			fmt.Sprintf("%s.%s", execCfgKey, PreCommitCmd): []string{"lint", "test"},
-			fmt.Sprintf("%s.%s", execCfgKey, PrePushCmd):   []string{"test"},
+			fmt.Sprintf("%s.%s", execCfgKey, CommitMsg): "^#[0-9]+:\\s*.{10,}$",
+			fmt.Sprintf("%s.%s", execCfgKey, PreCommit): []string{"lint", "test"},
+			fmt.Sprintf("%s.%s", execCfgKey, PrePush):   []string{"test"},
 		}
 		if err := project.mergeConfig(hook); err != nil {
 			color.Red("failed to setup hook")
@@ -83,13 +77,13 @@ func (project *Project) SetupHooks(force bool) {
 	gitHook := CurProject().GitHook()
 	var hooks []string
 	if len(gitHook.CommitMsg) > 0 {
-		hooks = append(hooks, commitMsg)
+		hooks = append(hooks, CommitMsg)
 	}
 	if len(gitHook.PreCommit) > 0 {
-		hooks = append(hooks, preCommit)
+		hooks = append(hooks, PreCommit)
 	}
 	if len(gitHook.PrePush) > 0 {
-		hooks = append(hooks, prePush)
+		hooks = append(hooks, PrePush)
 	}
 	shell := lo.IfF(Windows(), func() string {
 		return "#!/usr/bin/env pwsh\n"

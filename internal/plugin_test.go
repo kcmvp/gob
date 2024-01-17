@@ -106,7 +106,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 	for _, test := range tests {
 		suite.T().Run(test.name, func(t *testing.T) {
 			plugin, err := NewPlugin(test.url)
-			assert.Equal(t, plugin.logName(), test.logName)
+			assert.Equal(t, plugin.taskName(), test.logName)
 			assert.Equal(t, plugin.Binary(), test.binary)
 			assert.True(t, test.wantErr == (err != nil))
 			if !test.wantErr {

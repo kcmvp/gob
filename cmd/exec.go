@@ -42,7 +42,7 @@ func execValidArgs() []string {
 }
 
 func pushDelete(cmd string) bool {
-	if cmd == internal.PrePushCmd {
+	if cmd == internal.PrePush {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -55,18 +55,18 @@ func pushDelete(cmd string) bool {
 }
 
 func do(execution internal.Execution, cmd *cobra.Command, args ...string) error {
-	if execution.CmdKey == internal.CommitMsgCmd {
+	if execution.CmdKey == internal.CommitMsg {
 		args = append(args, execution.Actions...)
 		return validateCommitMsg(cmd, args...)
 	} else {
 		if pushDelete(execution.CmdKey) {
 			return nil
 		}
+		// process hook
 		for _, arg := range execution.Actions {
 			if err := execute(cmd, arg); err != nil {
 				return errors.New(color.RedString("failed to %s the project \n", arg))
 			}
-			color.Green("%s successfully", strings.ToUpper(string(arg[0]))+arg[1:])
 		}
 		return nil
 	}
