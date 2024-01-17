@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/shared"
 	"github.com/samber/lo"
 	"io/fs"
 	"os"
@@ -98,7 +97,7 @@ func (plugin Plugin) Name() string {
 	return plugin.name
 }
 
-func (plugin Plugin) logName() string {
+func (plugin Plugin) taskName() string {
 	return lo.If(len(plugin.Alias) > 0, plugin.Alias).Else(plugin.Name())
 }
 
@@ -150,7 +149,7 @@ func (plugin Plugin) Execute() error {
 		return err
 	}
 	pCmd := exec.Command(plugin.Binary(), strings.Split(plugin.Args, " ")...) //nolint #gosec
-	if err := shared.StreamCmdOutput(pCmd, filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.logName()))); err != nil {
+	if err := StreamCmdOutput(pCmd, plugin.taskName()); err != nil {
 		return err
 	}
 	if pCmd.ProcessState.ExitCode() != 0 {

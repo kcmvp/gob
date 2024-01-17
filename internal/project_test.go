@@ -30,7 +30,7 @@ func (suite *ProjectTestSuite) SetupSuite() {
 }
 
 func (suite *ProjectTestSuite) TearDownSuite() {
-	os.RemoveAll(suite.testDir)
+	//os.RemoveAll(suite.testDir)
 	os.RemoveAll(suite.goPath)
 }
 

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/fatih/color"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -54,4 +55,13 @@ func (suite *ActionTestSuite) TestBuiltInActions() {
 	assert.Equal(suite.T(), []string{"build", "clean", "test", "after_test"}, lo.Map(builtinActions(), func(item Action, index int) string {
 		return item.A
 	}))
+}
+
+func (suite *ActionTestSuite) TestExecute() {
+	_ = os.Chdir(internal.CurProject().Root())
+	err := execute(builderCmd, "build")
+	assert.NoError(suite.T(), err)
+	err = execute(builderCmd, "build1")
+	assert.Error(suite.T(), err)
+	assert.Contains(suite.T(), err.Error(), color.RedString("can not find command %s", "build1"))
 }
