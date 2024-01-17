@@ -2,62 +2,112 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-func TestNewPlugin(t *testing.T) {
+type InternalPluginTestSuit struct {
+	suite.Suite
+	testDir string
+	goPath  string
+}
+
+func (suite *InternalPluginTestSuit) SetupSuite() {
+	os.RemoveAll(suite.goPath)
+	os.RemoveAll(suite.testDir)
+	os.Setenv("PATH", fmt.Sprintf("%s%s%s", suite.goPath, string(os.PathListSeparator), os.Getenv("PATH")))
+}
+
+func (suite *InternalPluginTestSuit) TearDownSuite() {
+	os.RemoveAll(suite.goPath)
+	os.RemoveAll(suite.testDir)
+}
+
+func TestInternalPluginSuite(t *testing.T) {
+	_, dir := TestCallee()
+	suite.Run(t, &InternalPluginTestSuit{
+		goPath:  GoPath(),
+		testDir: filepath.Join(CurProject().Target(), dir),
+	})
+}
+
+func (suite *InternalPluginTestSuit) TestNewPlugin() {
 	tests := []struct {
 		name    string
 		url     string
 		module  string
+		logName string
+		binary  string
 		wantErr bool
 	}{
-		{"without version",
-			"github.com/golangci/golangci-lint/cmd/golangci-lint",
-			"github.com/golangci/golangci-lint",
-			false,
+		{
+			name:    "without version",
+			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint",
+			module:  "github.com/golangci/golangci-lint",
+			logName: "golangci-lint",
+			binary:  "golangci-lint-v1.55.2",
+			wantErr: false,
 		},
-		{"laatest version",
-			"github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
-			"github.com/golangci/golangci-lint",
-			false,
+		{
+			name:    "laatest version",
+			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
+			module:  "github.com/golangci/golangci-lint",
+			logName: "golangci-lint",
+			binary:  "golangci-lint-v1.55.2",
+			wantErr: false,
 		},
-		{"specific version",
-			"github.com/golangci/golangci-lint/cmd/golangci-lint@v1.1.1",
-			"github.com/golangci/golangci-lint",
-			false,
+		{
+			name:    "specific version",
+			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@v1.1.1",
+			module:  "github.com/golangci/golangci-lint",
+			logName: "golangci-lint",
+			binary:  "golangci-lint-v1.1.1",
+			wantErr: false,
 		},
-		{"has @ but no version",
-			"github.com/golangci/golangci-lint/cmd/golangci-lint@",
-			"github.com/golangci/golangci-lint",
-			true,
+		{
+			name:    "has @ but no version",
+			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@",
+			module:  "github.com/golangci/golangci-lint",
+			logName: "",
+			binary:  "-",
+			wantErr: true,
 		},
-		{"at the beginning of the url",
-			"@github.com/golangci/golangci-lint/cmd/golangci-lint",
-			"github.com/golangci/golangci-lint",
-			true,
+		{
+			name:    "at the beginning of the url",
+			url:     "@github.com/golangci/golangci-lint/cmd/golangci-lint",
+			module:  "github.com/golangci/golangci-lint",
+			logName: "",
+			binary:  "-",
+			wantErr: true,
 		},
-		{"multiple @",
-			"github.com/golangci/golangci-lint/cmd/golangci@-lint@v1",
-			"github.com/golangci/golangci-lint",
-			true,
+		{
+			name:    "multiple @",
+			url:     "github.com/golangci/golangci-lint/cmd/golangci@-lint@v1",
+			module:  "github.com/golangci/golangci-lint",
+			logName: "",
+			binary:  "-",
+			wantErr: true,
 		},
-
-		// gotest.tools/gotestsum
-		{"gotestsum",
-			"gotest.tools/gotestsum",
-			"gotest.tools/gotestsum",
-			false,
+		{
+			name:    "gotestsum",
+			url:     "gotest.tools/gotestsum",
+			module:  "gotest.tools/gotestsum",
+			logName: "gotestsum",
+			binary:  "gotestsum-v1.11.0",
+			wantErr: false,
 		},
 	}
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		suite.T().Run(test.name, func(t *testing.T) {
 			plugin, err := NewPlugin(test.url)
+			assert.Equal(t, plugin.logName(), test.logName)
+			assert.Equal(t, plugin.Binary(), test.binary)
 			assert.True(t, test.wantErr == (err != nil))
 			if !test.wantErr {
 				assert.Equal(t, test.module, plugin.module)
@@ -67,11 +117,12 @@ func TestNewPlugin(t *testing.T) {
 	}
 }
 
-func TestUnmarshalJSON(t *testing.T) {
+func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
 	data, _ := os.ReadFile(filepath.Join(CurProject().Root(), "cmd", "resources", "config.json"))
 	v := gjson.GetBytes(data, "plugins")
 	var plugins []Plugin
 	err := json.Unmarshal([]byte(v.Raw), &plugins)
+	t := suite.T()
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(plugins))
 	plugin, ok := lo.Find(plugins, func(plugin Plugin) bool {
@@ -91,5 +142,30 @@ func TestUnmarshalJSON(t *testing.T) {
 	assert.Equal(t, "gotestsum", plugin.Name())
 	assert.Equal(t, "gotest.tools/gotestsum", plugin.Module())
 	assert.Equal(t, "test", plugin.Alias)
+}
 
+func (suite *InternalPluginTestSuit) TestInstallPlugin() {
+	t := suite.T()
+	plugin, err := NewPlugin("gotest.tools/gotestsum")
+	assert.NoError(t, err)
+	path, err := plugin.install()
+	assert.NoError(t, err)
+	assert.NoFileExistsf(t, path, "temporay go path should be deleted")
+	binary := filepath.Join(GoPath(), plugin.Binary())
+	info1, err := os.Stat(binary)
+	assert.NoErrorf(t, err, "testsum should be installed successfully")
+	path, _ = plugin.install()
+	assert.NoFileExistsf(t, path, "temporay go path should be deleted")
+	info2, _ := os.Stat(binary)
+	assert.Equal(t, info1.ModTime(), info2.ModTime())
+}
+
+func (suite *InternalPluginTestSuit) TestExecute() {
+	t := suite.T()
+	plugin, err := NewPlugin("golang.org/x/tools/cmd/guru@v0.17.0")
+	assert.NoError(t, err)
+	err = plugin.Execute()
+	assert.Error(t, err)
+	//'exit status 2' means the plugin is executed but no parameters,
+	assert.Equal(t, "exit status 2", err.Error())
 }

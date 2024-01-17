@@ -246,7 +246,7 @@ func (project *Project) SetupPlugin(plugin Plugin) {
 		}
 		_ = project.config().ReadInConfig()
 	}
-	if err := plugin.install(); err != nil {
+	if _, err := plugin.install(); err != nil {
 		color.Red("failed to install plugin %s: %s", plugin.name, err.Error())
 	}
 }
@@ -283,7 +283,7 @@ func Version() string {
 		}) {
 			return fmt.Sprintf("%s@stage", tag)
 		}
-		if output, err = exec.Command("git", "show", "--format=%cd", "--date=format:%Y/%m/%d", hash).CombinedOutput(); err == nil {
+		if output, err = exec.Command("git", "log", "--format=%ci -n 1", hash).CombinedOutput(); err == nil {
 			return fmt.Sprintf("%s@%s", tag, strings.ReplaceAll(string(output), "\n", ""))
 		}
 	}
@@ -298,7 +298,7 @@ func temporaryGoPath() string {
 func GoPath() string {
 	if ok, method := TestCallee(); ok {
 		dir := filepath.Join(os.TempDir(), method)
-		os.MkdirAll(dir, 0o700) //nolint
+		_ = os.MkdirAll(dir, os.ModePerm) //nolint
 		return dir
 	}
 	return filepath.Join(os.Getenv("GOPATH"), "bin")

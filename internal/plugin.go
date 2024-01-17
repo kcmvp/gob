@@ -4,16 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gob/shared" //nolint
+	"github.com/fatih/color"
+	"github.com/kcmvp/gob/shared"
+	"github.com/samber/lo"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/fatih/color"
-	"github.com/samber/lo"
 )
 
 const modulePattern = `^[^@]+@?[^@\s]+$`
@@ -110,10 +109,10 @@ func (plugin Plugin) Binary() string {
 }
 
 // install a plugin when it does not exist
-func (plugin Plugin) install() error {
+func (plugin Plugin) install() (string, error) {
 	gopath := GoPath()
 	if _, err := os.Stat(filepath.Join(gopath, plugin.Binary())); err == nil {
-		return nil
+		return "", nil
 	}
 	tempGoPath := temporaryGoPath()
 	defer os.RemoveAll(tempGoPath)
@@ -126,9 +125,9 @@ func (plugin Plugin) install() error {
 		return pair
 	})
 	if err := cmd.Run(); err != nil {
-		return errors.New(color.RedString(err.Error()))
+		return tempGoPath, errors.New(color.RedString(err.Error()))
 	}
-	return filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
+	return tempGoPath, filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -147,9 +146,15 @@ func (plugin Plugin) install() error {
 }
 
 func (plugin Plugin) Execute() error {
-	if err := plugin.install(); err != nil {
+	if _, err := plugin.install(); err != nil {
 		return err
 	}
-	exeCmd := exec.Command(plugin.Binary(), strings.Split(plugin.Args, " ")...) //nolint #gosec
-	return shared.StreamCmdOutput(exeCmd, filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.logName())))
+	pCmd := exec.Command(plugin.Binary(), strings.Split(plugin.Args, " ")...) //nolint #gosec
+	if err := shared.StreamCmdOutput(pCmd, filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", plugin.logName()))); err != nil {
+		return err
+	}
+	if pCmd.ProcessState.ExitCode() != 0 {
+		return fmt.Errorf("faild %d", pCmd.ProcessState.ExitCode())
+	}
+	return nil
 }

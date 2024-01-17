@@ -80,7 +80,7 @@ func execute(cmd *cobra.Command, arg string) error {
 	if err == nil {
 		return afterExecution(cmd, arg)
 	}
-	return nil
+	return err
 }
 
 func validBuilderArgs() []string {
