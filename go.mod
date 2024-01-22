@@ -12,6 +12,7 @@ require (
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.17.0
+	github.com/xlab/treeprint v1.2.0
 )
 
 require (
