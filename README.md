@@ -66,10 +66,10 @@ This command will do below initializations:
 ## Screenshots
 
 - Git Hooks
-> <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="200" width="400">
+> <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="250" width="500">
 
 - Dependency tree 
-> <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="200" width="400">
+> <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="250" width="500">
 
 
 
