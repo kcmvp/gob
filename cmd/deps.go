@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 kcmvp <EMAIL ADDRESS>
-*/
 package cmd
 
 import (

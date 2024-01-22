@@ -60,19 +60,14 @@ This command will do below initializations:
 >     1. commit-msg 
 >     2. pre-commit 
 >     3. pre-push
-
-- Execute `gob test` from project home directory  
- ```shell
-gob test
-```
-> <img src="https://github.com/kcmvp/gob/blob/main/docs/gob_test.png" height="200" width="400">
+ 
+## Screenshots
 
 - Try to commit your code see what will happen
-git commit will trigger hooks
-> <img src="https://github.com/kcmvp/gob/blob/main/docs/gob_commit.png" height="200" width="400">
+  git commit will trigger hooks
+> ![commit hoook](./docs/commit_hook.gif)
 
-
-It's just the beginning, gob can do more than this! 
+> <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="200" width="400">
 
 
 
