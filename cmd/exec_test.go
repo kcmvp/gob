@@ -83,7 +83,7 @@ func TestValidateCommitMsg(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := validateCommitMsg(execCmd, test.args...)
+			err := do(internal.Execution{CmdKey: internal.CommitMsg}, nil, test.args...)
 			assert.True(t, test.wantErr == (err != nil))
 		})
 	}

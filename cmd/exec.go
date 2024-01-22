@@ -20,7 +20,7 @@ const pushDeleteHash = "0000000000000000000000000000000000000000"
 
 // validateCommitMsg invoked by git commit-msg hook, an error returns when it fails to validate
 // the commit message
-var validateCommitMsg Execution = func(cmd *cobra.Command, args ...string) error {
+var validateCommitMsg Execution = func(_ *cobra.Command, args ...string) error {
 	if len(args) < 2 {
 		return fmt.Errorf(color.RedString("please input commit message"))
 	}
@@ -57,7 +57,7 @@ func pushDelete(cmd string) bool {
 func do(execution internal.Execution, cmd *cobra.Command, args ...string) error {
 	if execution.CmdKey == internal.CommitMsg {
 		args = append(args, execution.Actions...)
-		return validateCommitMsg(cmd, args...)
+		return validateCommitMsg(nil, args...)
 	} else {
 		if pushDelete(execution.CmdKey) {
 			return nil
