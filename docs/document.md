@@ -74,7 +74,7 @@ issue below command
 gob lint
 ```
 
-## Built-in commands
+## Commands
 
 > principles apply to all commands: 
 > every command must be executed from project root directory
@@ -139,6 +139,13 @@ gob plugin install github.com/golangci/golangci-lint/cmd/golangci-lint
 gob plugin list
 ```
 list all the definied plugins in project
+
+
+### gob deps
+```shell
+gob deps
+```
+Display project dependency as tree view
 
 
 

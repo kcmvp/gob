@@ -60,6 +60,8 @@ This command will do below initializations:
 >     1. commit-msg 
 >     2. pre-commit 
 >     3. pre-push
+
+*`gob.yaml` and `.golangci.yaml` need to be checkin with your sources code 
  
 ## Screenshots
 
