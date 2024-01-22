@@ -65,10 +65,10 @@ This command will do below initializations:
  
 ## Screenshots
 
-- Try to commit your code see what will happen
-  git commit will trigger hooks
-> ![commit hoook](./docs/commit_hook.gif)
+- Git Hooks
+> <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.git" height="200" width="400">
 
+- Dependency tree 
 > <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="200" width="400">
 
 
