@@ -69,6 +69,11 @@ func (suite *PluginTestSuit) TestInstallPluginWithVersion() {
 	}
 }
 
+func (suite *PluginTestSuit) TestList() {
+	err := list(nil, "")
+	assert.NoError(suite.T(), err)
+}
+
 func (suite *PluginTestSuit) TestPluginArgs() {
 	tests := []struct {
 		name    string
