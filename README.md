@@ -31,7 +31,7 @@ these tools and frameworks exist independently to solve specific problems.
 Whenever a new Golang project is started, it requires a series of initialization;
 What’s worse is that whenever your switch the development environment, same process have to be repeated!
 This project is built to solve this problem by providing a method similar to [Maven](https://maven.apache.org/)
-or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [Document](#commands)for details
+or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [Document](#commands) for details
 
 <span id="nav-3"></span>
 
@@ -40,6 +40,21 @@ or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [Docume
 1. **Everything is a plugin, simple yet powerful !**
 2. Build a tool chain and workflow without a line.
 3. Better user experience
+
+## How gob works
+`Gob` takes everything defined in the `gob.yaml` as plugin.
+```mermaid
+flowchart TD
+        Gob --> gob.yaml 
+        gob.yaml --> plugin1
+        gob.yaml --> plugin2
+        gob.yaml --> plugin3
+```
+You just need to tell `gob` 3W(where,when and what)
+
+1. **Where** : where to download the tool
+2. **When** : when to execute to command
+2. **What** : what to do with the tool
 
 ## Quick Start
 1. Install `gob` with below command
@@ -61,17 +76,49 @@ This command will generate two files
 
 
 ## Commands 
-- [gob init](#gob-init)
-- [gob build](#gob-build)
-- [gob clean](#gob-clean)
-- [gob test](#gob-test)
-- [gob lint](#gob-lint)
-- [gob deps](#gob-deps)
-- [gob plugin install](#gob-plugin-install)
-- [gob plugin list](#gob-plugin-list)
+- Build related commands
+  - [gob init](#gob-init)
+  - [gob build](#gob-build)
+  - [gob clean](#gob-clean)
+  - [gob test](#gob-test)
+  - [gob lint](#gob-lint)
+  - [gob deps](#gob-deps)
+- Plugin related commands
+  - [gob plugin install](#gob-plugin-install)
+  - [gob plugin list](#gob-plugin-list)
 
+### gob init
+Initialize gob for the project, it will do following initializations 
+1. generate file `gob.yaml`
+2. generate file `.golangci.yaml`, which is the configuration for [golangci-lint](https://github.com/golangci/golangci-lint)
+3. setup `git hooks` if project in the source control.
+   4. commit-msg
+   5. pre-commit
+   6. pre-push
+```shell
+gob init
+```
+`gob.yaml`
+```yaml
+exec:
+    commit-msg-hook: ^#[0-9]+:\s*.{10,}$
+    pre-commit-hook:
+        - lint
+        - test
+    pre-push-hook:
+        - test
+plugins:
+    golangci-lint:
+        alias: lint #When : when issue `gob lint`
+        args: run ./... #What: execute `golangci-lint run ./...`
+        url: github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 #Where: where to download the plugin
+    gotestsum:
+        alias: test
+        args: --format testname -- -coverprofile=target/cover.out ./...
+        url: gotest.tools/gotestsum@v1.11.0
+```
+in most cases you don't need to edit the configuration manually. you can achieve this by [plugin commands](#gob-plugin-install) 
 
-### gob init 
 ### gob build
 ### gob clean
 ### gob test
