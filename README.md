@@ -38,38 +38,35 @@ or [Gradle](https://gradle.com/) in the **Java** ecosystem.
 ## Features
 
 1. **Everything is a plugin, simple yet powerful !**
-2. Build a tool chain and workflow without line code.
-3. Better interaction user experience
-
-Please refer [document](./docs/document.md) for details
+2. Build a tool chain and workflow without a line.
+3. Better user experience
 
 ## Quick Start
-- Install `gob` with below command
+1. Install `gob` with below command
 ```shell
     go install github.com/kcmvp/gob
 ```
-- Initialize project with below comman d(in the project home directory)
+2. Initialize project with below command(in the project home directory)
 ```shell
   gob init
 ```
+This command will generate two files
+>- gob.yaml :  `gob` configuration
+>- .golangci.yaml: [golangci-lint](https://golangci-lint.run/) configuration. gob supports `golangci-lint` butilin
+>  These two files need to be checked in with your source code
 
-This command will do below initializations:
->  1. generate gob's configuration [gob.yaml](https://github.com/kcmvp/gob/blob/main/gob.yaml)
->  2. install gob's builtin plugins: [golangci-lint](https://golangci-lint.run/) & [gotestsum](https://github.com/gotestyourself/gotestsum)
->  3. setup three git hooks 
->     1. commit-msg 
->     2. pre-commit 
->     3. pre-push
-
-*`gob.yaml` and `.golangci.yaml` need to be checkin with your sources code 
- 
-## Screenshots
-
-- Git Hooks
+3. Make some changes in your source code and try to commit the code, you will see below screenshot.
 > <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="425">
 
-- Dependency tree 
+
+4: Check project dependency
+```shell
+gob deps
+```
 > <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="425">
+
+
+Please refer [document](./docs/document.md) for details
 
 
 
