@@ -66,9 +66,9 @@ You just need to tell `gob` 3W(where,when and what)
   gob init
 ```
 
-| Make some changes and comit code                                                                | execute `gob deps`                                                                                  |
-|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="100"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="200"> |
+| Make some changes and comit code                                                                 | execute `gob deps`                                                                                   |
+|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="300"> |
 
 
 ## Commands 
