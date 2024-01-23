@@ -65,14 +65,10 @@ You just need to tell `gob` 3W(where,when and what)
 ```shell
   gob init
 ```
-This command will generate two files
->- gob.yaml :  `gob` configuration
->- .golangci.yaml: [golangci-lint](https://golangci-lint.run/) configuration. gob supports `golangci-lint` butilin
->  These two files need to be checked in with your source code
 
-| Git Hooks | Dependency Tree |
-|-----------|-----------------|
-|<img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="425">           |<img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="425">                 |
+| Make some changes and comit code                                                                 | execute `gob deps`                                                                                    |
+|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="425"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="425"> |
 
 
 ## Commands 
@@ -88,6 +84,9 @@ This command will generate two files
   - [gob plugin list](#gob-plugin-list)
 
 ### gob init
+```shell
+gob init
+```
 Initialize gob for the project, it will do following initializations 
 1. generate file `gob.yaml`
 2. generate file `.golangci.yaml`, which is the configuration for [golangci-lint](https://github.com/golangci/golangci-lint)
@@ -95,10 +94,10 @@ Initialize gob for the project, it will do following initializations
    4. commit-msg
    5. pre-commit
    6. pre-push
-```shell
-gob init
-```
-`gob.yaml`
+> This command can be executed at any time. 
+
+Content of `gob.yaml`
+
 ```yaml
 exec:
     commit-msg-hook: ^#[0-9]+:\s*.{10,}$
@@ -120,13 +119,50 @@ plugins:
 in most cases you don't need to edit the configuration manually. you can achieve this by [plugin commands](#gob-plugin-install) 
 
 ### gob build
+```shell
+gob build
+```
+This command would build all the candidate binaries(main methods in main packages) to the `target` folder.
+1. Final binary name is same as go source file name which contains `main method`
+2. Would fail if there are same name go main surce file
+
 ### gob clean
+```shell
+gob clean
+```
+This command would clean `target` folder
+
 ### gob test
+```shell
+gob test
+```
+This command would run all tests for the project and generate coverage report at `target/cover.html`
+
 ### gob lint
+```shell
+gob lint
+```
+Run `golangci-lint` against project based on the configuration, a report named `target/lint.log` will be generated if there are any violations
 ### gob deps
+```shell
+gob deps
+```
+List project dependencies tree and indicate there are updates for a specific dependency
 ### gob plugin install
+```shell
+gob plugin install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 lint run ./...
+```
+It is an advanced version of `go install`, which supports multi-version.(eg:`golangci-lint-v1.55.2`, `golangci-lint-v1.55.1`)
+1. Install the versioned tool(just the same as `go install`)
+2. Set up the tool as plugin in `gob.yaml`
+3. You can update adjust the parameters of the plugin by editing  `gob.yaml`
+ 
 ### gob plugin list
 
+```shell
+gob plugin list
+```
+List all the installed plugins
 
 ## FAQ
 
