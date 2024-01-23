@@ -72,18 +72,21 @@ You just need to tell `gob` 3W(where,when and what)
 
 
 ## Commands 
-- Build Commands
-  - [gob init](#gob-init)
-  - [gob build](#gob-build)
-  - [gob clean](#gob-clean)
-  - [gob test](#gob-test)
-  - [gob lint](#gob-lint)
-  - [gob deps](#gob-deps)
-- Plugin Commands
-  - [gob plugin install](#gob-plugin-install)
-  - [gob plugin list](#gob-plugin-list)
-- Setup Commands
-  - [gob setup version](#gob-setup-version)
+
+Build Commands
+- [gob init](#gob-init)
+- [gob build](#gob-build)
+- [gob clean](#gob-clean)
+- [gob test](#gob-test)
+- [gob lint](#gob-lint)
+- [gob deps](#gob-deps)
+
+Plugin Commands
+- [gob plugin install](#gob-plugin-install)
+- [gob plugin list](#gob-plugin-list)
+ 
+Setup Commands
+- [gob setup version](#gob-setup-version)
 
 ### gob init
 ```shell

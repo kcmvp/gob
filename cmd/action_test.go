@@ -27,10 +27,6 @@ func (suite *ActionTestSuite) SetupSuite() {
 	os.Remove(suite.binary)
 }
 
-//func (suite *ActionTestSuite) TearDownSuite() {
-//	os.Remove(suite.binary)
-//}
-
 func (suite *ActionTestSuite) TestActionBuild() {
 	err := buildAction(nil)
 	assert.NoError(suite.T(), err)
@@ -64,4 +60,11 @@ func (suite *ActionTestSuite) TestExecute() {
 	err = execute(builderCmd, "build1")
 	assert.Error(suite.T(), err)
 	assert.Contains(suite.T(), err.Error(), color.RedString("can not find command %s", "build1"))
+}
+
+func (suite *ActionTestSuite) TestCoverage() {
+	_, err1 := os.Stat(filepath.Join(internal.CurProject().Target(), "cover.out"))
+	err2 := coverReport(nil, "")
+	assert.True(suite.T(), (err1 == nil) == (err2 == nil))
+
 }

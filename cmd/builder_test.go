@@ -82,10 +82,35 @@ func (suite *BuilderTestSuit) TestArgs() {
 }
 
 func (suite *BuilderTestSuit) TestBuild() {
-	builderCmd.SetArgs([]string{"cd"})
-	err := builderCmd.Execute()
-	assert.Error(suite.T(), err)
-	assert.True(suite.T(), strings.Contains(err.Error(), color.RedString("")))
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{
+			name:    "invalid",
+			args:    []string{"cd"},
+			wantErr: true,
+		},
+		{
+			name:    "valid",
+			args:    []string{"build"},
+			wantErr: false,
+		},
+	}
+	for _, test := range tests {
+		suite.T().Run(test.name, func(t *testing.T) {
+			builderCmd.SetArgs(test.args)
+			if !test.wantErr {
+				os.Chdir(internal.CurProject().Root())
+			}
+			err := Execute()
+			assert.True(t, test.wantErr == (err != nil))
+			if test.wantErr {
+				assert.True(suite.T(), strings.Contains(err.Error(), color.RedString("")))
+			}
+		})
+	}
 
 }
 
