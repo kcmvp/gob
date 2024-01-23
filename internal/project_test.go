@@ -116,3 +116,7 @@ func (suite *ProjectTestSuite) TestMainFiles() {
 	assert.Equal(suite.T(), 1, len(mainFiles))
 	assert.True(suite.T(), lo.Contains(mainFiles, filepath.Join(CurProject().Root(), "gob.go")))
 }
+
+func (suite *ProjectTestSuite) TestVersion() {
+	assert.NotEqual(suite.T(), unknownVersion, Version())
+}
