@@ -31,7 +31,7 @@ these tools and frameworks exist independently to solve specific problems.
 Whenever a new Golang project is started, it requires a series of initialization;
 What’s worse is that whenever your switch the development environment, same process have to be repeated!
 This project is built to solve this problem by providing a method similar to [Maven](https://maven.apache.org/)
-or [Gradle](https://gradle.com/) in the **Java** ecosystem.
+or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [document](./docs/document.md) for details
 
 <span id="nav-3"></span>
 
@@ -65,8 +65,6 @@ gob deps
 ```
 > <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="425">
 
-
-Please refer [document](./docs/document.md) for details
 
 
 
