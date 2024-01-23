@@ -31,7 +31,7 @@ these tools and frameworks exist independently to solve specific problems.
 Whenever a new Golang project is started, it requires a series of initialization;
 What’s worse is that whenever your switch the development environment, same process have to be repeated!
 This project is built to solve this problem by providing a method similar to [Maven](https://maven.apache.org/)
-or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [Document](#document-) for details
+or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [Document](#commands)for details
 
 <span id="nav-3"></span>
 
@@ -60,18 +60,25 @@ This command will generate two files
 |<img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="425">           |<img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="425">                 |
 
 
-3. Make some changes in your source code and try to commit the code, you will see below screenshot.
-> <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="425">
+## Commands 
+- [gob init](#gob-init)
+- [gob build](#gob-build)
+- [gob clean](#gob-clean)
+- [gob test](#gob-test)
+- [gob lint](#gob-lint)
+- [gob deps](#gob-deps)
+- [gob plugin install](#gob-plugin-install)
+- [gob plugin list](#gob-plugin-list)
 
 
-4: Check project dependency
-```shell
-gob deps
-```
-> <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="425">
-
-
-## Document 
+### gob init 
+### gob build
+### gob clean
+### gob test
+### gob lint
+### gob deps
+### gob plugin install
+### gob plugin list
 
 
 ## FAQ
