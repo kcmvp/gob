@@ -66,22 +66,24 @@ You just need to tell `gob` 3W(where,when and what)
   gob init
 ```
 
-| Make some changes and comit code                                                                 | execute `gob deps`                                                                                    |
-|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245"> |
+| Make some changes and comit code                                                                | execute `gob deps`                                                                                  |
+|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="100"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="200"> |
 
 
 ## Commands 
-- Build related commands
+- Build Commands
   - [gob init](#gob-init)
   - [gob build](#gob-build)
   - [gob clean](#gob-clean)
   - [gob test](#gob-test)
   - [gob lint](#gob-lint)
   - [gob deps](#gob-deps)
-- Plugin related commands
+- Plugin Commands
   - [gob plugin install](#gob-plugin-install)
   - [gob plugin list](#gob-plugin-list)
+- Setup Commands
+  - [gob setup version](#gob-setup-version)
 
 ### gob init
 ```shell
@@ -162,6 +164,9 @@ It is an advanced version of `go install`, which supports multi-version.(eg:`gol
 ```shell
 gob plugin list
 ```
+
+### gob setup version
+
 List all the installed plugins
 
 ## FAQ
