@@ -164,10 +164,10 @@ It is an advanced version of `go install`, which supports multi-version.(eg:`gol
 ```shell
 gob plugin list
 ```
+List all the installed plugins
 
 ### gob setup version
 
-List all the installed plugins
 
 ## FAQ
 
