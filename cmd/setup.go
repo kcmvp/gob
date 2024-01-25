@@ -24,7 +24,7 @@ var setupCmd = &cobra.Command{
 		action, _ := lo.Find(setupActions(), func(action Action) bool {
 			return action.A == args[0]
 		})
-		action.B(cmd, args...)
+		_ = action.B(cmd, args...)
 	},
 }
 
