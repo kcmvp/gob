@@ -31,7 +31,7 @@ type (
 	Action    lo.Tuple2[string, Execution]
 )
 
-func builtinActions() []Action {
+func buildActions() []Action {
 	return []Action{
 		{A: "build", B: buildAction},
 		{A: "clean", B: cleanAction},
@@ -40,8 +40,14 @@ func builtinActions() []Action {
 	}
 }
 
+func setupActions() []Action {
+	return []Action{
+		{A: "version", B: setupVersion},
+	}
+}
+
 func beforeExecution(cmd *cobra.Command, arg string) error {
-	if action, ok := lo.Find(builtinActions(), func(action Action) bool {
+	if action, ok := lo.Find(buildActions(), func(action Action) bool {
 		return action.A == fmt.Sprintf("before_%s", arg)
 	}); ok {
 		return action.B(cmd, arg)
@@ -50,7 +56,7 @@ func beforeExecution(cmd *cobra.Command, arg string) error {
 }
 
 func afterExecution(cmd *cobra.Command, arg string) error {
-	if action, ok := lo.Find(builtinActions(), func(action Action) bool {
+	if action, ok := lo.Find(buildActions(), func(action Action) bool {
 		return action.A == fmt.Sprintf("after_%s", arg)
 	}); ok {
 		return action.B(cmd, arg)
@@ -67,7 +73,7 @@ func execute(cmd *cobra.Command, arg string) error {
 		return plugin.Alias == arg
 	}); ok {
 		err = plugin.Execute()
-	} else if action, ok := lo.Find(builtinActions(), func(action Action) bool {
+	} else if action, ok := lo.Find(buildActions(), func(action Action) bool {
 		return action.A == arg
 	}); ok {
 		err = action.B(cmd, arg)
@@ -81,7 +87,7 @@ func execute(cmd *cobra.Command, arg string) error {
 }
 
 func validBuilderArgs() []string {
-	builtIn := lo.Map(lo.Filter(builtinActions(), func(item Action, _ int) bool {
+	builtIn := lo.Map(lo.Filter(buildActions(), func(item Action, _ int) bool {
 		return !strings.Contains(item.A, "_")
 	}), func(action Action, _ int) string {
 		return action.A
@@ -156,4 +162,18 @@ func coverReport(_ *cobra.Command, _ ...string) error {
 		}
 	}
 	return fmt.Errorf(color.RedString("Failed to generate coverage report %s", err.Error()))
+}
+
+func setupVersion(_ *cobra.Command, _ ...string) error {
+	infra := filepath.Join(internal.CurProject().Root(), "infra")
+	if _, err := os.Stat(infra); err != nil {
+		os.Mkdir(infra, 0700) // nolint
+	}
+	ver := filepath.Join(infra, "version.go")
+	if _, err := os.Stat(ver); err != nil {
+		data, _ := resources.ReadFile(filepath.Join(resourceDir, "version.tmpl"))
+		os.WriteFile(ver, data, 0666) //nolint
+	}
+	color.GreenString("version file is generated at infra/version.go")
+	return nil
 }

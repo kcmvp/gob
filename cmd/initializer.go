@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 kcmvp <kcheng.mvp@gmail.com>
 */
 package cmd
 
@@ -28,21 +28,9 @@ func builtinPlugins() []internal.Plugin {
 	return plugins
 }
 
-func initBuildVersion() {
-	infra := filepath.Join(internal.CurProject().Root(), "infra")
-	if _, err := os.Stat(infra); err != nil {
-		os.Mkdir(infra, 0700) // nolint
-	}
-	ver := filepath.Join(infra, "version.go")
-	if _, err := os.Stat(ver); err != nil {
-		data, _ := resources.ReadFile(filepath.Join(resourceDir, "version.tmpl"))
-		os.WriteFile(ver, data, 0666) //nolint
-	}
-}
-
 func initializerFunc(_ *cobra.Command, _ []string) {
 	fmt.Println("Initialize configuration ......")
-	initBuildVersion()
+	//initBuildVersion()
 	lo.ForEach(builtinPlugins(), func(plugin internal.Plugin, index int) {
 		internal.CurProject().SetupPlugin(plugin)
 		if len(plugin.Config) > 0 {
