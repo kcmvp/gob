@@ -31,14 +31,14 @@ these tools and frameworks exist independently to solve specific problems.
 Whenever a new Golang project is started, it requires a series of initialization;
 What’s worse is that whenever your switch the development environment, same process have to be repeated!
 This project is built to solve this problem by providing a method similar to [Maven](https://maven.apache.org/)
-or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [Document](#commands) for details
+or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [documents](#commands) for details
 
 <span id="nav-3"></span>
 
 ## Features
 
 1. **Everything is a plugin, simple yet powerful !**
-2. Build a tool chain and workflow without a line.
+2. Define a tool chain and workflow without a line code.
 3. Better user experience
 
 ## How gob works
@@ -171,6 +171,22 @@ List all the installed plugins
 
 ### gob setup version
 
-
 ## FAQ
+
+- [When install a plugin, how to find out the url?](#)
+ 
+   `gob plugin install` work the same way as `go install`, it take the same url as `go install`.
+ 
+
+- [How to upgrade a plugin ?](#)
+ 
+   Just simply edit `gob.yaml` file and update the version you want. 
+    ```yaml
+   plugins:
+      golangci-lint:
+      alias: lint
+      args: run ./...
+      url: github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+   ```
+`
 
