@@ -14,18 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	CleanCache     bool
-	CleanTestCache bool
-	CleanModCache  bool
-)
-
-const (
-	cleanCacheFlag     = "cache"
-	cleanTestCacheFlag = "testcache"
-	cleanModCacheFlag  = "modcache"
-)
-
 type (
 	Execution func(cmd *cobra.Command, args ...string) error
 	Action    lo.Tuple2[string, Execution]
@@ -128,15 +116,6 @@ func cleanAction(_ *cobra.Command, _ ...string) error {
 	fmt.Println("Clean target folder successfully !")
 	// clean cache
 	args := []string{"clean"}
-	if CleanCache {
-		args = append(args, fmt.Sprintf("--%s", cleanCacheFlag))
-	}
-	if CleanTestCache {
-		args = append(args, fmt.Sprintf("--%s", cleanTestCacheFlag))
-	}
-	if CleanModCache {
-		args = append(args, fmt.Sprintf("--%s", cleanModCacheFlag))
-	}
 	_, err := exec.Command("go", args...).CombinedOutput()
 	if len(args) > 1 && err == nil {
 		fmt.Println("Clean cache successfully !")

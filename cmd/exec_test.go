@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/kcmvp/gob/internal"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -13,27 +14,24 @@ import (
 
 type ExecTestSuite struct {
 	suite.Suite
-	testDir string
 }
 
-func (suite *ExecTestSuite) SetupSuite() {
+func (suite *ExecTestSuite) BeforeTest(_, testName string) {
 	s, _ := os.Open(filepath.Join(internal.CurProject().Root(), "testdata", "gob.yaml"))
-	os.MkdirAll(suite.testDir, os.ModePerm)
-	t, _ := os.Create(filepath.Join(suite.testDir, "gob.yaml"))
+	root := filepath.Join(internal.CurProject().Root(), "target", fmt.Sprintf("cmd_exec_test_%s", testName))
+	os.MkdirAll(root, os.ModePerm)
+	t, _ := os.Create(filepath.Join(root, "gob.yaml"))
 	io.Copy(t, s)
 	s.Close()
 	t.Close()
 }
 
 func (suite *ExecTestSuite) TearDownSuite() {
-	os.RemoveAll(suite.testDir)
+	TearDownSuite("cmd_exec_test_")
 }
 
 func TestExecSuite(t *testing.T) {
-	_, file := internal.TestCallee()
-	suite.Run(t, &ExecTestSuite{
-		testDir: filepath.Join(internal.CurProject().Target(), file),
-	})
+	suite.Run(t, &ExecTestSuite{})
 }
 
 func (suite *ExecTestSuite) TestActions() {
@@ -58,10 +56,8 @@ func (suite *ExecTestSuite) TestCmdArgs() {
 		},
 	}
 	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			err := execCmd.Args(execCmd, test.args)
-			assert.True(t, test.wantErr == (err != nil))
-		})
+		err := execCmd.Args(execCmd, test.args)
+		assert.True(suite.T(), test.wantErr == (err != nil))
 	}
 }
 

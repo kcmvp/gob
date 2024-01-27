@@ -34,7 +34,8 @@ type Project struct {
 	cfg    sync.Map // store all the configuration
 }
 
-func TestCallee() (bool, string) {
+// TestCaller returns true when caller is from _test.go and the full method name
+func TestCaller() (bool, string) {
 	var test bool
 	var file string
 	callers := make([]uintptr, 10)
@@ -49,7 +50,9 @@ func TestCallee() (bool, string) {
 			items = lo.Map(items[len(items)-2:], func(item string, _ int) string {
 				return strings.ReplaceAll(item, ".go", "")
 			})
-			file = strings.Join(items, "-")
+			uniqueNames := strings.Split(frame.Function, ".")
+			items = append(items, uniqueNames[len(uniqueNames)-1])
+			file = strings.Join(items, "_")
 			break
 		}
 	}
@@ -57,22 +60,14 @@ func TestCallee() (bool, string) {
 }
 
 func (project *Project) config() *viper.Viper {
-	testEnv, file := TestCallee()
+	testEnv, file := TestCaller()
 	key := lo.If(testEnv, file).Else(defaultCfgKey)
 	obj, ok := project.cfg.Load(key)
 	if ok {
 		return obj.(*viper.Viper)
 	}
 	v := viper.New()
-	path := lo.If(!testEnv, project.Root()).ElseF(func() string {
-		tp := filepath.Join(project.Target(), file)
-		if _, err := os.Stat(tp); err != nil {
-			if err = os.Mkdir(tp, os.ModePerm); err != nil {
-				color.Red("failed to create temporary directory %s", tp)
-			}
-		}
-		return tp
-	})
+	path := lo.If(!testEnv, project.Root()).Else(project.Target())
 
 	v.SetConfigFile(filepath.Join(path, "gob.yaml"))
 	if err := v.ReadInConfig(); err != nil {
@@ -94,10 +89,10 @@ func (project *Project) mergeConfig(cfg map[string]any) error {
 }
 
 func (project *Project) HookDir() string {
-	if ok, file := TestCallee(); ok {
-		mock := filepath.Join(CurProject().Target(), file)
+	if ok, _ := TestCaller(); ok {
+		mock := filepath.Join(CurProject().Target(), ".git", "hooks")
 		if _, err := os.Stat(mock); err != nil {
-			os.Mkdir(mock, os.ModePerm) //nolint
+			os.MkdirAll(mock, os.ModePerm) //nolint
 		}
 		return mock
 	}
@@ -150,8 +145,11 @@ func (project *Project) Module() string {
 
 func (project *Project) Target() string {
 	target := filepath.Join(project.Root(), "target")
+	if test, method := TestCaller(); test {
+		target = filepath.Join(target, method)
+	}
 	if _, err := os.Stat(target); err != nil {
-		os.Mkdir(target, os.ModePerm)
+		_ = os.MkdirAll(target, os.ModePerm)
 	}
 	return target
 }
@@ -296,7 +294,7 @@ func temporaryGoPath() string {
 }
 
 func GoPath() string {
-	if ok, method := TestCallee(); ok {
+	if ok, method := TestCaller(); ok {
 		dir := filepath.Join(os.TempDir(), method)
 		_ = os.MkdirAll(dir, os.ModePerm) //nolint
 		return dir

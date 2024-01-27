@@ -9,45 +9,36 @@ import (
 	"testing"
 )
 
-var v6 = "golang.org/x/tools/cmd/digraph@v0.16.0"
-var v7 = "golang.org/x/tools/cmd/digraph@v0.16.1"
+const v6 = "golang.org/x/tools/cmd/digraph@v0.16.0"
+const v7 = "golang.org/x/tools/cmd/digraph@v0.16.1"
 
 type PluginTestSuit struct {
 	suite.Suite
-	testDir string
-	goPath  string
-}
-
-func (suite *PluginTestSuit) SetupSuite() {
-	os.RemoveAll(suite.goPath)
-	os.RemoveAll(suite.testDir)
-}
-
-func (suite *PluginTestSuit) TearDownSuite() {
-	os.RemoveAll(suite.goPath)
-	os.RemoveAll(suite.testDir)
 }
 
 func TestPluginSuite(t *testing.T) {
-	_, dir := internal.TestCallee()
-	suite.Run(t, &PluginTestSuit{
-		goPath:  internal.GoPath(),
-		testDir: filepath.Join(internal.CurProject().Target(), dir),
-	})
+	suite.Run(t, &PluginTestSuit{})
 }
 
+func (suite *PluginTestSuit) TearDownSuite() {
+
+	TearDownSuite("cmd_plugin_test_")
+
+}
 func (suite *PluginTestSuit) TestInstallPlugin() {
-	install(nil, v6)
+	err := install(nil, v6)
+	assert.NoError(suite.T(), err)
 	plugins := internal.CurProject().Plugins()
+	_, err = os.Stat(filepath.Join(internal.GoPath(), plugins[0].Binary()))
+	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 1, len(plugins))
 	assert.Equal(suite.T(), "digraph", plugins[0].Name())
 	assert.Equal(suite.T(), "v0.16.0", plugins[0].Version())
 	assert.Equal(suite.T(), "golang.org/x/tools/cmd/digraph", plugins[0].Module())
-	install(nil, v7)
-
-	plugins = internal.CurProject().Plugins()
+	err = install(nil, v7)
+	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 1, len(plugins))
-	_, err := os.Stat(filepath.Join(suite.goPath, plugins[0].Binary()))
+	_, err = os.Stat(filepath.Join(internal.GoPath(), plugins[0].Binary()))
 	assert.NoError(suite.T(), err)
 }
 
@@ -62,10 +53,8 @@ func (suite *PluginTestSuit) TestInstallPluginWithVersion() {
 		{"incorrect version", "github.com/hhatto/gocloc/cmd/gocloc@abc", false},
 	}
 	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			err := install(nil, test.url)
-			assert.True(t, test.wantErr == (err != nil))
-		})
+		err := install(nil, test.url)
+		assert.True(suite.T(), test.wantErr == (err != nil))
 	}
 }
 
@@ -102,9 +91,7 @@ func (suite *PluginTestSuit) TestPluginArgs() {
 		},
 	}
 	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			err := pluginCmd.Args(nil, test.args)
-			assert.True(t, test.wantErr == (err != nil))
-		})
+		err := pluginCmd.Args(nil, test.args)
+		assert.True(suite.T(), test.wantErr == (err != nil))
 	}
 }

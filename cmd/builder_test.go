@@ -14,26 +14,14 @@ import (
 
 type BuilderTestSuit struct {
 	suite.Suite
-	gopath  string
-	testDir string
 }
 
 func TestBuilderTestSuit(t *testing.T) {
-	_, file := internal.TestCallee()
-	suite.Run(t, &BuilderTestSuit{
-		gopath:  internal.GoPath(),
-		testDir: filepath.Join(internal.CurProject().Target(), file),
-	})
+	suite.Run(t, &BuilderTestSuit{})
 }
 
-func (suite *BuilderTestSuit) SetupSuite() {
-	os.RemoveAll(suite.gopath)
-	os.RemoveAll(suite.testDir)
-}
-
-func (suite *BuilderTestSuit) TearDownTest() {
-	os.RemoveAll(suite.gopath)
-	os.RemoveAll(suite.testDir)
+func (suite *BuilderTestSuit) TearDownSuite() {
+	TearDownSuite("cmd_builder_test_")
 }
 
 func (suite *BuilderTestSuit) TestValidArgs() {
@@ -73,12 +61,16 @@ func (suite *BuilderTestSuit) TestArgs() {
 		},
 	}
 	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			err := builderCmd.Args(nil, test.args)
-			assert.True(t, test.wantErr == (err != nil))
-		})
+		err := builderCmd.Args(nil, test.args)
+		assert.True(suite.T(), test.wantErr == (err != nil))
 	}
 
+}
+
+func (suite *BuilderTestSuit) TestExecute() {
+	builderCmd.SetArgs([]string{"cd"})
+	err := Execute()
+	assert.Error(suite.T(), err)
 }
 
 func (suite *BuilderTestSuit) TestBuild() {
@@ -99,19 +91,13 @@ func (suite *BuilderTestSuit) TestBuild() {
 		},
 	}
 	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			builderCmd.SetArgs(test.args)
-			if !test.wantErr {
-				os.Chdir(internal.CurProject().Root())
-			}
-			err := Execute()
-			assert.True(t, test.wantErr == (err != nil))
-			if test.wantErr {
-				assert.True(suite.T(), strings.Contains(err.Error(), color.RedString("")))
-			}
-		})
+		builderCmd.SetArgs(test.args)
+		err := execute(builderCmd, test.args[0])
+		assert.True(suite.T(), test.wantErr == (err != nil))
+		if test.wantErr {
+			assert.True(suite.T(), strings.Contains(err.Error(), color.RedString("")))
+		}
 	}
-
 }
 
 func (suite *BuilderTestSuit) TestPersistentPreRun() {
@@ -149,4 +135,15 @@ func (suite *BuilderTestSuit) TestBuiltinPlugins() {
 	assert.Equal(suite.T(), "gotestsum", plugin.Name())
 	assert.Equal(suite.T(), "gotest.tools/gotestsum", plugin.Module())
 	assert.Equal(suite.T(), "test", plugin.Alias)
+}
+
+func (suite *BuilderTestSuit) TestRunE() {
+	target := internal.CurProject().Target()
+	err := builderCmd.RunE(builderCmd, []string{"build"})
+	assert.NoError(suite.T(), err)
+	_, err = os.Stat(filepath.Join(target, lo.If(internal.Windows(), "gob.exe").Else("gob")))
+	assert.NoError(suite.T(), err, "binary should be generated")
+	err = builderCmd.RunE(builderCmd, []string{"build", "clean"})
+	assert.NoError(suite.T(), err)
+	assert.NoFileExistsf(suite.T(), filepath.Join(target, lo.If(internal.Windows(), "gob.exe").Else("gob")), "binary should be deleted")
 }

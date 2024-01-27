@@ -34,8 +34,7 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 	// Create a file to save the output
 	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", task)))
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return err
+		return fmt.Errorf(color.RedString("Error creating file:", err))
 	}
 	defer log.Close()
 

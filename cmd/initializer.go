@@ -30,7 +30,6 @@ func builtinPlugins() []internal.Plugin {
 
 func initializerFunc(_ *cobra.Command, _ []string) {
 	fmt.Println("Initialize configuration ......")
-	// initBuildVersion()
 	lo.ForEach(builtinPlugins(), func(plugin internal.Plugin, index int) {
 		internal.CurProject().SetupPlugin(plugin)
 		if len(plugin.Config) > 0 {

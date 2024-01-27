@@ -16,21 +16,14 @@ const testsum = "gotest.tools/gotestsum"
 
 type InitializationTestSuite struct {
 	suite.Suite
-	testDir string
-	goPath  string
 }
 
 func TestInitializationTestSuit(t *testing.T) {
-	_, dir := internal.TestCallee()
-	suite.Run(t, &InitializationTestSuite{
-		testDir: filepath.Join(internal.CurProject().Target(), dir),
-		goPath:  internal.GoPath(),
-	})
+	suite.Run(t, &InitializationTestSuite{})
 }
 
 func (suite *InitializationTestSuite) TearDownSuite() {
-	os.RemoveAll(suite.goPath)
-	os.RemoveAll(suite.testDir)
+	TearDownSuite("cmd_initializer_test_")
 }
 
 func (suite *InitializationTestSuite) TestBuiltInPlugins() {
@@ -45,6 +38,8 @@ func (suite *InitializationTestSuite) TestBuiltInPlugins() {
 }
 
 func (suite *InitializationTestSuite) TestInitializerFunc() {
+	gopath := internal.GoPath()
+	target := internal.CurProject().Target()
 	initializerFunc(nil, nil)
 	plugins := internal.CurProject().Plugins()
 	assert.Equal(suite.T(), 2, len(plugins))
@@ -58,10 +53,10 @@ func (suite *InitializationTestSuite) TestInitializerFunc() {
 	})
 	assert.True(suite.T(), ok)
 	lo.ForEach(plugins, func(plugin internal.Plugin, _ int) {
-		_, err := os.Stat(filepath.Join(suite.goPath, plugin.Binary()))
+		_, err := os.Stat(filepath.Join(gopath, plugin.Binary()))
 		assert.NoError(suite.T(), err)
 	})
-	_, err1 := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
+	_, err1 := os.Stat(filepath.Join(target, "gob.yaml"))
 	assert.NoError(suite.T(), err1)
 	assert.Equal(suite.T(), []string{"build", "clean", "test", "lint"}, validBuilderArgs())
 }

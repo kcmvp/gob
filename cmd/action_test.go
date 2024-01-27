@@ -6,6 +6,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,23 +16,36 @@ import (
 
 type ActionTestSuite struct {
 	suite.Suite
-	binary string
 }
 
 func TestActionSuite(t *testing.T) {
-	suite.Run(t, &ActionTestSuite{
-		binary: filepath.Join(internal.CurProject().Target(), lo.If(internal.Windows(), "gob.exe").Else("gob")),
+	suite.Run(t, &ActionTestSuite{})
+}
+
+func TearDownSuite(prefix string) {
+	filepath.WalkDir(os.TempDir(), func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() && strings.HasPrefix(d.Name(), prefix) {
+			os.RemoveAll(path)
+		}
+		return nil
+	})
+	filepath.WalkDir(filepath.Join(internal.CurProject().Root(), "target"), func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() && strings.HasPrefix(d.Name(), prefix) {
+			os.RemoveAll(path)
+		}
+		return nil
 	})
 }
 
-func (suite *ActionTestSuite) SetupSuite() {
-	os.Remove(suite.binary)
+func (suite *ActionTestSuite) TearDownSuite() {
+	TearDownSuite("cmd_action_test_")
 }
 
 func (suite *ActionTestSuite) TestActionBuild() {
 	err := buildAction(nil)
 	assert.NoError(suite.T(), err)
-	_, err = os.Stat(suite.binary)
+	binary := filepath.Join(internal.CurProject().Target(), lo.If(internal.Windows(), "gob.exe").Else("gob"))
+	_, err = os.Stat(binary)
 	assert.NoError(suite.T(), err)
 }
 
@@ -63,9 +78,18 @@ func (suite *ActionTestSuite) TestExecute() {
 }
 
 func (suite *ActionTestSuite) TestCoverage() {
+	s, _ := os.Open(filepath.Join(internal.CurProject().Root(), "testdata", "cover.out"))
+	t, _ := os.Create(filepath.Join(internal.CurProject().Target(), "cover.out"))
+	io.Copy(t, s)
+	s.Close()
+	t.Close()
 	_, err1 := os.Stat(filepath.Join(internal.CurProject().Target(), "cover.out"))
+	assert.NoError(suite.T(), err1)
 	err2 := coverReport(nil, "")
 	assert.True(suite.T(), (err1 == nil) == (err2 == nil))
+	_, err2 = os.Stat(filepath.Join(internal.CurProject().Target(), "cover.html"))
+	assert.NoError(suite.T(), err2)
+
 }
 
 func (suite *ActionTestSuite) TestSetupActions() {
@@ -83,4 +107,17 @@ func (suite *ActionTestSuite) TestSetupVersion() {
 	assert.NoError(suite.T(), err)
 	_, err = os.Stat(version)
 	assert.NoError(suite.T(), err)
+}
+
+func (suite *ActionTestSuite) TestBuildAndClean() {
+	target := internal.CurProject().Target()
+	err := buildAction(nil, "")
+	assert.NoError(suite.T(), err)
+	entry, err := os.ReadDir(target)
+	assert.Truef(suite.T(), len(entry) > 0, "target should not empty")
+	err = cleanAction(nil, "")
+	assert.NoError(suite.T(), err)
+	entry, err = os.ReadDir(target)
+	assert.Truef(suite.T(), len(entry) == 0, "target should empty")
+
 }
