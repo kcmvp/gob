@@ -75,7 +75,7 @@ func (suite *BuilderTestSuit) TestExecute() {
 	os.Chdir(internal.GoPath())
 	err = Execute()
 	assert.Equal(suite.T(), "Please execute the command in the project root dir", err.Error())
-	builderCmd.SetArgs([]string{"clean"})
+	builderCmd.SetArgs([]string{"build"})
 	os.Chdir(internal.CurProject().Root())
 	err = Execute()
 	assert.NoError(suite.T(), err)

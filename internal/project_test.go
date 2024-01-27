@@ -38,6 +38,12 @@ func TestProjectSuite(t *testing.T) {
 	suite.Run(t, &ProjectTestSuite{})
 }
 
+func TestBasic(t *testing.T) {
+	plugins := CurProject().Plugins()
+	assert.Equal(t, 0, len(plugins))
+	assert.Equal(t, "github.com/kcmvp/gob", project.Module())
+}
+
 func (suite *ProjectTestSuite) TestPlugins() {
 	_, err := os.Stat(filepath.Join(CurProject().Target(), "gob.yaml"))
 	assert.NoError(suite.T(), err)
