@@ -148,7 +148,8 @@ func (plugin Plugin) Execute() error {
 	if _, err := plugin.install(); err != nil {
 		return err
 	}
-	pCmd := exec.Command(plugin.Binary(), strings.Split(plugin.Args, " ")...) //nolint #gosec
+	// always use absolute path
+	pCmd := exec.Command(filepath.Join(GoPath(), plugin.Binary()), strings.Split(plugin.Args, " ")...) //nolint #gosec
 	if err := StreamCmdOutput(pCmd, plugin.taskName()); err != nil {
 		return err
 	}

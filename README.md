@@ -170,6 +170,15 @@ gob plugin list
 List all the installed plugins
 
 ### gob setup version
+```shell
+gob setup version
+```
+This command will generate file `version.go` in `infra` folder, and project version informatill
+will be injected into `buildVersion` when build the project with command `gob build`
+```go
+// buildVersion don't change this
+var buildVersion string
+```
 
 ## FAQ
 

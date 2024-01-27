@@ -36,5 +36,5 @@ func TestDependency(t *testing.T) {
 		})
 		assert.True(t, contains)
 	})
-
+	depCmd.RunE(nil, []string{""})
 }

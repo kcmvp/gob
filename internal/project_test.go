@@ -8,42 +8,38 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 const depth = "github.com/KyleBanks/depth/cmd/depth"
 const testsum = "gotest.tools/gotestsum"
+const v6 = "golang.org/x/tools/cmd/digraph@v0.16.0"
 
 type ProjectTestSuite struct {
 	suite.Suite
-	goPath  string
-	testDir string
 }
 
-func (suite *ProjectTestSuite) SetupSuite() {
+func (suite *ProjectTestSuite) BeforeTest(_, testName string) {
 	s, _ := os.Open(filepath.Join(CurProject().Root(), "testdata", "gob.yaml"))
-	os.MkdirAll(suite.testDir, os.ModePerm)
-	t, _ := os.Create(filepath.Join(suite.testDir, "gob.yaml"))
+	root := filepath.Join(CurProject().Root(), "target", fmt.Sprintf("internal_project_test_%s", testName))
+	os.MkdirAll(root, os.ModePerm)
+	t, _ := os.Create(filepath.Join(root, "gob.yaml"))
 	io.Copy(t, s)
 	s.Close()
 	t.Close()
 }
 
 func (suite *ProjectTestSuite) TearDownSuite() {
-	//os.RemoveAll(suite.testDir)
-	os.RemoveAll(suite.goPath)
+	TearDownSuite("internal_project_test_")
 }
 
 func TestProjectSuite(t *testing.T) {
-	_, file := TestCallee()
-	suite.Run(t, &ProjectTestSuite{
-		goPath:  GoPath(),
-		testDir: filepath.Join(CurProject().Target(), file),
-	})
+	suite.Run(t, &ProjectTestSuite{})
 }
 
 func (suite *ProjectTestSuite) TestPlugins() {
-	_, err := os.Stat(filepath.Join(suite.testDir, "gob.yaml"))
+	_, err := os.Stat(filepath.Join(CurProject().Target(), "gob.yaml"))
 	assert.NoError(suite.T(), err)
 	plugins := CurProject().Plugins()
 	fmt.Println(plugins)
@@ -94,11 +90,9 @@ func (suite *ProjectTestSuite) TestIsSetup() {
 		},
 	}
 	for _, test := range tests {
-		suite.T().Run(test.name, func(j *testing.T) {
-			plugin, _ := NewPlugin(test.url)
-			v := CurProject().isSetup(plugin)
-			assert.Equal(j, test.settled, v)
-		})
+		plugin, _ := NewPlugin(test.url)
+		v := CurProject().isSetup(plugin)
+		assert.Equal(suite.T(), test.settled, v)
 	}
 }
 
@@ -119,4 +113,26 @@ func (suite *ProjectTestSuite) TestMainFiles() {
 
 func (suite *ProjectTestSuite) TestVersion() {
 	assert.NotNil(suite.T(), Version())
+}
+
+func (suite *ProjectTestSuite) Test_Callee() {
+	test, method := TestCaller()
+	assert.True(suite.T(), test)
+	assert.Equal(suite.T(), "internal_project_test_Test_Callee", method)
+}
+
+func (suite *ProjectTestSuite) TestHookDir() {
+	hookDir := CurProject().HookDir()
+	assert.True(suite.T(), strings.HasSuffix(hookDir, "internal_project_test_TestHookDir/.git/hooks"))
+	_, err := os.Stat(hookDir)
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *ProjectTestSuite) TestSetupPlugin() {
+	plugin, _ := NewPlugin(v6)
+	project.SetupPlugin(plugin)
+	entry, err := os.ReadDir(GoPath())
+	assert.True(suite.T(), strings.HasSuffix(GoPath(), "project_test_TestSetupPlugin"))
+	assert.NoErrorf(suite.T(), err, "GOPATH should be created")
+	assert.True(suite.T(), len(entry) == 1, "plugin should be installed to GOPATH")
 }

@@ -14,30 +14,21 @@ import (
 
 type InternalPluginTestSuit struct {
 	suite.Suite
-	testDir string
-	goPath  string
-}
-
-func (suite *InternalPluginTestSuit) SetupSuite() {
-	os.RemoveAll(suite.goPath)
-	os.RemoveAll(suite.testDir)
-	os.Setenv("PATH", fmt.Sprintf("%s%s%s", suite.goPath, string(os.PathListSeparator), os.Getenv("PATH")))
 }
 
 func (suite *InternalPluginTestSuit) TearDownSuite() {
-	os.RemoveAll(suite.goPath)
-	os.RemoveAll(suite.testDir)
+	TearDownSuite("internal_plugin_test_")
 }
 
 func TestInternalPluginSuite(t *testing.T) {
-	_, dir := TestCallee()
-	suite.Run(t, &InternalPluginTestSuit{
-		goPath:  GoPath(),
-		testDir: filepath.Join(CurProject().Target(), dir),
-	})
+	suite.Run(t, &InternalPluginTestSuit{})
 }
 
 func (suite *InternalPluginTestSuit) TestNewPlugin() {
+	gopath := GoPath()
+	defer func() {
+		os.RemoveAll(gopath)
+	}()
 	tests := []struct {
 		name    string
 		url     string
@@ -118,6 +109,10 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 }
 
 func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
+	gopath := GoPath()
+	defer func() {
+		os.RemoveAll(gopath)
+	}()
 	data, _ := os.ReadFile(filepath.Join(CurProject().Root(), "cmd", "resources", "config.json"))
 	v := gjson.GetBytes(data, "plugins")
 	var plugins []Plugin
@@ -145,6 +140,10 @@ func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
 }
 
 func (suite *InternalPluginTestSuit) TestInstallPlugin() {
+	gopath := GoPath()
+	defer func() {
+		os.RemoveAll(gopath)
+	}()
 	t := suite.T()
 	plugin, err := NewPlugin("gotest.tools/gotestsum")
 	assert.NoError(t, err)
@@ -161,11 +160,18 @@ func (suite *InternalPluginTestSuit) TestInstallPlugin() {
 }
 
 func (suite *InternalPluginTestSuit) TestExecute() {
+	gopath := GoPath()
+	defer func() {
+		os.RemoveAll(gopath)
+	}()
 	t := suite.T()
 	plugin, err := NewPlugin("golang.org/x/tools/cmd/guru@v0.17.0")
 	assert.NoError(t, err)
 	err = plugin.Execute()
+	fmt.Println(err.Error())
 	assert.Error(t, err)
 	//'exit status 2' means the plugin is executed but no parameters,
 	assert.Equal(t, "exit status 2", err.Error())
+	_, err = os.Stat(filepath.Join(CurProject().Target(), "guru.log"))
+	assert.NoError(suite.T(), err)
 }

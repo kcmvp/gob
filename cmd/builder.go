@@ -69,7 +69,4 @@ func init() {
 		}).Else(nil)
 	})
 	builderCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	builderCmd.Flags().BoolVar(&CleanCache, cleanCacheFlag, false, "to remove the entire go build cache")
-	builderCmd.Flags().BoolVar(&CleanTestCache, cleanTestCacheFlag, false, "to expire all test results in the go build cache")
-	builderCmd.Flags().BoolVar(&CleanModCache, cleanModCacheFlag, false, "to remove the entire module download cache")
 }
