@@ -95,3 +95,8 @@ func (suite *PluginTestSuit) TestPluginArgs() {
 		assert.True(suite.T(), test.wantErr == (err != nil))
 	}
 }
+
+func (suite *PluginTestSuit) TestRunE() {
+	err := pluginCmd.RunE(pluginCmd, []string{"list"})
+	assert.NoErrorf(suite.T(), err, "should list iinstalled plugin successfully")
+}

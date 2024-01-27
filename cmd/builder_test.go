@@ -146,4 +146,6 @@ func (suite *BuilderTestSuit) TestRunE() {
 	err = builderCmd.RunE(builderCmd, []string{"build", "clean"})
 	assert.NoError(suite.T(), err)
 	assert.NoFileExistsf(suite.T(), filepath.Join(target, lo.If(internal.Windows(), "gob.exe").Else("gob")), "binary should be deleted")
+	err = builderCmd.RunE(builderCmd, []string{"def"})
+	assert.Errorf(suite.T(), err, "can not find the command def")
 }
