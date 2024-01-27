@@ -22,13 +22,10 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 	if ptmx, err := pty.Start(cmd); err == nil {
 		scanner = bufio.NewScanner(ptmx)
 		defer ptmx.Close()
+	} else if rd, err := cmd.StdoutPipe(); err == nil {
+		scanner = bufio.NewScanner(rd)
 	} else {
-		color.Yellow("device not support tty will fall back plain model")
-		if rd, err := cmd.StdoutPipe(); err == nil {
-			scanner = bufio.NewScanner(rd)
-		} else {
-			return err
-		}
+		return err
 	}
 	color.HiCyan("Start %s ......\n", task)
 	// Create a file to save the output

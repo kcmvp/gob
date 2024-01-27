@@ -84,11 +84,6 @@ func NewPlugin(url string, options ...string) (Plugin, error) {
 	}
 	return plugin, nil
 }
-
-func (plugin Plugin) Equal(other Plugin) bool {
-	return strings.Split(plugin.Url, "@")[0] == strings.Split(other.Url, "@")[0]
-}
-
 func (plugin Plugin) Version() string {
 	return plugin.version
 }

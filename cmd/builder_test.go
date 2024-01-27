@@ -69,8 +69,16 @@ func (suite *BuilderTestSuit) TestArgs() {
 
 func (suite *BuilderTestSuit) TestExecute() {
 	builderCmd.SetArgs([]string{"cd"})
+	os.Chdir(internal.CurProject().Root())
 	err := Execute()
-	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), "valid args are : [build clean test lint]", err.Error())
+	os.Chdir(internal.GoPath())
+	err = Execute()
+	assert.Equal(suite.T(), "Please execute the command in the project root dir", err.Error())
+	builderCmd.SetArgs([]string{"build"})
+	os.Chdir(internal.CurProject().Root())
+	err = Execute()
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *BuilderTestSuit) TestBuild() {
