@@ -117,10 +117,10 @@ func cleanAction(_ *cobra.Command, _ ...string) error {
 	// clean cache
 	args := []string{"clean"}
 	_, err := exec.Command("go", args...).CombinedOutput()
-	if len(args) > 1 && err == nil {
+	if err == nil {
 		fmt.Println("Clean cache successfully !")
 	}
-	return nil
+	return err
 }
 
 func testAction(_ *cobra.Command, args ...string) error {
