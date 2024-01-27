@@ -78,17 +78,18 @@ func (suite *ActionTestSuite) TestExecute() {
 }
 
 func (suite *ActionTestSuite) TestCoverage() {
+	err := coverReport(nil, "")
+	assert.Errorf(suite.T(), err, "no cover.out")
 	s, _ := os.Open(filepath.Join(internal.CurProject().Root(), "testdata", "cover.out"))
 	t, _ := os.Create(filepath.Join(internal.CurProject().Target(), "cover.out"))
 	io.Copy(t, s)
 	s.Close()
 	t.Close()
-	_, err1 := os.Stat(filepath.Join(internal.CurProject().Target(), "cover.out"))
-	assert.NoError(suite.T(), err1)
-	err2 := coverReport(nil, "")
-	assert.True(suite.T(), (err1 == nil) == (err2 == nil))
-	_, err2 = os.Stat(filepath.Join(internal.CurProject().Target(), "cover.html"))
-	assert.NoError(suite.T(), err2)
+	_, err = os.Stat(filepath.Join(internal.CurProject().Target(), "cover.out"))
+	err = coverReport(nil, "")
+	assert.NoError(suite.T(), err, "should generate test cover report successfully")
+	_, err = os.Stat(filepath.Join(internal.CurProject().Target(), "cover.html"))
+	assert.NoError(suite.T(), err)
 
 }
 

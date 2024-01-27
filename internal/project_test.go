@@ -43,7 +43,7 @@ func (suite *ProjectTestSuite) TestPlugins() {
 	assert.NoError(suite.T(), err)
 	plugins := CurProject().Plugins()
 	fmt.Println(plugins)
-	assert.Equal(suite.T(), 2, len(plugins))
+	assert.Equal(suite.T(), 3, len(plugins))
 	plugin, ok := lo.Find(plugins, func(plugin Plugin) bool {
 		return plugin.Url == testsum
 	})

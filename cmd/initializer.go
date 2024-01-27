@@ -17,7 +17,14 @@ import (
 )
 
 func builtinPlugins() []internal.Plugin {
-	data, err := resources.ReadFile("resources/config.json")
+	var data []byte
+	var err error
+	test, _ := internal.TestCaller()
+	if !test {
+		data, err = resources.ReadFile("resources/config.json")
+	} else {
+		data, err = os.ReadFile(filepath.Join(internal.CurProject().Root(), "testdata", "config.json"))
+	}
 	var plugins []internal.Plugin
 	if err == nil {
 		v := gjson.GetBytes(data, "plugins")

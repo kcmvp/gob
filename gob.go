@@ -5,8 +5,12 @@ package main
 
 import (
 	"github.com/kcmvp/gob/cmd"
+	"os" //nolint
 )
 
 func main() {
-	cmd.Execute()
+	if cmd.Execute() != nil {
+		os.Exit(1)
+	}
+	os.Exit(0)
 }

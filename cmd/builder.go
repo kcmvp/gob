@@ -47,15 +47,12 @@ var builderCmd = &cobra.Command{
 }
 
 func Execute() error {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf(color.RedString(err.Error()))
-	}
+	currentDir, _ := os.Getwd()
 	if internal.CurProject().Root() != currentDir {
 		return fmt.Errorf(color.RedString("Please execute the command in the project root dir"))
 	}
 	ctx := context.Background()
-	if err = builderCmd.ExecuteContext(ctx); err != nil {
+	if err := builderCmd.ExecuteContext(ctx); err != nil {
 		return fmt.Errorf(color.RedString(err.Error()))
 	}
 	return nil
