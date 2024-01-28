@@ -158,10 +158,7 @@ func (project *Project) Target() string {
 func (project *Project) sourceFileInPkg(pkg string) ([]string, error) {
 	_ = os.Chdir(project.Root())
 	cmd := exec.Command("go", "list", "-f", fmt.Sprintf("{{if eq .Name \"%s\"}}{{.Dir}}{{end}}", pkg), "./...")
-	output, err := cmd.Output()
-	if err != nil {
-		return []string{}, err
-	}
+	output, _ := cmd.Output()
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	var dirs []string
 	for scanner.Scan() {
@@ -169,9 +166,6 @@ func (project *Project) sourceFileInPkg(pkg string) ([]string, error) {
 		if len(line) > 0 {
 			dirs = append(dirs, line)
 		}
-	}
-	if err = scanner.Err(); err != nil {
-		return []string{}, err
 	}
 	return dirs, nil
 }

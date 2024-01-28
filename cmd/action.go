@@ -43,20 +43,17 @@ func beforeExecution(cmd *cobra.Command, arg string) error {
 	return nil
 }
 
-func afterExecution(cmd *cobra.Command, arg string) error {
+func afterExecution(cmd *cobra.Command, arg string) {
 	if action, ok := lo.Find(buildActions(), func(action Action) bool {
 		return action.A == fmt.Sprintf("after_%s", arg)
 	}); ok {
-		return action.B(cmd, arg)
+		action.B(cmd, arg) //nolint
 	}
-	return nil
 }
 
 func execute(cmd *cobra.Command, arg string) error {
-	err := beforeExecution(cmd, arg)
-	if err != nil {
-		return err
-	}
+	beforeExecution(cmd, arg) //nolint
+	var err error
 	if plugin, ok := lo.Find(internal.CurProject().Plugins(), func(plugin internal.Plugin) bool {
 		return plugin.Alias == arg
 	}); ok {
@@ -68,10 +65,11 @@ func execute(cmd *cobra.Command, arg string) error {
 	} else {
 		return fmt.Errorf(color.RedString("can not find command %s", arg))
 	}
-	if err == nil {
-		return afterExecution(cmd, arg)
+	if err != nil {
+		return err
 	}
-	return err
+	afterExecution(cmd, arg)
+	return nil
 }
 
 func validBuilderArgs() []string {

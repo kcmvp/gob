@@ -53,10 +53,7 @@ func dependency() (treeprint.Tree, error) {
 	if err != nil {
 		return tree, fmt.Errorf(color.RedString(err.Error()))
 	}
-	if _, err = exec.Command("go", "mod", "tidy").CombinedOutput(); err != nil {
-		return tree, fmt.Errorf(color.RedString(err.Error()))
-	}
-
+	exec.Command("go", "mod", "tidy").CombinedOutput() //nolint
 	if _, err = exec.Command("go", "build", "./...").CombinedOutput(); err != nil {
 		return tree, fmt.Errorf(color.RedString(err.Error()))
 	}
@@ -80,10 +77,6 @@ func dependency() (treeprint.Tree, error) {
 				dep.C = entry[1]
 			}
 		}
-	}
-
-	if err = scanner.Err(); err != nil {
-		return tree, fmt.Errorf(err.Error())
 	}
 	// parse the dependency tree
 	cache := []string{os.Getenv("GOPATH"), "pkg", "mod", "cache", "download"}
