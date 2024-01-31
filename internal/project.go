@@ -112,7 +112,7 @@ func init() {
 		module: item[1],
 		cfg:    sync.Map{},
 	}
-	cmd = exec.Command("go", "list", "-f", "{{if not .Standard}}{{.ImportPath}}{{end}}", "-deps")
+	cmd = exec.Command("go", "list", "-f", "{{if not .Standard}}{{.ImportPath}}{{end}}", "-deps", "./...")
 	output, err = cmd.Output()
 	if err != nil {
 		log.Fatal(color.RedString("Error: please execute command in project root directory"))
