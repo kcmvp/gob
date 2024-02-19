@@ -42,15 +42,15 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "golangci-lint",
-			binary:  "golangci-lint-v1.55.2",
+			binary:  "golangci-lint-v1.56.2",
 			wantErr: false,
 		},
 		{
-			name:    "laatest version",
+			name:    "latest version",
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "golangci-lint",
-			binary:  "golangci-lint-v1.55.2",
+			binary:  "golangci-lint-v1.56.2",
 			wantErr: false,
 		},
 		{
@@ -102,7 +102,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			assert.True(t, test.wantErr == (err != nil))
 			if !test.wantErr {
 				assert.Equal(t, test.module, plugin.module)
-				assert.True(t, lo.Contains([]string{"v1.55.2", "v1.1.1", "v1.11.0"}, plugin.Version()))
+				assert.True(t, lo.Contains([]string{"v1.56.2", "v1.1.1", "v1.11.0"}, plugin.Version()))
 			}
 		})
 	}
@@ -124,7 +124,7 @@ func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
 		return plugin.Url == "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	})
 	assert.True(t, ok)
-	assert.Equal(t, "v1.55.2", plugin.Version())
+	assert.Equal(t, "v1.56.2", plugin.Version())
 	assert.Equal(t, "golangci-lint", plugin.Name())
 	assert.Equal(t, "github.com/golangci/golangci-lint", plugin.Module())
 	assert.Equal(t, "lint", plugin.Alias)
