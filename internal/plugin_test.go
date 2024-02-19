@@ -46,7 +46,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			wantErr: false,
 		},
 		{
-			name:    "laatest version",
+			name:    "latest version",
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "golangci-lint",
