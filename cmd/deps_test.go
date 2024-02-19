@@ -28,7 +28,7 @@ func TestDependency(t *testing.T) {
 	os.Chdir(internal.CurProject().Root())
 	mod, _ := os.Open(filepath.Join(internal.CurProject().Root(), "go.mod"))
 	_, _, deps, _ := parseMod(mod)
-	tree, err := dependency()
+	tree, err := dependencyTree()
 	assert.NoError(t, err)
 	tree.VisitAll(func(item *treeprint.Node) {
 		contains := lo.ContainsBy(deps, func(dep *lo.Tuple4[string, string, string, int]) bool {

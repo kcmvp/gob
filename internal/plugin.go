@@ -74,10 +74,9 @@ func (plugin *Plugin) UnmarshalJSON(data []byte) error {
 	return (*Plugin)(aux.Embedded).init()
 }
 
-func NewPlugin(url string, options ...string) (Plugin, error) {
+func NewPlugin(url string) (Plugin, error) {
 	plugin := Plugin{
-		Url:  url,
-		Args: strings.Join(options, " "),
+		Url: url,
 	}
 	if err := plugin.init(); err != nil {
 		return Plugin{}, err

@@ -6,6 +6,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/kcmvp/gob/internal"
@@ -27,6 +28,8 @@ func install(_ *cobra.Command, args ...string) error {
 	if err != nil {
 		return err
 	}
+	plugin.Alias = alias
+	plugin.Alias = command
 	internal.CurProject().SetupPlugin(plugin)
 	return nil
 }
@@ -79,7 +82,7 @@ you can update the plugin by edit gob.yaml directly
 			return fmt.Errorf("invalid argument %s", args[0])
 		}
 		if "install" == args[0] && (len(args) < 2 || strings.TrimSpace(args[1]) == "") {
-			return errors.New("miss the plugin url")
+			return errors.New(color.RedString("miss the plugin url"))
 		}
 		return nil
 	},

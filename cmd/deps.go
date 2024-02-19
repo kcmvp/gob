@@ -23,45 +23,46 @@ var (
 // parseMod return a tuple which the fourth element is the indicator of direct or indirect reference
 func parseMod(mod *os.File) (string, string, []*lo.Tuple4[string, string, string, int], error) {
 	scanner := bufio.NewScanner(mod)
-	start := false
 	var deps []*lo.Tuple4[string, string, string, int]
 	var module, version string
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
+		if len(line) == 0 || line == ")" || line == "//" || strings.HasPrefix(line, "require") {
+			continue
+		}
 		if strings.HasPrefix(line, "module ") {
 			module = strings.Split(line, " ")[1]
 		} else if strings.HasPrefix(line, "go ") {
 			version = strings.Split(line, " ")[1]
-		}
-		start = start && line != ")"
-		if start && len(line) > 0 {
+		} else {
 			entry := strings.Split(line, " ")
 			m := strings.TrimSpace(entry[0])
 			v := strings.TrimSpace(entry[1])
 			dep := lo.T4(m, v, v, lo.If(len(entry) > 2, 0).Else(1))
 			deps = append(deps, &dep)
 		}
-		start = start || strings.HasPrefix(line, "require")
 	}
 	return module, version, deps, scanner.Err()
 }
 
-// dependency build dependency tree of the project, an empty tree returns when runs into error
-func dependency() (treeprint.Tree, error) {
-	tree := treeprint.New()
+// dependencyTree build dependency tree of the project, an empty tree returns when runs into error
+func dependencyTree() (treeprint.Tree, error) {
 	mod, err := os.Open(filepath.Join(internal.CurProject().Root(), "go.mod"))
 	if err != nil {
-		return tree, fmt.Errorf(color.RedString(err.Error()))
+		return nil, fmt.Errorf(color.RedString(err.Error()))
 	}
 	exec.Command("go", "mod", "tidy").CombinedOutput() //nolint
-	if _, err = exec.Command("go", "build", "./...").CombinedOutput(); err != nil {
-		return tree, fmt.Errorf(color.RedString(err.Error()))
+	if output, err := exec.Command("go", "build", "./...").CombinedOutput(); err != nil {
+		return nil, fmt.Errorf(color.RedString(string(output)))
 	}
-
 	module, _, dependencies, err := parseMod(mod)
-	if err != nil {
-		return tree, fmt.Errorf(err.Error())
+	if len(dependencies) < 1 {
+		return nil, nil
 	}
+	if err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+	tree := treeprint.New()
 	tree.SetValue(bold.Sprintf("%s", module))
 	direct := lo.FilterMap(dependencies, func(item *lo.Tuple4[string, string, string, int], _ int) (string, bool) {
 		return fmt.Sprintf("%s@latest", item.A), item.D == 1
@@ -118,9 +119,12 @@ var depCmd = &cobra.Command{
 	Long: `Show the dependency tree of the project
 and indicate available updates which take an green * indicator`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tree, err := dependency()
+		tree, err := dependencyTree()
 		if err != nil {
 			return err
+		} else if tree == nil {
+			yellow.Println("No dependencies !")
+			return nil
 		}
 		bold.Print("\nDependencies of the projects:\n")
 		yellow.Print("* indicates new versions available\n")

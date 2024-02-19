@@ -131,7 +131,7 @@ func (suite *BuilderTestSuit) TestBuiltinPlugins() {
 		return plugin.Url == "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	})
 	assert.True(suite.T(), ok)
-	assert.Equal(suite.T(), "v1.55.2", plugin.Version())
+	assert.Equal(suite.T(), "v1.56.2", plugin.Version())
 	assert.Equal(suite.T(), "golangci-lint", plugin.Name())
 	assert.Equal(suite.T(), "github.com/golangci/golangci-lint", plugin.Module())
 	assert.Equal(suite.T(), "lint", plugin.Alias)
