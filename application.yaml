@@ -1,0 +1,19 @@
+#  "postgres://username:password@localhost:5432/database_name"
+# username:password@protocol(address)/dbname?param=value
+datasource:
+  ds1:
+    driver: sqlite3
+    user: usera
+    password: passwd1
+    Host: localhost
+    url: file:test1.db?cache=shared&mode=memory
+  ds2:
+    driver: sqlite3
+    user: userb
+    password: passwd2
+    url: file:test2.db?cache=shared&mode=memory
+    scripts:
+      - sqlite3-schema.sql
+
+
+

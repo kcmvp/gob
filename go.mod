@@ -5,7 +5,12 @@ go 1.21.4
 require (
 	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.16.0
+	github.com/iancoleman/strcase v0.3.0
 	github.com/jedib0t/go-pretty/v6 v6.5.4
+	github.com/kcmvp/structs v1.1.0
+	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/samber/do/v2 v2.0.0-beta.5
+	github.com/samber/go-type-to-string v1.2.0
 	github.com/samber/lo v1.39.0
 	github.com/schollz/progressbar/v3 v3.14.1
 	github.com/spf13/cobra v1.8.0

@@ -50,7 +50,7 @@ flowchart TD
         gob.yaml --> plugin2
         gob.yaml --> plugin3
 ```
-You just need to tell `gob` 3W(where,when and what)
+You just need to tell `gbc` 3W(where,when and what)
 
 1. **Where** : where to download the tool
 2. **When** : when to execute to command
@@ -59,40 +59,40 @@ You just need to tell `gob` 3W(where,when and what)
 ## Quick Start
 1. Install `gob` with below command
 ```shell
-    go install github.com/kcmvp/gob
+    go install github.com/kcmvp/gbc
 ```
 2. Initialize project with below command(in the project home directory)
 ```shell
-  gob init
+  gbc init
 ```
 
-| Make some changes and comit code                                                                 | execute `gob deps`                                                                                   |
+| Make some changes and comit code                                                                 | execute `gbc deps`                                                                                   |
 |--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="300"> |
+| <img src="https://github.com/kcmvp/gbc/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gbc/blob/main/docs/dependency_tree.png" height="245" width="300"> |
 
 
 ## Commands 
 
 Build Commands
-- [gob init](#gob-init)
-- [gob build](#gob-build)
-- [gob clean](#gob-clean)
-- [gob test](#gob-test)
-- [gob lint](#gob-lint)
-- [gob deps](#gob-deps)
+- [gbc init](#gbc-init)
+- [gbc build](#gbc-build)
+- [gbc clean](#gbc-clean)
+- [gbc test](#gbc-test)
+- [gbc lint](#gbc-lint)
+- [gbc deps](#gbc-deps)
 
 Plugin Commands
-- [gob plugin install](#gob-plugin-install)
-- [gob plugin list](#gob-plugin-list)
+- [gbc plugin install](#gbc-plugin-install)
+- [gbc plugin list](#gbc-plugin-list)
  
 Setup Commands
-- [gob setup version](#gob-setup-version)
+- [gbc setup version](#gbc-setup-version)
 
-### gob init
+### gbc init
 ```shell
-gob init
+gbc init
 ```
-Initialize gob for the project, it will do following initializations 
+Initialize gbc for the project, it will do following initializations 
 1. generate file `gob.yaml`
 2. generate file `.golangci.yaml`, which is the configuration for [golangci-lint](https://github.com/golangci/golangci-lint)
 3. setup `git hooks` if project in the source control.
@@ -113,7 +113,7 @@ exec:
         - test
 plugins:
     golangci-lint:
-        alias: lint #When : when issue `gob lint`
+        alias: lint #When : when issue `gbc lint`
         args: run ./... #What: execute `golangci-lint run ./...`
         url: github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 #Where: where to download the plugin
     gotestsum:
@@ -121,41 +121,41 @@ plugins:
         args: --format testname -- -coverprofile=target/cover.out ./...
         url: gotest.tools/gotestsum@v1.11.0
 ```
-in most cases you don't need to edit the configuration manually. you can achieve this by [plugin commands](#gob-plugin-install) 
+in most cases you don't need to edit the configuration manually. you can achieve this by [plugin commands](#gbc-plugin-install) 
 
-### gob build
+### gbc build
 ```shell
-gob build
+gbc build
 ```
 This command would build all the candidate binaries(main methods in main packages) to the `target` folder.
 1. Final binary name is same as go source file name which contains `main method`
 2. Would fail if there are same name go main surce file
 
-### gob clean
+### gbc clean
 ```shell
-gob clean
+gbc clean
 ```
 This command would clean `target` folder
 
-### gob test
+### gbc test
 ```shell
-gob test
+gbc test
 ```
 This command would run all tests for the project and generate coverage report at `target/cover.html`
 
-### gob lint
+### gbc lint
 ```shell
-gob lint
+gbc lint
 ```
 Run `golangci-lint` against project based on the configuration, a report named `target/lint.log` will be generated if there are any violations
-### gob deps
+### gbc deps
 ```shell
-gob deps
+gbc deps
 ```
 List project dependencies tree and indicate there are updates for a specific dependency
-### gob plugin install
+### gbc plugin install
 ```shell
-gob plugin install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 lint run ./...
+gbc plugin install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2 lint run ./...
 ```
 It is an advanced version of `go install`, which supports multi-version.(eg:`golangci-lint-v1.55.2`, `golangci-lint-v1.55.1`)
 1. Install the versioned tool(just the same as `go install`)
