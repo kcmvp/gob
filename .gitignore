@@ -21,6 +21,5 @@
 go.work
 .idea
 gob
-*.sql
 11.json
 target
