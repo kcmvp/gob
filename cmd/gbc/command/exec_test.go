@@ -1,8 +1,8 @@
-package cmd
+package command
 
 import (
 	"fmt"
-	"github.com/kcmvp/gob/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gbc/artifact"
 	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -19,18 +19,20 @@ type ExecTestSuite struct {
 }
 
 func (suite *ExecTestSuite) BeforeTest(_, testName string) {
-	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "gbc", "testdata", "gob.yaml"))
-	root := filepath.Join(artifact.CurProject().Root(), "target", fmt.Sprintf("cmd_ExecTestSuite_%s", testName))
+	os.Chdir(artifact.CurProject().Root())
+	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "gob.yaml"))
+	_, method := utils.TestCaller()
+	root := filepath.Join(artifact.CurProject().Root(), "target", strings.ReplaceAll(method, "_BeforeTest", fmt.Sprintf("_%s", testName)))
 	os.MkdirAll(root, os.ModePerm)
 	t, _ := os.Create(filepath.Join(root, "gob.yaml"))
 	io.Copy(t, s)
-	s.Close()
 	t.Close()
+	s.Close()
 }
 
 func (suite *ExecTestSuite) TearDownSuite() {
-	_, method := utils.TestCaller()
-	TearDownSuite(strings.TrimRight(method, "TearDownSuite"))
+	//_, method := utils.TestCaller()
+	//TearDownSuite(strings.TrimRight(method, "TearDownSuite"))
 }
 
 func TestExecSuite(t *testing.T) {

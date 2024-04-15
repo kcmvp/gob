@@ -1,8 +1,8 @@
-package cmd
+package command
 
 import (
 	"fmt"
-	"github.com/kcmvp/gob/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gbc/artifact"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/xlab/treeprint"

@@ -1,7 +1,7 @@
 /*
 Copyright © 2023 kcmvp <kcheng.mvp@gmail.com>
 */
-package cmd
+package command
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gbc/artifact"
 	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -22,9 +22,9 @@ func builtinPlugins() []artifact.Plugin {
 	var err error
 	test, _ := utils.TestCaller()
 	if !test {
-		data, err = resources.ReadFile("resources/config.json")
+		data, err = resources.ReadFile(filepath.Join(resourceDir, "config.json"))
 	} else {
-		data, err = os.ReadFile(filepath.Join(artifact.CurProject().Root(), "gbc", "testdata", "config.json"))
+		data, err = os.ReadFile(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "config.json"))
 	}
 	var plugins []artifact.Plugin
 	if err == nil {
