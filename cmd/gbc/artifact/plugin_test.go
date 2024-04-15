@@ -116,7 +116,7 @@ func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
 	defer func() {
 		os.RemoveAll(gopath)
 	}()
-	data, _ := os.ReadFile(filepath.Join(CurProject().Root(), "gbc", "cmd", "resources", "config.json"))
+	data, _ := os.ReadFile(filepath.Join(CurProject().Root(), "cmd", "gbc", "command", "resources", "config.json"))
 	v := gjson.GetBytes(data, "plugins")
 	var plugins []Plugin
 	err := json.Unmarshal([]byte(v.Raw), &plugins)

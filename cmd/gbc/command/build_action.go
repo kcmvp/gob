@@ -1,9 +1,9 @@
-package cmd
+package command
 
 import (
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gob/gbc/artifact" //nolint
+	"github.com/kcmvp/gob/cmd/gbc/artifact" //nolint
 	"os"
 	"os/exec"
 	"path/filepath"

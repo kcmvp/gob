@@ -1,7 +1,7 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package command
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gbc/artifact"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )

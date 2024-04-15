@@ -30,28 +30,36 @@ Although the Golang programming ecosystem is becoming more and more mature,
 these tools and frameworks exist independently to solve specific problems.
 Whenever a new Golang project is started, it requires a series of initialization;
 What’s worse is that whenever your switch the development environment, same process have to be repeated!
-This project is built to solve this problem by providing a method similar to [Maven](https://maven.apache.org/)
-or [Gradle](https://gradle.com/) in the **Java** ecosystem. Please refer [documents](#commands) for details
+This project is built to solve this problem by providing a tool named *gbc**, which is similar to [Maven](https://maven.apache.org/)
+or [Gradle](https://gradle.com/) in the **Java** ecosystem together with a framework(glue) similar to [SpringBoot](https://spring.io/projects/spring-boot). Please refer [documents](#commands) for details
 
 <span id="nav-3"></span>
 
 ## Features
 
-1. **Everything is a plugin, simple yet powerful !**
-2. Define a tool chain and workflow without a line code.
-3. Better user experience
+1. Everything is a plugin, you can use any tool you like as a plugin to customize your build process!
+2. Model driver SQL database DAO.
+3. IoC Container support.
+4. Code generation for most popular frameworks scaffolding.
+5. Environment sensitive profile.
+6. More ....
+
+## What's a gob based project looks like?
+Just like[SpringBoot](https://spring.io/projects/spring-boot), the most important part of a gob project is the **configurations** which define your project.
+There are *two** main configurations
+1. **gob.yaml** : it acts as the same as **settings.gradle.kts**(Gradle) or **pom.xml**(Maven), you can define any thrid party tool as a plugin in this file.
+2. **application.yaml**: it acts as the same **application.yaml** of [SpringBoot](https://spring.io/projects/spring-boot)
 
 ## How gob works
 `Gob` takes everything defined in the `gob.yaml` as plugin.
 ```mermaid
 flowchart TD
-        Gob --> gob.yaml 
+        gbc --> gob.yaml 
         gob.yaml --> plugin1
         gob.yaml --> plugin2
         gob.yaml --> plugin3
 ```
 You just need to tell `gbc` 3W(where,when and what)
-
 1. **Where** : where to download the tool
 2. **When** : when to execute to command
 2. **What** : what to do with the tool

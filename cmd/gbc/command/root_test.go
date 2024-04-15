@@ -1,9 +1,9 @@
-package cmd
+package command
 
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gbc/artifact"
 	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestRootTestSuit(t *testing.T) {
 
 func (suite *RootTestSuit) BeforeTest(_, testName string) {
 	os.Chdir(artifact.CurProject().Root())
-	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "gbc", "testdata", "gob.yaml"))
+	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "gob.yaml"))
 	_, method := utils.TestCaller()
 	root := filepath.Join(artifact.CurProject().Root(), "target", strings.ReplaceAll(method, "_BeforeTest", fmt.Sprintf("_%s", testName)))
 	os.MkdirAll(root, os.ModePerm)

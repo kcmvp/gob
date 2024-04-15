@@ -1,5 +1,5 @@
 // Package cmd /*
-package cmd
+package command
 
 import (
 	"context"
@@ -7,13 +7,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gbc/artifact"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	"os"      //nolint
+	"os" //nolint
+	"path/filepath"
 	"strings" //nolint
 	"sync"    //nolint
 )
+
+const resourceDir = "resources"
 
 //go:embed resources/*
 var resources embed.FS
@@ -25,13 +28,11 @@ var (
 
 func usageTemplate() string {
 	once.Do(func() {
-		bytes, _ := resources.ReadFile("resources/usage.tmpl")
+		bytes, _ := resources.ReadFile(filepath.Join(resourceDir, "usage.tmpl"))
 		template = color.YellowString(string(bytes))
 	})
 	return template
 }
-
-const resourceDir = "resources"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
