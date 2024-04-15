@@ -38,20 +38,37 @@ or [Gradle](https://gradle.com/) in the **Java** ecosystem together with a frame
 ## Features
 
 1. Everything is a plugin, you can use any tool you like as a plugin to customize your build process!
-2. Model driver SQL database DAO.
-3. IoC Container support.
+2. Model driver SQL database DAO(data access object).
+3. IoC Container support via [samber/do](https://github.com/samber/do).
 4. Code generation for most popular frameworks scaffolding.
-5. Environment sensitive profile.
+5. Environment sensitive profile. **application.yml** for no-test environment and **application-test.yml** for test environment
 6. More ....
 
 ## What's a gob based project looks like?
 Just like[SpringBoot](https://spring.io/projects/spring-boot), the most important part of a gob project is the **configurations** which define your project.
-There are *two** main configurations
-1. **gob.yaml** : it acts as the same as **settings.gradle.kts**(Gradle) or **pom.xml**(Maven), you can define any thrid party tool as a plugin in this file.
+There are **two** main configurations
+1. **gob.yaml** : it acts as the same as **settings.gradle.kts**( [Gradle](https://gradle.com/)) or **pom.xml**([Maven](https://maven.apache.org/)), you can define any thrid party tool as a plugin in this file.
 2. **application.yaml**: it acts as the same **application.yaml** of [SpringBoot](https://spring.io/projects/spring-boot)
 
-## How gob works
-`Gob` takes everything defined in the `gob.yaml` as plugin.
+
+## Quick Start
+1. Install `gbc` with below command
+```shell
+    go install github.com/kcmvp/cmd/gbc@latest
+```
+2. Initialize project with below command(in the project home directory)
+```shell
+  gbc init
+```
+
+| Make some changes and commit code                                                               | execute `gbc deps`                                                                                   |
+|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| <img src="https://github.com/kcmvp/gbc/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gbc/blob/main/docs/dependency_tree.png" height="245" width="300"> |
+
+
+
+## How gbc works
+`gbc` takes everything defined in the `gob.yaml` as plugin.
 ```mermaid
 flowchart TD
         gbc --> gob.yaml 
@@ -63,20 +80,6 @@ You just need to tell `gbc` 3W(where,when and what)
 1. **Where** : where to download the tool
 2. **When** : when to execute to command
 2. **What** : what to do with the tool
-
-## Quick Start
-1. Install `gob` with below command
-```shell
-    go install github.com/kcmvp/gbc
-```
-2. Initialize project with below command(in the project home directory)
-```shell
-  gbc init
-```
-
-| Make some changes and comit code                                                                 | execute `gbc deps`                                                                                   |
-|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| <img src="https://github.com/kcmvp/gbc/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gbc/blob/main/docs/dependency_tree.png" height="245" width="300"> |
 
 
 ## Commands 
