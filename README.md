@@ -61,9 +61,9 @@ There are **two** main configurations
   gbc init
 ```
 
-| Make some changes and commit code                                                               | execute `gbc deps`                                                                                   |
-|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| <img src="https://github.com/kcmvp/gbc/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gbc/blob/main/docs/dependency_tree.png" height="245" width="300"> |
+| Make some changes and commit code                                                                | execute `gbc deps`                                                                                   |
+|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="300"> |
 
 
 
