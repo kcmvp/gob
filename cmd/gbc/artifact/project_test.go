@@ -47,6 +47,12 @@ func TestBasic(t *testing.T) {
 	assert.Equal(t, "github.com/kcmvp/gob", project.Module())
 }
 
+func (suite *ProjectTestSuite) TestDeps() {
+	deps := CurProject().Dependencies()
+	assert.Equal(suite.T(), 58, len(deps))
+	assert.True(suite.T(), lo.Contains(deps, "github.com/spf13/viper"))
+}
+
 func (suite *ProjectTestSuite) TestPlugins() {
 	_, err := os.Stat(filepath.Join(CurProject().Target(), "gob.yaml"))
 	assert.NoError(suite.T(), err)
@@ -100,7 +106,7 @@ func (suite *ProjectTestSuite) TestIsSetup() {
 	}
 	for _, test := range tests {
 		plugin, _ := NewPlugin(test.url)
-		v := CurProject().isSetup(plugin)
+		v := CurProject().settled(plugin)
 		assert.Equal(suite.T(), test.settled, v)
 	}
 }
@@ -140,7 +146,7 @@ func (suite *ProjectTestSuite) TestHookDir() {
 
 func (suite *ProjectTestSuite) TestSetupPlugin() {
 	plugin, _ := NewPlugin(v6)
-	project.SetupPlugin(plugin)
+	project.InstallPlugin(plugin)
 	gopath := GoPath()
 	entry, err := os.ReadDir(gopath)
 	_, suffix := utils.TestCaller()

@@ -57,11 +57,12 @@ func (project *Project) config() *viper.Viper {
 }
 
 func (project *Project) mergeConfig(cfg map[string]any) error {
-	err := project.config().MergeConfigMap(cfg)
+	viper := project.config()
+	err := viper.MergeConfigMap(cfg)
 	if err != nil {
 		return err
 	}
-	return project.config().WriteConfigAs(project.config().ConfigFileUsed())
+	return viper.WriteConfigAs(viper.ConfigFileUsed())
 }
 
 func (project *Project) HookDir() string {
@@ -200,8 +201,20 @@ func (project *Project) Plugins() []Plugin {
 	}
 }
 
-func (project *Project) SetupPlugin(plugin Plugin) {
-	if !project.isSetup(plugin) {
+func (project *Project) Dependencies() []string {
+	return project.deps
+}
+
+func (project *Project) InstallDependency(dep string) error {
+	if !lo.Contains(project.deps, dep) {
+		exec.Command("go", "get", "-u", dep).CombinedOutput() //nolint
+	}
+	return nil
+}
+
+func (project *Project) InstallPlugin(plugin Plugin) error {
+	var err error
+	if !project.settled(plugin) {
 		values := lo.MapEntries(map[string]string{
 			"alias": plugin.Alias,
 			"args":  plugin.Args,
@@ -209,18 +222,16 @@ func (project *Project) SetupPlugin(plugin Plugin) {
 		}, func(key string, value string) (string, any) {
 			return fmt.Sprintf("%s.%s.%s", pluginCfgKey, plugin.Name(), key), value
 		})
-		if err := project.mergeConfig(values); err != nil {
-			color.Red("failed to setup plugin %s", err.Error())
-			return
+		if err = project.mergeConfig(values); err != nil {
+			return err
 		}
 		_ = project.config().ReadInConfig()
 	}
-	if _, err := plugin.install(); err != nil {
-		color.Red("failed to install plugin %s: %s", plugin.name, err.Error())
-	}
+	_, err = plugin.install()
+	return err
 }
 
-func (project *Project) isSetup(plugin Plugin) bool {
+func (project *Project) settled(plugin Plugin) bool {
 	return project.config().Get(fmt.Sprintf("plugins.%s.url", plugin.name)) != nil
 }
 

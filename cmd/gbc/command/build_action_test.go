@@ -79,23 +79,6 @@ func (suite *ActionTestSuite) TestCoverage() {
 
 }
 
-func (suite *ActionTestSuite) TestSetupActions() {
-	assert.Equal(suite.T(), 1, len(setupActions()))
-}
-
-func (suite *ActionTestSuite) TestSetupVersion() {
-	err := setupVersion(nil, "")
-	assert.NoError(suite.T(), err)
-	version := filepath.Join(artifact.CurProject().Root(), "infra", "version.go")
-	os.Remove(version)
-	_, err = os.Stat(version)
-	assert.Error(suite.T(), err)
-	err = setupVersion(nil, "")
-	assert.NoError(suite.T(), err)
-	_, err = os.Stat(version)
-	assert.NoError(suite.T(), err)
-}
-
 func (suite *ActionTestSuite) TestBuildAndClean() {
 	target := artifact.CurProject().Target()
 	err := buildAction(nil, "")

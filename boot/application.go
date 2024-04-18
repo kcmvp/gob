@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 
 	"github.com/kcmvp/gob/internal"
@@ -32,6 +33,19 @@ func Container() *do.RootScope {
 
 func InitApp() {
 	InitAppWith(DefaultCfg)
+}
+
+func AppName() string {
+	appName := cfg.GetString("name")
+	if appName == "" {
+		info, _ := debug.ReadBuildInfo()
+		appName = info.Main.Path
+	}
+	return appName
+}
+
+func Cfg() *viper.Viper {
+	return cfg
 }
 
 func InitAppWith(cfgName string) {

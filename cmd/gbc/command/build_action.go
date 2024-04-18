@@ -31,11 +31,11 @@ func (a Action) String() string {
 	return fmt.Sprintf("%s: %s", a.A, a.A)
 }
 
-func setupActions() []Action {
-	return []Action{
-		{A: "version", B: setupVersion},
-	}
-}
+//func setupActions() []Action {
+//	return []Action{
+//		{A: "version", B: setupVersion},
+//	}
+//}
 
 func beforeExecution(cmd *cobra.Command, arg string) error {
 	if action, ok := lo.Find(buildActions(), func(action Action) bool {
@@ -98,8 +98,8 @@ func buildAction(_ *cobra.Command, _ ...string) error {
 		}
 		output := filepath.Join(artifact.CurProject().Target(), binary)
 		versionFlag := fmt.Sprintf("-X 'main.buildVersion=%s'", artifact.Version())
-		if data, err := exec.Command("go", "build", "-o", output, "-ldflags", versionFlag, mainFile).CombinedOutput(); err != nil { //nolint
-			return errors.New(color.RedString(string(data)))
+		if msg, err := exec.Command("go", "build", "-o", output, "-ldflags", versionFlag, mainFile).CombinedOutput(); err != nil { //nolint
+			return errors.New(color.RedString(string(msg)))
 		}
 		fmt.Printf("Build project successfully %s\n", output)
 		bm[binary] = output
@@ -143,16 +143,16 @@ func coverReport(_ *cobra.Command, _ ...string) error {
 	return fmt.Errorf(color.RedString("Failed to generate coverage report %s", err.Error()))
 }
 
-func setupVersion(_ *cobra.Command, _ ...string) error {
-	infra := filepath.Join(artifact.CurProject().Root(), "infra")
-	if _, err := os.Stat(infra); err != nil {
-		os.Mkdir(infra, 0700) // nolint
-	}
-	ver := filepath.Join(infra, "version.go")
-	if _, err := os.Stat(ver); err != nil {
-		data, _ := resources.ReadFile(filepath.Join(resourceDir, "version.tmpl"))
-		os.WriteFile(ver, data, 0666) //nolint
-	}
-	color.GreenString("version file is generated at infra/version.go")
-	return nil
-}
+//func setupVersion(_ *cobra.Command, _ ...string) error {
+//	infra := filepath.Join(artifact.CurProject().Root(), "infra")
+//	if _, err := os.Stat(infra); err != nil {
+//		os.Mkdir(infra, 0700) // nolint
+//	}
+//	ver := filepath.Join(infra, "version.go")
+//	if _, err := os.Stat(ver); err != nil {
+//		data, _ := resources.ReadFile(filepath.Join(resourceDir, "version.tmpl"))
+//		os.WriteFile(ver, data, 0666) //nolint
+//	}
+//	color.GreenString("version file is generated at infra/version.go")
+//	return nil
+//}

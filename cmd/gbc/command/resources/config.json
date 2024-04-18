@@ -1,15 +1,21 @@
 {
-  "plugins": [
-    {
-      "alias": "lint",
-      "args": "run ./...",
-      "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
-      "config": ".golangci.yaml"
-    },
-    {
-      "alias": "test",
-      "args": "--format testname -- -coverprofile=target/cover.out ./...",
-      "url": "gotest.tools/gotestsum"
-    }
-  ]
+  "gbc_init": {
+    "plugins": [
+      {
+        "alias": "lint",
+        "args": "run ./...",
+        "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
+        "config": ".golangci.yaml"
+      },
+      {
+        "alias": "test",
+        "args": "--format testname -- -coverprofile=target/cover.out ./...",
+        "url": "gotest.tools/gotestsum"
+      }
+    ],
+    "deps": [
+      "github.com/kcmvp/gob",
+      "github.com/stretchr/testify",
+    ]
+  }
 }
