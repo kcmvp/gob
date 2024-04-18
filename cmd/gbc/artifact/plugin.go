@@ -33,6 +33,7 @@ func (plugin *Plugin) init() error {
 		return fmt.Errorf("invalud tool url %s", plugin.Url)
 	}
 	plugin.version = "latest"
+	plugin.Url = strings.TrimSpace(plugin.Url)
 	reg := regexp.MustCompile(`@\S*`)
 	matches := reg.FindAllString(plugin.Url, -1)
 	if len(matches) > 0 {
@@ -110,7 +111,7 @@ func (plugin Plugin) install() (string, error) {
 	}
 	tempGoPath := temporaryGoPath()
 	defer os.RemoveAll(tempGoPath)
-	fmt.Printf("Installing %s ...... \n", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version()))
+	fmt.Printf("Installing %s@%s to %s ...... \n", plugin.Url, plugin.Version(), gopath)
 	cmd := exec.Command("go", "install", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version())) //nolint:gosec
 	cmd.Env = lo.Map(os.Environ(), func(pair string, _ int) string {
 		if strings.HasPrefix(pair, "GOPATH=") {
@@ -118,8 +119,8 @@ func (plugin Plugin) install() (string, error) {
 		}
 		return pair
 	})
-	if err := cmd.Run(); err != nil {
-		return tempGoPath, errors.New(color.RedString(err.Error()))
+	if data, err := cmd.CombinedOutput(); err != nil {
+		return tempGoPath, errors.New(color.RedString(string(data)))
 	}
 	return tempGoPath, filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

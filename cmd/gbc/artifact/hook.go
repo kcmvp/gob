@@ -71,7 +71,8 @@ func (project *Project) SetupHooks(force bool) error {
 		}
 	}
 	if !InGit() {
-		return fmt.Errorf(color.RedString("project is not in the source control"))
+		color.Yellow("project is not in the source control")
+		return nil
 	}
 	if err := project.config().ReadInConfig(); err != nil {
 		return err

@@ -52,7 +52,7 @@ func (suite *PluginTestSuit) TestInstallPluginWithVersion() {
 	}{
 		{"no version", "github.com/hhatto/gocloc/cmd/gocloc", false},
 		{"latest version", "github.com/hhatto/gocloc/cmd/gocloc@latest", false},
-		{"incorrect version", "github.com/hhatto/gocloc/cmd/gocloc@abc", false},
+		{"incorrect version", "github.com/hhatto/gocloc/cmd/gocloc@abc", true},
 	}
 	for _, test := range tests {
 		err := install(nil, test.url)

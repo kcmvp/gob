@@ -31,8 +31,8 @@ func (suite *ExecTestSuite) BeforeTest(_, testName string) {
 }
 
 func (suite *ExecTestSuite) TearDownSuite() {
-	//_, method := utils.TestCaller()
-	//TearDownSuite(strings.TrimRight(method, "TearDownSuite"))
+	_, method := utils.TestCaller()
+	TearDownSuite(strings.TrimRight(method, "TearDownSuite"))
 }
 
 func TestExecSuite(t *testing.T) {

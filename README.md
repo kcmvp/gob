@@ -42,7 +42,8 @@ or [Gradle](https://gradle.com/) in the **Java** ecosystem together with a frame
 3. IoC Container support via [samber/do](https://github.com/samber/do).
 4. Code generation for most popular frameworks scaffolding.
 5. Environment sensitive profile. **application.yml** for no-test environment and **application-test.yml** for test environment
-6. More ....
+6. Friendly help messages
+7. More ....
 
 ## What's a gob based project looks like?
 Just like[SpringBoot](https://spring.io/projects/spring-boot), the most important part of a gob project is the **configurations** which define your project.

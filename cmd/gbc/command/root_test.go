@@ -26,15 +26,14 @@ func TestRootTestSuit(t *testing.T) {
 
 func (suite *RootTestSuit) BeforeTest(_, testName string) {
 	os.Chdir(artifact.CurProject().Root())
-	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "gob.yaml"))
+	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "config.json"))
 	_, method := utils.TestCaller()
 	root := filepath.Join(artifact.CurProject().Root(), "target", strings.ReplaceAll(method, "_BeforeTest", fmt.Sprintf("_%s", testName)))
 	os.MkdirAll(root, os.ModePerm)
-	t, _ := os.Create(filepath.Join(root, "gob.yaml"))
+	t, _ := os.Create(filepath.Join(root, "config.json"))
 	io.Copy(t, s)
 	t.Close()
 	s.Close()
-	os.Stat(root)
 }
 
 func (suite *RootTestSuit) TearDownSuite() {
@@ -49,6 +48,7 @@ func (suite *RootTestSuit) TestValidArgs() {
 }
 
 func (suite *RootTestSuit) TestArgs() {
+	artifact.CurProject().SetupHooks(true)
 	tests := []struct {
 		name    string
 		args    []string
@@ -84,6 +84,7 @@ func (suite *RootTestSuit) TestArgs() {
 }
 
 func (suite *RootTestSuit) TestExecute() {
+	artifact.CurProject().SetupHooks(true)
 	os.Chdir(artifact.CurProject().Target())
 	rootCmd.SetArgs([]string{"build"})
 	err := Execute()
@@ -100,6 +101,7 @@ func (suite *RootTestSuit) TestExecute() {
 }
 
 func (suite *RootTestSuit) TestBuild() {
+	artifact.CurProject().SetupHooks(true)
 	tests := []struct {
 		name    string
 		args    []string
@@ -131,6 +133,7 @@ func (suite *RootTestSuit) TestBuild() {
 }
 
 func (suite *RootTestSuit) TestPersistentPreRun() {
+	artifact.CurProject().SetupHooks(true)
 	rootCmd.SetArgs([]string{"build"})
 	Execute()
 	hooks := lo.MapToSlice(artifact.HookScripts(), func(key string, _ string) string {
@@ -140,27 +143,6 @@ func (suite *RootTestSuit) TestPersistentPreRun() {
 		_, err := os.Stat(filepath.Join(artifact.CurProject().HookDir(), hook))
 		assert.NoError(suite.T(), err)
 	}
-}
-
-func (suite *RootTestSuit) TestBuiltinPlugins() {
-	plugins := builtinPlugins()
-	assert.Equal(suite.T(), 2, len(plugins))
-	plugin, ok := lo.Find(plugins, func(plugin artifact.Plugin) bool {
-		return plugin.Url == "github.com/golangci/golangci-lint/cmd/golangci-lint"
-	})
-	assert.True(suite.T(), ok)
-	assert.Equal(suite.T(), "v1.57.2", plugin.Version())
-	assert.Equal(suite.T(), "golangci-lint", plugin.Name())
-	assert.Equal(suite.T(), "github.com/golangci/golangci-lint", plugin.Module())
-	assert.Equal(suite.T(), "lint", plugin.Alias)
-	plugin, ok = lo.Find(plugins, func(plugin artifact.Plugin) bool {
-		return plugin.Url == "gotest.tools/gotestsum"
-	})
-	assert.True(suite.T(), ok)
-	assert.Equal(suite.T(), "v1.11.0", plugin.Version())
-	assert.Equal(suite.T(), "gotestsum", plugin.Name())
-	assert.Equal(suite.T(), "gotest.tools/gotestsum", plugin.Module())
-	assert.Equal(suite.T(), "test", plugin.Alias)
 }
 
 func (suite *RootTestSuit) TestRunE() {

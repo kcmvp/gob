@@ -30,8 +30,7 @@ func install(_ *cobra.Command, args ...string) error {
 	}
 	plugin.Alias = alias
 	plugin.Alias = command
-	artifact.CurProject().SetupPlugin(plugin)
-	return nil
+	return artifact.CurProject().InstallPlugin(plugin)
 }
 
 func list(_ *cobra.Command, _ ...string) error {

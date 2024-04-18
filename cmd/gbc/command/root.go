@@ -4,34 +4,109 @@ package command
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/cmd/gbc/artifact"
+	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
+	"github.com/tidwall/gjson"
 	"os" //nolint
 	"path/filepath"
 	"strings" //nolint
 	"sync"    //nolint
 )
 
-const resourceDir = "resources"
-
-//go:embed resources/*
-var resources embed.FS
+const (
+	resourceDir = "resources"
+	tmplDir     = "tmpl"
+)
 
 var (
-	once     sync.Once
-	template string
+	//go:embed resources/*
+	resources embed.FS
+	//go:embed tmpl/*
+	templates embed.FS
+	once      sync.Once
+	usage     string
 )
 
 func usageTemplate() string {
 	once.Do(func() {
-		bytes, _ := resources.ReadFile(filepath.Join(resourceDir, "usage.tmpl"))
-		template = color.YellowString(string(bytes))
+		bytes, _ := templates.ReadFile(filepath.Join(tmplDir, "usage.tmpl"))
+		usage = color.YellowString(string(bytes))
 	})
-	return template
+	return usage
+}
+
+func parseArtefacts(cmd *cobra.Command, args []string, name string) (gjson.Result, error) {
+	var result gjson.Result
+	var data []byte
+	var err error
+	if test, uqf := utils.TestCaller(); test {
+		data, err = os.ReadFile(filepath.Join(artifact.CurProject().Root(), "target", uqf, "config.json"))
+	} else {
+		data, err = resources.ReadFile(filepath.Join(resourceDir, "config.json"))
+	}
+	if err != nil {
+		return result, err
+	}
+	key := strings.ReplaceAll(cmd.CommandPath(), " ", "_")
+	result = gjson.GetBytes(data, fmt.Sprintf("%s.%s", key, name))
+	if !result.Exists() {
+		result = gjson.GetBytes(data, fmt.Sprintf("%s_%s.%s", key, strings.Join(args, "_"), name))
+	}
+	return result, nil
+}
+
+func installPlugins(cmd *cobra.Command, args []string) error {
+	result, err := parseArtefacts(cmd, args, "plugins")
+	if result.Exists() {
+		var data []byte
+		var plugins []artifact.Plugin
+		err = json.Unmarshal([]byte(result.Raw), &plugins)
+		for _, plugin := range plugins {
+			if err = artifact.CurProject().InstallPlugin(plugin); err != nil {
+				return err
+			}
+			if len(plugin.Config) > 0 {
+				if _, err = os.Stat(filepath.Join(artifact.CurProject().Root(), plugin.Config)); err != nil {
+					if data, err = resources.ReadFile(filepath.Join(resourceDir, plugin.Config)); err == nil {
+						if err = os.WriteFile(filepath.Join(artifact.CurProject().Root(), plugin.Config), data, os.ModePerm); err != nil {
+							break
+						}
+					} else {
+						break
+					}
+				}
+			}
+		}
+		if err != nil {
+			return errors.New(color.RedString(err.Error()))
+		}
+	}
+	return err
+}
+
+func installDeps(cmd *cobra.Command, args []string) error {
+	result, err := parseArtefacts(cmd, args, "deps")
+	if result.Exists() {
+		var cfgDeps []string
+		err = json.Unmarshal([]byte(result.Raw), &cfgDeps)
+		for _, dep := range lo.Filter(cfgDeps, func(url string, _ int) bool {
+			return !lo.Contains(artifact.CurProject().Dependencies(), url)
+		}) {
+			if err = artifact.CurProject().InstallDependency(dep); err != nil {
+				break
+			}
+		}
+	}
+	if err != nil {
+		return errors.New(color.RedString(err.Error()))
+	}
+	return err
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -51,7 +126,13 @@ var rootCmd = &cobra.Command{
 		if artifact.CurProject().Root() != currentDir {
 			return fmt.Errorf(color.RedString("Please execute the command in the project root dir"))
 		}
-		return artifact.CurProject().Validate()
+		if err := installPlugins(cmd, args); err != nil {
+			return err
+		}
+		if err := installDeps(cmd, args); err != nil {
+			return err
+		}
+		return artifact.CurProject().SetupHooks(false)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for _, arg := range lo.Uniq(args) {

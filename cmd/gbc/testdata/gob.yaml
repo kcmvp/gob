@@ -8,7 +8,7 @@ plugins:
     depth:
         alias: depth
         args: run ./...
-        url: github.com/KyleBanks/depth/cmd/depth@latest
+        url: github.com/KyleBanks/depth/cmd/depth
     gotestsum:
         alias: test
         args: --format testname -- -coverprofile=target/cover.out ./...

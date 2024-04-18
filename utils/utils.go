@@ -19,6 +19,9 @@ func CleanStr(str string) string {
 	return strings.Map(cleanStr, str)
 }
 
+// TestCaller returns full unique of the method name together a bool value
+// true indicates the caller is from  _test.go. As init() is executed before any
+// other method, so call this method in init() would not return correct result.
 func TestCaller() (bool, string) {
 	var test bool
 	var frame runtime.Frame
