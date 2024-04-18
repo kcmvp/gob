@@ -16,7 +16,6 @@
     "deps": [
       "github.com/kcmvp/gob",
       "github.com/stretchr/testify",
-      "github.com/brianvoe/gofakeit"
     ]
   }
 }
