@@ -55,7 +55,7 @@ There are **two** main configurations
 ## Quick Start
 1. Install `gbc` with below command
 ```shell
-    go install github.com/kcmvp/cmd/gbc@latest
+    go install github.com/kcmvp/gob/cmd/gbc@latest
 ```
 2. Initialize project with below command(in the project home directory)
 ```shell
