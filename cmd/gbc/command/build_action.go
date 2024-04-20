@@ -1,12 +1,16 @@
 package command
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/kcmvp/gob/cmd/gbc/artifact" //nolint
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/fatih/color"
@@ -25,17 +29,12 @@ func buildActions() []Action {
 		{A: "clean", B: cleanAction, C: "clean project target folder"},
 		{A: "test", B: testAction, C: "test the project and generate coverage report in target folder"},
 		{A: "after_test", B: coverReport},
+		{A: "after_lint", B: nolintReport},
 	}
 }
 func (a Action) String() string {
 	return fmt.Sprintf("%s: %s", a.A, a.A)
 }
-
-//func setupActions() []Action {
-//	return []Action{
-//		{A: "version", B: setupVersion},
-//	}
-//}
 
 func beforeExecution(cmd *cobra.Command, arg string) error {
 	if action, ok := lo.Find(buildActions(), func(action Action) bool {
@@ -143,16 +142,56 @@ func coverReport(_ *cobra.Command, _ ...string) error {
 	return fmt.Errorf(color.RedString("Failed to generate coverage report %s", err.Error()))
 }
 
-//func setupVersion(_ *cobra.Command, _ ...string) error {
-//	infra := filepath.Join(artifact.CurProject().Root(), "infra")
-//	if _, err := os.Stat(infra); err != nil {
-//		os.Mkdir(infra, 0700) // nolint
-//	}
-//	ver := filepath.Join(infra, "version.go")
-//	if _, err := os.Stat(ver); err != nil {
-//		data, _ := resources.ReadFile(filepath.Join(resourceDir, "version.tmpl"))
-//		os.WriteFile(ver, data, 0666) //nolint
-//	}
-//	color.GreenString("version file is generated at infra/version.go")
-//	return nil
-//}
+func nolintReport(_ *cobra.Command, _ ...string) error {
+	color.HiCyan("Analysis nolint report ...")
+	_ = os.Chdir(artifact.CurProject().Root())
+	reg := regexp.MustCompile(`//\s*nolint`)
+	data, _ := exec.Command("go", "list", "-f", `{{.Dir}}:{{join .GoFiles " "}}`, `./...`).CombinedOutput()
+	scanner := bufio.NewScanner(bytes.NewBuffer(data))
+	var ignoreList []lo.Tuple3[string, int, int]
+	var maxLength, fOverAll, lOverAll int
+	for scanner.Scan() {
+		line := scanner.Text()
+		items := strings.Split(line, ":")
+		for _, file := range strings.Split(items[1], " ") {
+			var fIgnore, lIgnore int
+			abs := filepath.Join(items[0], file)
+			relative := strings.TrimPrefix(abs, artifact.CurProject().Root()+"/")
+			maxLength = lo.If(maxLength > len(relative), maxLength).Else(len(relative))
+			source, _ := os.ReadFile(abs)
+			sourceScanner := bufio.NewScanner(bytes.NewBuffer(source))
+			for sourceScanner.Scan() {
+				line = sourceScanner.Text()
+				if reg.MatchString(line) {
+					if strings.HasPrefix(strings.TrimPrefix(line, " "), "//") {
+						fIgnore++
+						lIgnore++
+					} else {
+						lIgnore++
+					}
+				}
+			}
+			fOverAll += fIgnore
+			lOverAll += lIgnore
+			if fIgnore+lIgnore > 0 {
+				ignoreList = append(ignoreList, lo.Tuple3[string, int, int]{A: relative, B: fIgnore, C: lIgnore})
+			}
+		}
+	}
+	maxLength += 5
+	if fOverAll+lOverAll > 0 {
+		color.Yellow("file level lint ignores: %d, line level lint ignores: %d", fOverAll, lOverAll)
+		slices.SortFunc(ignoreList, func(a, b lo.Tuple3[string, int, int]) int {
+			return b.C - a.C
+		})
+		// Open a file for writing
+		format := fmt.Sprintf("%%-%ds L:%%-10d F:%%-5d\n", maxLength)
+		file, _ := os.Create(filepath.Join(artifact.CurProject().Target(), "lint-ignore.log"))
+		defer file.Close()
+		for _, line := range ignoreList {
+			_, _ = file.WriteString(fmt.Sprintf(format, line.A, line.C, line.B))
+		}
+	}
+
+	return nil
+}
