@@ -48,8 +48,8 @@ func (suite *ActionTestSuite) TestBeforeExecution() {
 }
 
 func (suite *ActionTestSuite) TestBuiltInActions() {
-	assert.Equal(suite.T(), 4, len(buildActions()))
-	assert.Equal(suite.T(), []string{"build", "clean", "test", "after_test"}, lo.Map(buildActions(), func(item Action, index int) string {
+	assert.Equal(suite.T(), 5, len(buildActions()))
+	assert.Equal(suite.T(), []string{"build", "clean", "test", "after_test", "after_lint"}, lo.Map(buildActions(), func(item Action, index int) string {
 		return item.A
 	}))
 }

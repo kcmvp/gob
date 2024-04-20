@@ -27,7 +27,7 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 	} else {
 		return err
 	}
-	color.HiCyan("Start %s ......\n", task)
+	color.HiCyan("start %s ......\n", task)
 	// Create a file to save the output
 	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", task)))
 	if err != nil {
@@ -78,7 +78,7 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 		}
 	}
 	_ = progress.Finish()
-	color.HiCyan("\rFinish %s ......\n", task)
+	color.HiCyan("\rfinish %s ......\n", task)
 	ticker.Stop()
 	return cmd.Wait()
 }
