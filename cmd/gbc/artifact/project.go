@@ -77,13 +77,13 @@ func (project *Project) HookDir() string {
 }
 
 func init() {
-	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}:{{.Path}}")
+	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}_:_{{.Path}}")
 	output, err := cmd.Output()
 	if err != nil || len(string(output)) == 0 {
-		log.Fatal(color.RedString("Error: please execute command in project root directory"))
+		log.Fatal(color.RedString("Error: please execute command in project root directory %s", string(output)))
 	}
 
-	item := strings.Split(strings.TrimSpace(string(output)), ":")
+	item := strings.Split(strings.TrimSpace(string(output)), "_:_")
 	project = Project{
 		root:   item[0],
 		module: item[1],

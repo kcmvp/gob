@@ -32,6 +32,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 	defer func() {
 		os.RemoveAll(gopath)
 	}()
+	version := LatestVersion("github.com/golangci/golangci-lint")
 	tests := []struct {
 		name    string
 		url     string
@@ -45,7 +46,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "golangci-lint",
-			binary:  "golangci-lint-v1.57.2",
+			binary:  fmt.Sprintf("%s-%s", "golangci-lint", version[0].B),
 			wantErr: false,
 		},
 		{
@@ -53,7 +54,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "golangci-lint",
-			binary:  "golangci-lint-v1.57.2",
+			binary:  fmt.Sprintf("%s-%s", "golangci-lint", version[0].B),
 			wantErr: false,
 		},
 		{
@@ -105,7 +106,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			assert.True(t, test.wantErr == (err != nil))
 			if !test.wantErr {
 				assert.Equal(t, test.module, plugin.module)
-				assert.True(t, lo.Contains([]string{"v1.57.2", "v1.1.1", "v1.11.0"}, plugin.Version()))
+				assert.True(t, lo.Contains([]string{"v1.58.1", "v1.57.2", "v1.1.1", "v1.11.0"}, plugin.Version()))
 			}
 		})
 	}

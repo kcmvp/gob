@@ -1,6 +1,7 @@
 package artifact
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -49,13 +50,24 @@ func (plugin *Plugin) init() error {
 	}
 	plugin.name, _ = lo.Last(strings.Split(plugin.module, "/"))
 	if plugin.version == "latest" {
-		output, err := exec.Command("go", "list", "-m", fmt.Sprintf("%s@latest", plugin.module)).CombinedOutput() //nolint:gosec
-		if err != nil {
-			return fmt.Errorf("failed to get version of %s", plugin.Url)
-		}
-		plugin.version = strings.Fields(strings.ReplaceAll(string(output), "\n", ""))[1]
+		plugin.version = LatestVersion(plugin.module)[0].B
 	}
 	return nil
+}
+
+func LatestVersion(modules ...string) []lo.Tuple2[string, string] {
+	modules = lo.Map(modules, func(item string, _ int) string {
+		return fmt.Sprintf("%s@latest", item)
+	})
+	output, _ := exec.Command("go", append([]string{"list", "-m"}, modules...)...).CombinedOutput() //nolint
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	var tuple []lo.Tuple2[string, string]
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		entry := strings.Split(line, " ")
+		tuple = append(tuple, lo.Tuple2[string, string]{A: entry[0], B: entry[1]})
+	}
+	return tuple
 }
 
 func (plugin Plugin) Module() string {
