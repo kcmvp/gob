@@ -4,7 +4,7 @@
       {
         "alias": "lint",
         "args": "run ./...",
-        "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
+        "url": "github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2",
         "config": ".golangci.yaml"
       },
       {

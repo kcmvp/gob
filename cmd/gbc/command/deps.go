@@ -66,18 +66,15 @@ func dependencyTree() (treeprint.Tree, error) {
 	tree := treeprint.New()
 	tree.SetValue(module)
 	direct := lo.FilterMap(dependencies, func(item *lo.Tuple4[string, string, string, int], _ int) (string, bool) {
-		return fmt.Sprintf("%s@latest", item.A), item.D == 1
+		return item.A, item.D == 1
 	})
 	// get the latest version
-	output, _ := exec.Command("go", append([]string{"list", "-m"}, direct...)...).CombinedOutput() //nolint
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		entry := strings.Split(line, " ")
-		for _, dep := range dependencies {
-			if dep.A == entry[0] && dep.B != entry[1] {
-				dep.C = entry[1]
-			}
+	versions := artifact.LatestVersion(direct...)
+	for _, dep := range dependencies {
+		if version, ok := lo.Find(versions, func(t lo.Tuple2[string, string]) bool {
+			return dep.A == t.A && dep.B != t.B
+		}); ok {
+			dep.C = version.B
 		}
 	}
 	// parse the dependency tree

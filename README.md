@@ -107,10 +107,11 @@ gbc init
 Initialize gbc for the project, it will do following initializations 
 1. generate file `gob.yaml`
 2. generate file `.golangci.yaml`, which is the configuration for [golangci-lint](https://github.com/golangci/golangci-lint)
-3. setup `git hooks` if project in the source control.
-   4. commit-msg
-   5. pre-commit
-   6. pre-push
+3. setup `git hooks`(if project in the source control.)  
+   1. commit-msg 
+   2. pre-commit 
+   3. pre-push
+
 > This command can be executed at any time. 
 
 Content of `gob.yaml`
@@ -141,7 +142,7 @@ gbc build
 ```
 This command would build all the candidate binaries(main methods in main packages) to the `target` folder.
 1. Final binary name is same as go source file name which contains `main method`
-2. Would fail if there are same name go main surce file
+2. Would fail if there are same name go main source file
 
 ### gbc clean
 ```shell
@@ -185,7 +186,7 @@ List all the installed plugins
 ```shell
 gob setup version
 ```
-This command will generate file `version.go` in `infra` folder, and project version informatill
+This command will generate file `version.go` in `infra` folder, and project version information
 will be injected into `buildVersion` when build the project with command `gob build`
 ```go
 // buildVersion don't change this
