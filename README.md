@@ -62,7 +62,7 @@ There are **two** main configurations
   gbc init
 ```
 
-| Make some changes and commit code                                                                | execute `gbc deps`                                                                                   |
+| Git Hooks                                                                                        | Dependency Tree                                                                                      |
 |--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
 | <img src="https://github.com/kcmvp/gob/blob/main/docs/commit_hook.gif" height="245" width="400"> | <img src="https://github.com/kcmvp/gob/blob/main/docs/dependency_tree.png" height="245" width="300"> |
 
