@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
 	"os" //nolint
+	"path"
 	"path/filepath"
 	"strings" //nolint
 	"sync"    //nolint
@@ -35,7 +36,7 @@ var (
 
 func usageTemplate() string {
 	once.Do(func() {
-		bytes, _ := templates.ReadFile(fmt.Sprintf("%s/usage.tmpl", tmplDir))
+		bytes, _ := templates.ReadFile(path.Join(tmplDir, "usage.tmpl"))
 		usage = color.YellowString(string(bytes))
 	})
 	return usage
@@ -48,7 +49,8 @@ func parseArtifacts(cmd *cobra.Command, args []string, name string) (gjson.Resul
 	if test, uqf := utils.TestCaller(); test {
 		data, err = os.ReadFile(filepath.Join(artifact.CurProject().Root(), "target", uqf, "config.json"))
 	} else {
-		data, err = resources.ReadFile(fmt.Sprintf("%s/config.json", resourceDir))
+		path.Join()
+		data, err = resources.ReadFile(path.Join(resourceDir, "config.json"))
 	}
 	if err != nil {
 		return result, err
@@ -73,7 +75,7 @@ func installPlugins(cmd *cobra.Command, args []string) error {
 			}
 			if len(plugin.Config) > 0 {
 				if _, err = os.Stat(filepath.Join(artifact.CurProject().Root(), plugin.Config)); err != nil {
-					if data, err = resources.ReadFile(fmt.Sprintf("%s/%s", resourceDir, plugin.Config)); err == nil {
+					if data, err = resources.ReadFile(path.Join(resourceDir, plugin.Config)); err == nil {
 						if err = os.WriteFile(filepath.Join(artifact.CurProject().Root(), plugin.Config), data, os.ModePerm); err != nil {
 							break
 						}
