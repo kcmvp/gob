@@ -3,9 +3,7 @@ package artifact
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"io/fs"
 	"os"
@@ -123,7 +121,6 @@ func (plugin Plugin) install() (string, error) {
 	}
 	tempGoPath := temporaryGoPath()
 	defer os.RemoveAll(tempGoPath)
-	fmt.Printf("Installing %s@%s to %s ...... \n", plugin.Url, plugin.Version(), gopath)
 	cmd := exec.Command("go", "install", fmt.Sprintf("%s@%s", plugin.Url, plugin.Version())) //nolint:gosec
 	cmd.Env = lo.Map(os.Environ(), func(pair string, _ int) string {
 		if strings.HasPrefix(pair, "GOPATH=") {
@@ -131,8 +128,14 @@ func (plugin Plugin) install() (string, error) {
 		}
 		return pair
 	})
-	if data, err := cmd.CombinedOutput(); err != nil {
-		return tempGoPath, errors.New(color.RedString(string(data)))
+	task := fmt.Sprintf("%s installation", plugin.Name())
+	if err := StreamCmdOutput(cmd, task, func(msg string) string {
+		return ""
+	}); err != nil {
+		return tempGoPath, err
+	}
+	if cmd.ProcessState.ExitCode() != 0 {
+		return tempGoPath, fmt.Errorf("faild %d", cmd.ProcessState.ExitCode())
 	}
 	return tempGoPath, filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -143,7 +146,6 @@ func (plugin Plugin) install() (string, error) {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("%s is installed successfully \n", plugin.Url)
 		} else {
 			// change the permission for deletion
 			os.Chmod(path, 0o766) //nolint
@@ -158,7 +160,7 @@ func (plugin Plugin) Execute() error {
 	}
 	// always use absolute path
 	pCmd := exec.Command(filepath.Join(GoPath(), plugin.Binary()), strings.Split(plugin.Args, " ")...) //nolint #gosec
-	if err := StreamCmdOutput(pCmd, plugin.taskName()); err != nil {
+	if err := StreamCmdOutput(pCmd, plugin.taskName(), nil); err != nil {
 		return err
 	}
 	if pCmd.ProcessState.ExitCode() != 0 {

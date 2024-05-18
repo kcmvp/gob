@@ -126,7 +126,7 @@ func cleanAction(_ *cobra.Command, _ ...string) error {
 func testAction(_ *cobra.Command, _ ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", artifact.CurProject().Target())
 	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...) //nolint
-	return artifact.StreamCmdOutput(testCmd, "test")
+	return artifact.StreamCmdOutput(testCmd, "test", nil)
 }
 
 func coverReport(_ *cobra.Command, _ ...string) error {
@@ -143,7 +143,6 @@ func coverReport(_ *cobra.Command, _ ...string) error {
 }
 
 func nolintReport(_ *cobra.Command, _ ...string) error {
-	color.HiCyan("Analysis nolint report ...")
 	_ = os.Chdir(artifact.CurProject().Root())
 	reg := regexp.MustCompile(`//\s*nolint`)
 	data, _ := exec.Command("go", "list", "-f", `{{.Dir}}:{{join .GoFiles " "}}`, `./...`).CombinedOutput()
@@ -180,7 +179,7 @@ func nolintReport(_ *cobra.Command, _ ...string) error {
 	}
 	maxLength += 5
 	if fOverAll+lOverAll > 0 {
-		color.Yellow("file level lint ignores: %d, line level lint ignores: %d", fOverAll, lOverAll)
+		color.Yellow("[Lint Report]:file level ignores: %d, line level ignores: %d", fOverAll, lOverAll)
 		slices.SortFunc(ignoreList, func(a, b lo.Tuple3[string, int, int]) int {
 			return b.C - a.C
 		})
