@@ -35,20 +35,20 @@ var (
 
 func usageTemplate() string {
 	once.Do(func() {
-		bytes, _ := templates.ReadFile(filepath.Join(tmplDir, "usage.tmpl"))
+		bytes, _ := templates.ReadFile(fmt.Sprintf("%s/usage.tmpl", tmplDir))
 		usage = color.YellowString(string(bytes))
 	})
 	return usage
 }
 
-func parseArtefacts(cmd *cobra.Command, args []string, name string) (gjson.Result, error) {
+func parseArtifacts(cmd *cobra.Command, args []string, name string) (gjson.Result, error) {
 	var result gjson.Result
 	var data []byte
 	var err error
 	if test, uqf := utils.TestCaller(); test {
 		data, err = os.ReadFile(filepath.Join(artifact.CurProject().Root(), "target", uqf, "config.json"))
 	} else {
-		data, err = resources.ReadFile(filepath.Join(resourceDir, "config.json"))
+		data, err = resources.ReadFile(fmt.Sprintf("%s/config.json", resourceDir))
 	}
 	if err != nil {
 		return result, err
@@ -62,7 +62,7 @@ func parseArtefacts(cmd *cobra.Command, args []string, name string) (gjson.Resul
 }
 
 func installPlugins(cmd *cobra.Command, args []string) error {
-	result, err := parseArtefacts(cmd, args, "plugins")
+	result, err := parseArtifacts(cmd, args, "plugins")
 	if result.Exists() {
 		var data []byte
 		var plugins []artifact.Plugin
@@ -73,7 +73,7 @@ func installPlugins(cmd *cobra.Command, args []string) error {
 			}
 			if len(plugin.Config) > 0 {
 				if _, err = os.Stat(filepath.Join(artifact.CurProject().Root(), plugin.Config)); err != nil {
-					if data, err = resources.ReadFile(filepath.Join(resourceDir, plugin.Config)); err == nil {
+					if data, err = resources.ReadFile(fmt.Sprintf("%s/%s", resourceDir, plugin.Config)); err == nil {
 						if err = os.WriteFile(filepath.Join(artifact.CurProject().Root(), plugin.Config), data, os.ModePerm); err != nil {
 							break
 						}
@@ -91,7 +91,7 @@ func installPlugins(cmd *cobra.Command, args []string) error {
 }
 
 func installDeps(cmd *cobra.Command, args []string) error {
-	result, err := parseArtefacts(cmd, args, "deps")
+	result, err := parseArtifacts(cmd, args, "deps")
 	if result.Exists() {
 		var cfgDeps []string
 		err = json.Unmarshal([]byte(result.Raw), &cfgDeps)

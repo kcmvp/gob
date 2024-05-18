@@ -16,6 +16,7 @@ import (
 
 type InternalPluginTestSuit struct {
 	suite.Suite
+	lintLatestVersion string
 }
 
 func (suite *InternalPluginTestSuit) TearDownSuite() {
@@ -24,7 +25,9 @@ func (suite *InternalPluginTestSuit) TearDownSuite() {
 }
 
 func TestInternalPluginSuite(t *testing.T) {
-	suite.Run(t, &InternalPluginTestSuit{})
+	suite.Run(t, &InternalPluginTestSuit{
+		lintLatestVersion: LatestVersion("github.com/golangci/golangci-lint")[0].B,
+	})
 }
 
 func (suite *InternalPluginTestSuit) TestNewPlugin() {
@@ -32,7 +35,6 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 	defer func() {
 		os.RemoveAll(gopath)
 	}()
-	version := LatestVersion("github.com/golangci/golangci-lint")
 	tests := []struct {
 		name    string
 		url     string
@@ -46,7 +48,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "golangci-lint",
-			binary:  fmt.Sprintf("%s-%s", "golangci-lint", version[0].B),
+			binary:  fmt.Sprintf("%s-%s", "golangci-lint", suite.lintLatestVersion),
 			wantErr: false,
 		},
 		{
@@ -54,7 +56,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "golangci-lint",
-			binary:  fmt.Sprintf("%s-%s", "golangci-lint", version[0].B),
+			binary:  fmt.Sprintf("%s-%s", "golangci-lint", suite.lintLatestVersion),
 			wantErr: false,
 		},
 		{
@@ -128,7 +130,7 @@ func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
 		return plugin.Url == "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	})
 	assert.True(t, ok)
-	assert.Equal(t, "v1.57.2", plugin.Version())
+	assert.Equal(t, suite.lintLatestVersion, plugin.Version())
 	assert.Equal(t, "golangci-lint", plugin.Name())
 	assert.Equal(t, "github.com/golangci/golangci-lint", plugin.Module())
 	assert.Equal(t, "lint", plugin.Alias)

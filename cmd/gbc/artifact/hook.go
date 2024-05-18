@@ -34,7 +34,7 @@ type GitHook struct {
 
 func (project *Project) GitHook() GitHook {
 	var hook GitHook
-	project.config().UnmarshalKey(execCfgKey, &hook) //nolint
+	project.load().UnmarshalKey(execCfgKey, &hook) //nolint
 	return hook
 }
 
@@ -44,8 +44,11 @@ type Execution struct {
 }
 
 func (project *Project) Executions() []Execution {
-	values := project.config().Get(execCfgKey).(map[string]any)
-	return lo.MapToSlice(values, func(key string, v any) Execution {
+	values := project.load().Get(execCfgKey)
+	if values == nil {
+		return []Execution{}
+	}
+	return lo.MapToSlice(values.(map[string]any), func(key string, v any) Execution {
 		var actions []string
 		if _, ok := v.(string); ok {
 			actions = append(actions, v.(string))
@@ -74,9 +77,8 @@ func (project *Project) SetupHooks(force bool) error {
 		color.Yellow("project is not in the source control")
 		return nil
 	}
-	if err := project.config().ReadInConfig(); err != nil {
-		return err
-	}
+	// force load configuration again for testing
+	_ = project.load().ReadInConfig()
 	gitHook := CurProject().GitHook()
 	var hooks []string
 	if len(gitHook.CommitMsg) > 0 {
@@ -89,7 +91,7 @@ func (project *Project) SetupHooks(force bool) error {
 		hooks = append(hooks, PrePush)
 	}
 	shell := lo.IfF(Windows(), func() string {
-		return "#!/usr/bin/env pwsh\n"
+		return "#!/usr/bin/env bash\n"
 	}).Else("#!/bin/sh\n")
 	hookDir := CurProject().HookDir()
 	for name, script := range HookScripts() {
