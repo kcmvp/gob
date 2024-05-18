@@ -16,7 +16,9 @@ import (
 	"github.com/creack/pty"
 )
 
-func StreamCmdOutput(cmd *exec.Cmd, task string) error {
+type consoleFormatter func(msg string) string
+
+func StreamCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error {
 	// Start the command with a pty
 	var scanner *bufio.Scanner
 	if ptmx, err := pty.Start(cmd); err == nil {
@@ -27,9 +29,9 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 	} else {
 		return err
 	}
-	color.HiCyan("start %s ......\n", task)
+	color.Green("start %s ......\n", task)
 	// Create a file to save the output
-	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", task)))
+	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", strings.ReplaceAll(task, " ", "_"))))
 	if err != nil {
 		return fmt.Errorf(color.RedString("Error creating file:", err))
 	}
@@ -43,6 +45,9 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 	go func() {
 		for scanner.Scan() {
 			line := strings.TrimSpace(scanner.Text())
+			if formatter != nil {
+				line = strings.TrimSpace(formatter(line))
+			}
 			if len(line) > 1 {
 				ch <- line
 			}
@@ -63,7 +68,7 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 			_, err = log.WriteString(lineWithoutColor + "\n")
 			line = lo.IfF(overwrite, func() string {
 				overwrite = false
-				return fmt.Sprintf("\r%-20s", line)
+				return fmt.Sprintf("\r%-15s", line)
 			}).Else(line)
 			fmt.Println(line)
 			if err != nil {
@@ -78,7 +83,7 @@ func StreamCmdOutput(cmd *exec.Cmd, task string) error {
 		}
 	}
 	_ = progress.Finish()
-	color.HiCyan("\rfinish %s ......\n", task)
+	color.Green("\rfinished %s ......\n", task)
 	ticker.Stop()
 	return cmd.Wait()
 }
