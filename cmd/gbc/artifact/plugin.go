@@ -21,7 +21,7 @@ type Plugin struct {
 	Alias       string `json:"alias" mapstructure:"alias"`
 	Args        string `json:"args" mapstructure:"args"`
 	Url         string `json:"url" mapstructure:"url"` //nolint
-	Config      string `json:"config" mapstructure:"config"`
+	Config      string `json:"load" mapstructure:"load"`
 	Description string `json:"description" mapstructure:"description"`
 	version     string
 	name        string

@@ -45,7 +45,7 @@ func (suite *InitializeTestSuite) TearDownSuite() {
 }
 
 func (suite *RootTestSuit) TestParsePlugins() {
-	result, err := parseArtefacts(initializerCmd, []string{""}, "plugins")
+	result, err := parseArtifacts(initializerCmd, []string{""}, "plugins")
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), result.Exists())
 	var plugins []artifact.Plugin
@@ -58,7 +58,7 @@ func (suite *RootTestSuit) TestParsePlugins() {
 }
 
 func (suite *RootTestSuit) TestParseDeps() {
-	result, err := parseArtefacts(initializerCmd, []string{""}, "deps")
+	result, err := parseArtifacts(initializerCmd, []string{""}, "deps")
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), result.Exists())
 	var deps []string

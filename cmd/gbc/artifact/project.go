@@ -36,7 +36,7 @@ type Project struct {
 	cfgs   sync.Map // store all the configuration
 }
 
-func (project *Project) config() *viper.Viper {
+func (project *Project) load() *viper.Viper {
 	testEnv, file := utils.TestCaller()
 	key := lo.If(testEnv, file).Else(defaultCfgKey)
 	obj, ok := project.cfgs.Load(key)
@@ -49,7 +49,7 @@ func (project *Project) config() *viper.Viper {
 	if err := v.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
-			color.Yellow("Warning: can not find configuration gob.yaml")
+			log.Fatal(color.RedString("error: can not find configuration gob.yaml"))
 		}
 	}
 	project.cfgs.Store(key, v)
@@ -57,7 +57,7 @@ func (project *Project) config() *viper.Viper {
 }
 
 func (project *Project) mergeConfig(cfg map[string]any) error {
-	viper := project.config()
+	viper := project.load()
 	err := viper.MergeConfigMap(cfg)
 	if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (project *Project) MainFiles() []string {
 }
 
 func (project *Project) Plugins() []Plugin {
-	viper := project.config()
+	viper := project.load()
 	if v := viper.Get(pluginCfgKey); v != nil {
 		plugins := v.(map[string]any)
 		return lo.MapToSlice(plugins, func(key string, _ any) Plugin {
@@ -225,14 +225,14 @@ func (project *Project) InstallPlugin(plugin Plugin) error {
 		if err = project.mergeConfig(values); err != nil {
 			return err
 		}
-		_ = project.config().ReadInConfig()
+		_ = project.load().ReadInConfig()
 	}
 	_, err = plugin.install()
 	return err
 }
 
 func (project *Project) settled(plugin Plugin) bool {
-	return project.config().Get(fmt.Sprintf("plugins.%s.url", plugin.name)) != nil
+	return project.load().Get(fmt.Sprintf("plugins.%s.url", plugin.name)) != nil
 }
 
 func (project *Project) Validate() error {
