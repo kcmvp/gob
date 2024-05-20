@@ -6,6 +6,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/mod/modfile"
 	"io"
 	"os"
 	"path/filepath"
@@ -47,12 +48,13 @@ func TestBasic(t *testing.T) {
 	assert.Equal(t, "github.com/kcmvp/gob", project.Module())
 }
 
-//
-//func (suite *ProjectTestSuite) TestDeps() {
-//	deps := CurProject().Dependencies()
-//	assert.Equal(suite.T(), 58, len(deps))
-//	assert.True(suite.T(), lo.Contains(deps, "github.com/spf13/viper"))
-//}
+func (suite *ProjectTestSuite) TestDeps() {
+	deps := CurProject().Dependencies()
+	assert.Equal(suite.T(), 50, len(deps))
+	assert.True(suite.T(), lo.ContainsBy(deps, func(require *modfile.Require) bool {
+		return require.Mod.Path == "github.com/spf13/viper"
+	}))
+}
 
 func (suite *ProjectTestSuite) TestPlugins() {
 	_, err := os.Stat(filepath.Join(CurProject().Target(), "gob.yaml"))

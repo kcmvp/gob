@@ -19,6 +19,7 @@ require (
 	github.com/tidwall/gjson v1.17.1
 	github.com/xlab/treeprint v1.2.0
 	golang.org/x/mod v0.12.0
+	golang.org/x/tools v0.13.0
 )
 
 require (
