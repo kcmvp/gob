@@ -94,21 +94,19 @@ func installPlugins(cmd *cobra.Command, args []string) error {
 
 func installDeps(cmd *cobra.Command, args []string) error {
 	result, err := parseArtifacts(cmd, args, "deps")
+	if err != nil {
+		return err
+	}
 	if result.Exists() {
 		var cfgDeps []string
 		err = json.Unmarshal([]byte(result.Raw), &cfgDeps)
-		for _, dep := range lo.Filter(cfgDeps, func(url string, _ int) bool {
-			return !lo.Contains(artifact.CurProject().Dependencies(), url)
-		}) {
-			if err = artifact.CurProject().InstallDependency(dep); err != nil {
-				break
+		for _, dep := range cfgDeps {
+			if err := artifact.CurProject().InstallDependency(dep); err != nil {
+				return err
 			}
 		}
 	}
-	if err != nil {
-		return errors.New(color.RedString(err.Error()))
-	}
-	return err
+	return nil
 }
 
 // rootCmd represents the base command when called without any subcommands
