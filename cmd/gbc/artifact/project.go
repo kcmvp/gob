@@ -8,6 +8,7 @@ import (
 	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"   //nolint
 	"github.com/spf13/viper" //nolint
+	"golang.org/x/mod/modfile"
 	"io/fs"
 	"log"
 	"os"
@@ -30,10 +31,9 @@ var (
 )
 
 type Project struct {
-	root   string
-	module string
-	deps   []string
-	cfgs   sync.Map // store all the configuration
+	root string
+	mod  *modfile.File
+	cfgs sync.Map // store all the configuration
 }
 
 func (project *Project) load() *viper.Viper {
@@ -77,32 +77,20 @@ func (project *Project) HookDir() string {
 }
 
 func init() {
-	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}_:_{{.Path}}")
-	output, err := cmd.Output()
+	output, err := exec.Command("go", "list", "-m", "-f", "{{.Dir}}_:_{{.Path}}").CombinedOutput()
 	if err != nil || len(string(output)) == 0 {
-		log.Fatal(color.RedString("Error: please execute command in project root directory %s", string(output)))
+		log.Fatal(color.RedString("please execute command in project root directory %s", string(output)))
 	}
-
 	item := strings.Split(strings.TrimSpace(string(output)), "_:_")
-	project = Project{
-		root:   item[0],
-		module: item[1],
-		cfgs:   sync.Map{},
-	}
-	cmd = exec.Command("go", "list", "-f", "{{if not .Standard}}{{.ImportPath}}{{end}}", "-deps", "./...")
-	output, err = cmd.Output()
+	project = Project{cfgs: sync.Map{}, root: item[0]}
+	data, err := os.ReadFile(filepath.Join(project.root, "go.mod"))
 	if err != nil {
-		log.Fatal(color.RedString("Error: please execute command in project root directory"))
+		log.Fatal(color.RedString(err.Error()))
 	}
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	var deps []string
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if len(line) > 0 {
-			deps = append(deps, line)
-		}
+	project.mod, err = modfile.Parse("go.mod", data, nil)
+	if err != nil {
+		log.Fatal(color.RedString("please execute command in project root directory %s", string(output)))
 	}
-	project.deps = deps
 }
 
 // CurProject return Project struct
@@ -117,7 +105,7 @@ func (project *Project) Root() string {
 
 // Module return current project module name
 func (project *Project) Module() string {
-	return project.module
+	return project.mod.Module.Mod.Path
 }
 
 func (project *Project) Target() string {
@@ -201,15 +189,18 @@ func (project *Project) Plugins() []Plugin {
 	}
 }
 
-func (project *Project) Dependencies() []string {
-	return project.deps
+func (project *Project) Dependencies() []*modfile.Require {
+	return project.mod.Require
 }
 
 func (project *Project) InstallDependency(dep string) error {
-	if !lo.Contains(project.deps, dep) {
-		exec.Command("go", "get", "-u", dep).CombinedOutput() //nolint
+	var err error
+	if lo.NoneBy(project.mod.Require, func(r *modfile.Require) bool {
+		return lo.Contains(r.Syntax.Token, dep)
+	}) {
+		_, err = exec.Command("go", "get", "-u", dep).CombinedOutput() //nolint
 	}
-	return nil
+	return err
 }
 
 func (project *Project) InstallPlugin(plugin Plugin) error {

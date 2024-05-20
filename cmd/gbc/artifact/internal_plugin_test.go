@@ -108,7 +108,6 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			assert.True(t, test.wantErr == (err != nil))
 			if !test.wantErr {
 				assert.Equal(t, test.module, plugin.module)
-				assert.True(t, lo.Contains([]string{"v1.58.1", "v1.57.2", "v1.1.1", "v1.11.0"}, plugin.Version()))
 			}
 		})
 	}

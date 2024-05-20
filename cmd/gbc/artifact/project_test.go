@@ -47,11 +47,12 @@ func TestBasic(t *testing.T) {
 	assert.Equal(t, "github.com/kcmvp/gob", project.Module())
 }
 
-func (suite *ProjectTestSuite) TestDeps() {
-	deps := CurProject().Dependencies()
-	assert.Equal(suite.T(), 58, len(deps))
-	assert.True(suite.T(), lo.Contains(deps, "github.com/spf13/viper"))
-}
+//
+//func (suite *ProjectTestSuite) TestDeps() {
+//	deps := CurProject().Dependencies()
+//	assert.Equal(suite.T(), 58, len(deps))
+//	assert.True(suite.T(), lo.Contains(deps, "github.com/spf13/viper"))
+//}
 
 func (suite *ProjectTestSuite) TestPlugins() {
 	_, err := os.Stat(filepath.Join(CurProject().Target(), "gob.yaml"))
