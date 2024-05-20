@@ -42,23 +42,22 @@ func usageTemplate() string {
 	return usage
 }
 
-func parseArtifacts(cmd *cobra.Command, args []string, name string) (gjson.Result, error) {
+func parseArtifacts(cmd *cobra.Command, args []string, section string) (gjson.Result, error) {
 	var result gjson.Result
 	var data []byte
 	var err error
 	if test, uqf := utils.TestCaller(); test {
 		data, err = os.ReadFile(filepath.Join(artifact.CurProject().Root(), "target", uqf, "config.json"))
 	} else {
-		path.Join()
 		data, err = resources.ReadFile(path.Join(resourceDir, "config.json"))
 	}
 	if err != nil {
 		return result, err
 	}
 	key := strings.ReplaceAll(cmd.CommandPath(), " ", "_")
-	result = gjson.GetBytes(data, fmt.Sprintf("%s.%s", key, name))
+	result = gjson.GetBytes(data, fmt.Sprintf("%s.%s", key, section))
 	if !result.Exists() {
-		result = gjson.GetBytes(data, fmt.Sprintf("%s_%s.%s", key, strings.Join(args, "_"), name))
+		result = gjson.GetBytes(data, fmt.Sprintf("%s_%s.%s", key, strings.Join(args, "_"), section))
 	}
 	return result, nil
 }
