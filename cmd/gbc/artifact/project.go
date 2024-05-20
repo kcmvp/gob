@@ -1,7 +1,6 @@
 package artifact
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"github.com/fatih/color" //nolint
@@ -126,22 +125,6 @@ func (project *Project) Target() string {
 		_ = os.MkdirAll(target, os.ModePerm)
 	}
 	return target
-}
-
-// sourceFileInPkg return all go source file in a package
-func (project *Project) sourceFileInPkg(pkg string) ([]string, error) {
-	_ = os.Chdir(project.Root())
-	cmd := exec.Command("go", "list", "-f", fmt.Sprintf("{{if eq .Name \"%s\"}}{{.Dir}}{{end}}", pkg), "./...")
-	output, _ := cmd.Output()
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	var dirs []string
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if len(line) > 0 {
-			dirs = append(dirs, line)
-		}
-	}
-	return dirs, nil
 }
 
 func (project *Project) MainFiles() []string {
