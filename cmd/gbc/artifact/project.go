@@ -92,7 +92,7 @@ func init() {
 		log.Fatal(color.RedString("please execute command in project root directory %s", string(output)))
 	}
 	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedFiles | packages.NeedTypesInfo | packages.NeedDeps | packages.NeedImports | packages.NeedSyntax,
+		Mode: packages.NeedName | packages.NeedTypes | packages.NeedFiles | packages.NeedTypesInfo,
 		Dir:  project.root,
 	}
 	project.pkgs, err = packages.Load(cfg, "./...")
