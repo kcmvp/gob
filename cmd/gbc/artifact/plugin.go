@@ -129,7 +129,7 @@ func (plugin Plugin) install() (string, error) {
 		return pair
 	})
 	task := fmt.Sprintf("%s installation", plugin.Name())
-	if err := StreamCmdOutput(cmd, task, func(msg string) string {
+	if err := PtyCmdOutput(cmd, task, func(msg string) string {
 		return ""
 	}); err != nil {
 		return tempGoPath, err
@@ -160,7 +160,7 @@ func (plugin Plugin) Execute() error {
 	}
 	// always use absolute path
 	pCmd := exec.Command(filepath.Join(GoPath(), plugin.Binary()), strings.Split(plugin.Args, " ")...) //nolint #gosec
-	if err := StreamCmdOutput(pCmd, plugin.taskName(), nil); err != nil {
+	if err := PtyCmdOutput(pCmd, plugin.taskName(), nil); err != nil {
 		return err
 	}
 	if pCmd.ProcessState.ExitCode() != 0 {

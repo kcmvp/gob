@@ -3,6 +3,7 @@ package artifact
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,17 +19,19 @@ import (
 
 type consoleFormatter func(msg string) string
 
-func StreamCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error {
+func PtyCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error {
 	// Start the command with a pty
-	var scanner *bufio.Scanner
-	if ptmx, err := pty.Start(cmd); err == nil {
-		scanner = bufio.NewScanner(ptmx)
-		defer ptmx.Close()
-	} else if rd, err := cmd.StdoutPipe(); err == nil {
-		scanner = bufio.NewScanner(rd)
-	} else {
+	rc, err := func() (io.ReadCloser, error) {
+		if Windows() {
+			return cmd.StdoutPipe()
+		}
+		return pty.Start(cmd)
+	}()
+	if err != nil {
 		return err
 	}
+	defer rc.Close()
+	scanner := bufio.NewScanner(rc)
 	color.Green("start %s ......\n", task)
 	// Create a file to save the output
 	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", strings.ReplaceAll(task, " ", "_"))))
