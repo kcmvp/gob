@@ -23,7 +23,11 @@ func PtyCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error 
 	// Start the command with a pty
 	rc, err := func() (io.ReadCloser, error) {
 		if Windows() {
-			return cmd.StdoutPipe()
+			r, err := cmd.StdoutPipe()
+			if err != nil {
+				return r, err
+			}
+			return r, cmd.Start()
 		}
 		return pty.Start(cmd)
 	}()
