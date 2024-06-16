@@ -50,7 +50,7 @@ func TestBasic(t *testing.T) {
 
 func (suite *ProjectTestSuite) TestDeps() {
 	deps := CurProject().Dependencies()
-	assert.Equal(suite.T(), 50, len(deps))
+	assert.Equal(suite.T(), 49, len(deps))
 	assert.True(suite.T(), lo.ContainsBy(deps, func(require *modfile.Require) bool {
 		return require.Mod.Path == "github.com/spf13/viper"
 	}))

@@ -1,6 +1,7 @@
 exec:
     commit-msg: ^#[0-9]+:\s*.{10,}$
     pre-commit:
+        - clean
         - lint
         - test
     pre-push:
