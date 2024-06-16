@@ -48,18 +48,18 @@ func (plugin *Plugin) init() error {
 	}
 	plugin.name, _ = lo.Last(strings.Split(plugin.module, "/"))
 	if plugin.version == "latest" {
-		plugin.version = LatestVersion(plugin.module)[0].B
+		plugin.version = LatestVersion(true, plugin.module)[0].B
 	}
 	return nil
 }
 
-func LatestVersion(modules ...string) []lo.Tuple2[string, string] {
+func LatestVersion(log bool, modules ...string) []lo.Tuple2[string, string] {
 	modules = lo.Map(modules, func(item string, _ int) string {
 		return fmt.Sprintf("%s@latest", item)
 	})
 	cmd := exec.Command("go", append([]string{"list", "-m"}, modules...)...) //nolint
 	var tuple []lo.Tuple2[string, string]
-	if err := PtyCmdOutput(cmd, "checking dependencies ......", false, func(line string) string {
+	if err := PtyCmdOutput(cmd, "checking dependencies ......", log, func(line string) string {
 		entry := strings.Split(line, " ")
 		tuple = append(tuple, lo.Tuple2[string, string]{A: entry[0], B: entry[1]})
 		return ""

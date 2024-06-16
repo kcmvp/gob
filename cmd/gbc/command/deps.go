@@ -26,7 +26,7 @@ func directLatest() []lo.Tuple2[string, string] {
 	directs := lo.FilterMap(artifact.CurProject().Dependencies(), func(item *modfile.Require, _ int) (lo.Tuple2[string, string], bool) {
 		return lo.Tuple2[string, string]{A: item.Mod.Path, B: item.Mod.Version}, !item.Indirect
 	})
-	return artifact.LatestVersion(lo.Map(directs, func(item lo.Tuple2[string, string], _ int) string {
+	return artifact.LatestVersion(false, lo.Map(directs, func(item lo.Tuple2[string, string], _ int) string {
 		return item.A
 	})...)
 }

@@ -27,8 +27,8 @@ func (suite *InternalPluginTestSuit) TearDownSuite() {
 
 func TestInternalPluginSuite(t *testing.T) {
 	suite.Run(t, &InternalPluginTestSuit{
-		lintLatestVersion:      LatestVersion("github.com/golangci/golangci-lint")[0].B,
-		gotestsumLatestVersion: LatestVersion("gotest.tools/gotestsum")[0].B,
+		lintLatestVersion:      LatestVersion(false, "github.com/golangci/golangci-lint")[0].B,
+		gotestsumLatestVersion: LatestVersion(false, "gotest.tools/gotestsum")[0].B,
 	})
 }
 
@@ -179,6 +179,6 @@ func (suite *InternalPluginTestSuit) TestExecute() {
 	assert.Error(t, err)
 	//'exit status 2' means the plugin is executed but no parameters,
 	assert.Equal(t, "exit status 2", err.Error())
-	_, err = os.Stat(filepath.Join(CurProject().Target(), "guru.log"))
+	_, err = os.Stat(filepath.Join(CurProject().Target(), "start_guru.log"))
 	assert.NoError(suite.T(), err)
 }
