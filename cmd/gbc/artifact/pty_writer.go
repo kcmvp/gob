@@ -3,6 +3,7 @@ package artifact
 import (
 	"bufio"
 	"fmt"
+	"github.com/kcmvp/gob/utils" //nolint
 	"io"
 	"os"
 	"os/exec"
@@ -11,15 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
-	"github.com/samber/lo"
-
 	"github.com/creack/pty"
+	"github.com/fatih/color"
 )
 
 type consoleFormatter func(msg string) string
 
-func PtyCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error {
+func PtyCmdOutput(cmd *exec.Cmd, task string, file bool, formatter consoleFormatter) error {
 	// Start the command with a pty
 	rc, err := func() (io.ReadCloser, error) {
 		if Windows() {
@@ -36,14 +35,15 @@ func PtyCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error 
 	}
 	defer rc.Close()
 	scanner := bufio.NewScanner(rc)
-	color.Green("start %s ......\n", task)
-	// Create a file to save the output
-	log, err := os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", strings.ReplaceAll(task, " ", "_"))))
-	if err != nil {
-		return fmt.Errorf(color.RedString("Error creating file:", err))
+	color.Green(task)
+	var log *os.File
+	if file {
+		log, err = os.Create(filepath.Join(CurProject().Target(), fmt.Sprintf("%s.log", strings.ReplaceAll(task, " ", "_"))))
+		if err != nil {
+			return fmt.Errorf(color.RedString("Error creating file:", err.Error()))
+		}
+		defer log.Close()
 	}
-	defer log.Close()
-
 	// Create a regular expression to match color escape sequences
 	colorRegex := regexp.MustCompile(`\x1b\[[0-9;]*m`)
 	// Goroutine to remove color escape sequences, print the colored output, and write the modified output to the file
@@ -61,26 +61,29 @@ func PtyCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error 
 		}
 		eof = true
 		if err = scanner.Err(); err != nil {
-			fmt.Println("Error reading output:", err)
+			color.Red("Error reading output: %s", err.Error())
 		}
 	}()
-	ticker := time.NewTicker(150 * time.Millisecond)
 	overwrite := true
 	progress := NewProgress()
+	ticker := time.NewTicker(150 * time.Millisecond)
 	for !eof {
 		select {
-		case line := <-ch:
+		case msg := <-ch:
 			progress.Reset()
-			lineWithoutColor := colorRegex.ReplaceAllString(line, "")
-			_, err = log.WriteString(lineWithoutColor + "\n")
-			line = lo.IfF(overwrite, func() string {
+			if file {
+				lineWithoutColor := colorRegex.ReplaceAllString(msg, "")
+				_, err = log.WriteString(lineWithoutColor + "\n")
+				if err != nil {
+					color.Red("Error writing to file: %s", err.Error())
+					break
+				}
+			}
+			if overwrite {
 				overwrite = false
-				return fmt.Sprintf("\r%-15s", line)
-			}).Else(line)
-			fmt.Println(line)
-			if err != nil {
-				fmt.Println("Error writing to file:", err)
-				break
+				fmt.Printf("\r%-15s\n", msg)
+			} else {
+				fmt.Println(msg)
 			}
 		case <-ticker.C:
 			if !overwrite {
@@ -89,8 +92,11 @@ func PtyCmdOutput(cmd *exec.Cmd, task string, formatter consoleFormatter) error 
 			_ = progress.Add(1)
 		}
 	}
-	_ = progress.Finish()
-	color.Green("\rfinished %s ......\n", task)
+	if test, _ := utils.TestCaller(); test {
+		fmt.Printf("\r%-15s\n", "")
+	} else {
+		progress.Clear() //nolint
+	}
 	ticker.Stop()
 	return cmd.Wait()
 }

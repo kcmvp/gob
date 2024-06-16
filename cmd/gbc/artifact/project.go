@@ -30,10 +30,11 @@ var (
 )
 
 type Project struct {
-	root string
-	mod  *modfile.File
-	cfgs sync.Map // store all the configuration
-	pkgs []*packages.Package
+	root    string
+	mod     *modfile.File
+	cfgs    sync.Map // store all the configuration
+	pkgs    []*packages.Package
+	cachDir string
 }
 
 func (project *Project) load() *viper.Viper {
@@ -99,6 +100,16 @@ func init() {
 	if err != nil {
 		log.Fatal(color.RedString("failed to load project %s", err.Error()))
 	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	project.cachDir = filepath.Join(homeDir, ".gob", project.Module())
+	_ = os.MkdirAll(project.cachDir, os.ModePerm)
+}
+
+func (project *Project) CacheDir() string {
+	return project.cachDir
 }
 
 // CurProject return Project struct

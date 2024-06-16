@@ -21,18 +21,39 @@ var (
 	yellow = color.New(color.FgYellow)
 )
 
-// dependencyTree build dependency tree of the project, an empty tree returns when runs into error
-func dependencyTree() (treeprint.Tree, error) {
+func directLatest() []lo.Tuple2[string, string] {
 	exec.Command("go", "mod", "tidy").CombinedOutput() //nolint
-	tree := treeprint.New()
-	tree.SetValue(artifact.CurProject().Module())
 	directs := lo.FilterMap(artifact.CurProject().Dependencies(), func(item *modfile.Require, _ int) (lo.Tuple2[string, string], bool) {
 		return lo.Tuple2[string, string]{A: item.Mod.Path, B: item.Mod.Version}, !item.Indirect
 	})
-	// get the latest version
-	versions := artifact.LatestVersion(lo.Map(directs, func(item lo.Tuple2[string, string], _ int) string {
+	return artifact.LatestVersion(lo.Map(directs, func(item lo.Tuple2[string, string], _ int) string {
 		return item.A
 	})...)
+}
+
+func upgradeAll() error {
+	candidates := lo.Filter(directLatest(), func(latest lo.Tuple2[string, string], _ int) bool {
+		return lo.ContainsBy(artifact.CurProject().Dependencies(), func(dependency *modfile.Require) bool {
+			return !dependency.Indirect && dependency.Mod.Path == latest.A && dependency.Mod.Version != latest.B
+		})
+	})
+	args := lo.Union([]string{"get", "-u"}, lo.Map(candidates, func(latest lo.Tuple2[string, string], _ int) string {
+		return latest.A
+	}))
+	cmd := exec.Command("go", args...)
+	if err := artifact.PtyCmdOutput(cmd, "upgrading dependencies ......", false, nil); err != nil {
+		color.Red("failed to upgrade dependencies: %s", err.Error())
+	}
+	exec.Command("go", "mod", "tidy").CombinedOutput() //nolint
+	return nil
+}
+
+// dependencyTree build dependency tree of the project, an empty tree returns when runs into error
+func dependencyTree() (treeprint.Tree, error) {
+	tree := treeprint.New()
+	tree.SetValue(artifact.CurProject().Module())
+	// get the latest version
+	versions := directLatest()
 	// parse the dependency tree
 	cache := []string{os.Getenv("GOPATH"), "pkg", "mod", "cache", "download"}
 	for _, dependency := range artifact.CurProject().Dependencies() {
@@ -54,14 +75,13 @@ func dependencyTree() (treeprint.Tree, error) {
 				continue
 			}
 			mod, _ := modfile.Parse("go.mod", data, nil)
-			children := lo.Filter(artifact.CurProject().Dependencies(), func(p *modfile.Require, _ int) bool {
-				return p.Indirect && lo.ContainsBy(mod.Require, func(c *modfile.Require) bool {
-					return !c.Indirect && p.Mod.Path == c.Mod.Path
-				})
+			lo.ForEach(artifact.CurProject().Dependencies(), func(c *modfile.Require, index int) {
+				if c.Indirect && lo.ContainsBy(mod.Require, func(m *modfile.Require) bool {
+					return !m.Indirect && c.Mod.Path == m.Mod.Path
+				}) {
+					direct.AddNode(c.Mod.String())
+				}
 			})
-			for _, c := range children {
-				direct.AddNode(c.Mod.String())
-			}
 		}
 	}
 	return tree, nil
@@ -74,6 +94,10 @@ var depCmd = &cobra.Command{
 	Long: `Show the dependency tree of the project
 and indicate available updates which take an green * indicator`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		upgrade, _ := cmd.Flags().GetBool("upgrade")
+		if upgrade {
+			return upgradeAll()
+		}
 		tree, err := dependencyTree()
 		if err != nil {
 			return err
@@ -81,7 +105,7 @@ and indicate available updates which take an green * indicator`,
 			yellow.Println("No dependencies !")
 			return nil
 		}
-		green.Println("Dependencies of the projects:")
+		fmt.Println("\rDependencies of the projects:")
 		fmt.Println(tree.String())
 		return nil
 	},
@@ -90,5 +114,6 @@ and indicate available updates which take an green * indicator`,
 func init() {
 	depCmd.SetUsageTemplate(usageTemplate())
 	depCmd.SetErrPrefix(color.RedString("Error:"))
+	depCmd.Flags().BoolP("upgrade", "u", false, "upgrade dependencies if outdated dependencies exist")
 	rootCmd.AddCommand(depCmd)
 }

@@ -1,10 +1,10 @@
 package artifact
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/samber/lo"
+	"github.com/fatih/color" //nolint
+	"github.com/samber/lo"   //nolint
 	"io/fs"
 	"os"
 	"os/exec"
@@ -57,13 +57,14 @@ func LatestVersion(modules ...string) []lo.Tuple2[string, string] {
 	modules = lo.Map(modules, func(item string, _ int) string {
 		return fmt.Sprintf("%s@latest", item)
 	})
-	output, _ := exec.Command("go", append([]string{"list", "-m"}, modules...)...).CombinedOutput() //nolint
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	cmd := exec.Command("go", append([]string{"list", "-m"}, modules...)...) //nolint
 	var tuple []lo.Tuple2[string, string]
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	if err := PtyCmdOutput(cmd, "checking dependencies ......", false, func(line string) string {
 		entry := strings.Split(line, " ")
 		tuple = append(tuple, lo.Tuple2[string, string]{A: entry[0], B: entry[1]})
+		return ""
+	}); err != nil {
+		color.Yellow("failed to get latest version: %v", modules)
 	}
 	return tuple
 }
@@ -128,8 +129,7 @@ func (plugin Plugin) install() (string, error) {
 		}
 		return pair
 	})
-	task := fmt.Sprintf("%s installation", plugin.Name())
-	if err := PtyCmdOutput(cmd, task, func(msg string) string {
+	if err := PtyCmdOutput(cmd, fmt.Sprintf("install %s", plugin.Name()), false, func(msg string) string {
 		return ""
 	}); err != nil {
 		return tempGoPath, err
@@ -160,7 +160,7 @@ func (plugin Plugin) Execute() error {
 	}
 	// always use absolute path
 	pCmd := exec.Command(filepath.Join(GoPath(), plugin.Binary()), strings.Split(plugin.Args, " ")...) //nolint #gosec
-	if err := PtyCmdOutput(pCmd, plugin.taskName(), nil); err != nil {
+	if err := PtyCmdOutput(pCmd, fmt.Sprintf("start %s", plugin.taskName()), true, nil); err != nil {
 		return err
 	}
 	if pCmd.ProcessState.ExitCode() != 0 {

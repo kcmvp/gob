@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kcmvp/gob/utils"
-	"github.com/samber/lo"
+	"github.com/samber/lo" //nolint
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
@@ -16,7 +16,8 @@ import (
 
 type InternalPluginTestSuit struct {
 	suite.Suite
-	lintLatestVersion string
+	lintLatestVersion      string
+	gotestsumLatestVersion string
 }
 
 func (suite *InternalPluginTestSuit) TearDownSuite() {
@@ -26,7 +27,8 @@ func (suite *InternalPluginTestSuit) TearDownSuite() {
 
 func TestInternalPluginSuite(t *testing.T) {
 	suite.Run(t, &InternalPluginTestSuit{
-		lintLatestVersion: LatestVersion("github.com/golangci/golangci-lint")[0].B,
+		lintLatestVersion:      LatestVersion("github.com/golangci/golangci-lint")[0].B,
+		gotestsumLatestVersion: LatestVersion("gotest.tools/gotestsum")[0].B,
 	})
 }
 
@@ -68,7 +70,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			wantErr: false,
 		},
 		{
-			name:    "has @ but no version",
+			name:    "has_@ but no version",
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "",
@@ -84,7 +86,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			wantErr: true,
 		},
 		{
-			name:    "multiple @",
+			name:    "multiple@",
 			url:     "github.com/golangci/golangci-lint/cmd/golangci@-lint@v1",
 			module:  "github.com/golangci/golangci-lint",
 			logName: "",
@@ -96,7 +98,7 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 			url:     "gotest.tools/gotestsum",
 			module:  "gotest.tools/gotestsum",
 			logName: "gotestsum",
-			binary:  "gotestsum-v1.11.0",
+			binary:  fmt.Sprintf("%s-%s", "gotestsum", suite.gotestsumLatestVersion),
 			wantErr: false,
 		},
 	}
@@ -138,7 +140,7 @@ func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
 		return plugin.Url == "gotest.tools/gotestsum"
 	})
 	assert.True(t, ok)
-	assert.Equal(t, "v1.11.0", plugin.Version())
+	assert.Equal(t, suite.gotestsumLatestVersion, plugin.Version())
 	assert.Equal(t, "gotestsum", plugin.Name())
 	assert.Equal(t, "gotest.tools/gotestsum", plugin.Module())
 	assert.Equal(t, "test", plugin.Alias)

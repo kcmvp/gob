@@ -126,7 +126,7 @@ func cleanAction(_ *cobra.Command, _ ...string) error {
 func testAction(_ *cobra.Command, _ ...string) error {
 	coverProfile := fmt.Sprintf("-coverprofile=%s/cover.out", artifact.CurProject().Target())
 	testCmd := exec.Command("go", []string{"test", "-v", coverProfile, "./..."}...) //nolint
-	return artifact.PtyCmdOutput(testCmd, "test", nil)
+	return artifact.PtyCmdOutput(testCmd, "start test", true, nil)
 }
 
 func coverReport(_ *cobra.Command, _ ...string) error {
