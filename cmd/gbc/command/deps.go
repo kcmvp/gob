@@ -37,14 +37,19 @@ func upgradeAll() error {
 			return !dependency.Indirect && dependency.Mod.Path == latest.A && dependency.Mod.Version != latest.B
 		})
 	})
-	args := lo.Union([]string{"get", "-u"}, lo.Map(candidates, func(latest lo.Tuple2[string, string], _ int) string {
-		return latest.A
-	}))
-	cmd := exec.Command("go", args...)
-	if err := artifact.PtyCmdOutput(cmd, "upgrading dependencies ......", false, nil); err != nil {
-		color.Red("failed to upgrade dependencies: %s", err.Error())
+	if len(candidates) > 0 {
+		args := lo.Union([]string{"get", "-u"}, lo.Map(candidates, func(latest lo.Tuple2[string, string], _ int) string {
+			return latest.A
+		}))
+		cmd := exec.Command("go", args...)
+		if err := artifact.PtyCmdOutput(cmd, "upgrading dependencies ......", false, nil); err != nil {
+			color.Red("failed to upgrade dependencies: %s", err.Error())
+		}
+		exec.Command("go", "mod", "tidy").CombinedOutput() //nolint
+	} else {
+		color.Green("all dependencies are latest")
 	}
-	exec.Command("go", "mod", "tidy").CombinedOutput() //nolint
+
 	return nil
 }
 
