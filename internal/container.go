@@ -17,9 +17,11 @@ var (
 
 func init() {
 	Container = do.NewWithOpts(&do.InjectorOpts{
-		HookAfterRegistration: func(scope *do.Scope, serviceName string) {
-			fmt.Printf("scope is %s, name is %s \n", scope.Name(), serviceName)
-			//@todo, parse the mapping once
+		HookAfterRegistration: []func(scope *do.Scope, serviceName string){
+			func(scope *do.Scope, serviceName string) {
+				fmt.Printf("scope is %s, name is %s \n", scope.Name(), serviceName)
+				//@todo, parse the mapping once
+			},
 		},
 		Logf: func(format string, args ...any) {
 			log.Printf(format, args...)
