@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/kcmvp/gob/cmd/gbc/artifact" //nolint
+	"github.com/kcmvp/gob/cmd/gob/artifact" //nolint
 	"os"
 	"os/exec"
 	"path/filepath"

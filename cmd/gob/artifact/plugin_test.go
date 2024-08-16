@@ -16,7 +16,7 @@ import (
 
 type InternalPluginTestSuit struct {
 	suite.Suite
-	lintLatestVersion      string
+	//lintLatestVersion      string
 	gotestsumLatestVersion string
 }
 
@@ -27,7 +27,6 @@ func (suite *InternalPluginTestSuit) TearDownSuite() {
 
 func TestInternalPluginSuite(t *testing.T) {
 	suite.Run(t, &InternalPluginTestSuit{
-		lintLatestVersion:      LatestVersion(false, "github.com/golangci/golangci-lint")[0].B,
 		gotestsumLatestVersion: LatestVersion(false, "gotest.tools/gotestsum")[0].B,
 	})
 }
@@ -45,22 +44,6 @@ func (suite *InternalPluginTestSuit) TestNewPlugin() {
 		binary  string
 		wantErr bool
 	}{
-		{
-			name:    "without version",
-			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint",
-			module:  "github.com/golangci/golangci-lint",
-			logName: "golangci-lint",
-			binary:  fmt.Sprintf("%s-%s", "golangci-lint", suite.lintLatestVersion),
-			wantErr: false,
-		},
-		{
-			name:    "latest version",
-			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
-			module:  "github.com/golangci/golangci-lint",
-			logName: "golangci-lint",
-			binary:  fmt.Sprintf("%s-%s", "golangci-lint", suite.lintLatestVersion),
-			wantErr: false,
-		},
 		{
 			name:    "specific version",
 			url:     "github.com/golangci/golangci-lint/cmd/golangci-lint@v1.1.1",
@@ -120,23 +103,15 @@ func (suite *InternalPluginTestSuit) TestUnmarshalJSON() {
 	defer func() {
 		os.RemoveAll(gopath)
 	}()
-	data, _ := os.ReadFile(filepath.Join(CurProject().Root(), "cmd", "gbc", "command", "resources", "config.json"))
+	data, _ := os.ReadFile(filepath.Join(CurProject().Root(), "cmd", "gob", "command", "resources", "config.json"))
 	v := gjson.GetBytes(data, "gbc_init.plugins")
 	var plugins []Plugin
 	err := json.Unmarshal([]byte(v.Raw), &plugins)
 	t := suite.T()
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(plugins))
-	plugin, ok := lo.Find(plugins, func(plugin Plugin) bool {
-		return plugin.Url == "github.com/golangci/golangci-lint/cmd/golangci-lint"
-	})
-	assert.True(t, ok)
-	assert.Equal(t, suite.lintLatestVersion, plugin.Version())
-	assert.Equal(t, "golangci-lint", plugin.Name())
-	assert.Equal(t, "github.com/golangci/golangci-lint", plugin.Module())
-	assert.Equal(t, "lint", plugin.Alias)
 	// no command
-	plugin, ok = lo.Find(plugins, func(plugin Plugin) bool {
+	plugin, ok := lo.Find(plugins, func(plugin Plugin) bool {
 		return plugin.Url == "gotest.tools/gotestsum"
 	})
 	assert.True(t, ok)

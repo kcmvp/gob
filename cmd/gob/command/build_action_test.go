@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gob/artifact"
 	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ func (suite *ActionTestSuite) TearDownSuite() {
 func (suite *ActionTestSuite) TestActionBuild() {
 	err := buildAction(nil)
 	assert.NoError(suite.T(), err)
-	binary := filepath.Join(artifact.CurProject().Target(), lo.If(artifact.Windows(), "gbc.exe").Else("gbc"))
+	binary := filepath.Join(artifact.CurProject().Target(), lo.If(artifact.Windows(), "gob.exe").Else("gob"))
 	_, err = os.Stat(binary)
 	assert.NoError(suite.T(), err)
 }

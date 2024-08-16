@@ -34,8 +34,7 @@ func (plugin *Plugin) init() error {
 	plugin.version = "latest"
 	plugin.Url = strings.TrimSpace(plugin.Url)
 	reg := regexp.MustCompile(`@\S*`)
-	matches := reg.FindAllString(plugin.Url, -1)
-	if len(matches) > 0 {
+	if matches := reg.FindAllString(plugin.Url, -1); len(matches) > 0 {
 		plugin.version = strings.Trim(matches[0], "@")
 	}
 	plugin.Url = reg.ReplaceAllString(plugin.Url, "")

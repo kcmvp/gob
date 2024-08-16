@@ -3,7 +3,7 @@ package command
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kcmvp/gob/cmd/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gob/artifact"
 	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestInitializeTestSuit(t *testing.T) {
 func (suite *InitializeTestSuite) BeforeTest(_, testName string) {
 	os.Chdir(artifact.CurProject().Root())
 	var s, t *os.File
-	s, _ = os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "config.json"))
+	s, _ = os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gob", "testdata", "config.json"))
 	_, method := utils.TestCaller()
 	root := filepath.Join(artifact.CurProject().Root(), "target", strings.ReplaceAll(method, "_BeforeTest", fmt.Sprintf("_%s", testName)))
 	os.MkdirAll(root, os.ModePerm)

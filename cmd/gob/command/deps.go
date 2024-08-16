@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kcmvp/gob/cmd/gbc/artifact" //nolint
+	"github.com/kcmvp/gob/cmd/gob/artifact" //nolint
 
 	"github.com/fatih/color"
 	"github.com/samber/lo"

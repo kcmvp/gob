@@ -4,7 +4,7 @@ Copyright © 2023 kcheng.mvp@gmail.com
 package main
 
 import (
-	"github.com/kcmvp/gob/cmd/gbc/command"
+	"github.com/kcmvp/gob/cmd/gob/command"
 	"os" //nolint
 )
 

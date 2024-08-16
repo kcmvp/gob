@@ -23,7 +23,7 @@ type ProjectTestSuite struct {
 }
 
 func (suite *ProjectTestSuite) BeforeTest(_, testName string) {
-	s, _ := os.Open(filepath.Join(CurProject().Root(), "cmd", "gbc", "testdata", "gob.yaml"))
+	s, _ := os.Open(filepath.Join(CurProject().Root(), "cmd", "gob", "testdata", "gob.yaml"))
 	root := filepath.Join(CurProject().Root(), "target", fmt.Sprintf("artifact_ProjectTestSuite_%s", testName))
 	os.MkdirAll(root, os.ModePerm)
 	t, _ := os.Create(filepath.Join(root, "gob.yaml"))
@@ -126,7 +126,7 @@ func (suite *ProjectTestSuite) TestValidate() {
 func (suite *ProjectTestSuite) TestMainFiles() {
 	mainFiles := CurProject().MainFiles()
 	assert.Equal(suite.T(), 1, len(mainFiles))
-	assert.True(suite.T(), lo.Contains(mainFiles, filepath.Join(CurProject().Root(), "cmd", "gbc", "gbc.go")))
+	assert.True(suite.T(), lo.Contains(mainFiles, filepath.Join(CurProject().Root(), "cmd", "gob", "gob.go")))
 }
 
 func (suite *ProjectTestSuite) TestVersion() {
