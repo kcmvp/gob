@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/kcmvp/gob/cmd/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gob/artifact"
 	"github.com/kcmvp/gob/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"

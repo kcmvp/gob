@@ -3,7 +3,7 @@ package command
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kcmvp/gob/cmd/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gob/artifact"
 	"github.com/kcmvp/gob/utils"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

@@ -11,7 +11,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/kcmvp/gob/cmd/gbc/artifact"
+	"github.com/kcmvp/gob/cmd/gob/artifact"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
