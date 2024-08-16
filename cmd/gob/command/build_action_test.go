@@ -30,7 +30,7 @@ func (suite *ActionTestSuite) TearDownSuite() {
 func (suite *ActionTestSuite) TestActionBuild() {
 	err := buildAction(nil)
 	assert.NoError(suite.T(), err)
-	binary := filepath.Join(artifact.CurProject().Target(), lo.If(artifact.Windows(), "gbc.exe").Else("gbc"))
+	binary := filepath.Join(artifact.CurProject().Target(), lo.If(artifact.Windows(), "gob.exe").Else("gob"))
 	_, err = os.Stat(binary)
 	assert.NoError(suite.T(), err)
 }

@@ -20,7 +20,7 @@ type ExecTestSuite struct {
 
 func (suite *ExecTestSuite) BeforeTest(_, testName string) {
 	os.Chdir(artifact.CurProject().Root())
-	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "gob.yaml"))
+	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gob", "testdata", "gob.yaml"))
 	_, method := utils.TestCaller()
 	root := filepath.Join(artifact.CurProject().Root(), "target", strings.ReplaceAll(method, "_BeforeTest", fmt.Sprintf("_%s", testName)))
 	os.MkdirAll(root, os.ModePerm)

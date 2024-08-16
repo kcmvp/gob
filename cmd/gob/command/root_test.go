@@ -26,7 +26,7 @@ func TestRootTestSuit(t *testing.T) {
 
 func (suite *RootTestSuit) BeforeTest(_, testName string) {
 	os.Chdir(artifact.CurProject().Root())
-	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gbc", "testdata", "config.json"))
+	s, _ := os.Open(filepath.Join(artifact.CurProject().Root(), "cmd", "gob", "testdata", "config.json"))
 	_, method := utils.TestCaller()
 	root := filepath.Join(artifact.CurProject().Root(), "target", strings.ReplaceAll(method, "_BeforeTest", fmt.Sprintf("_%s", testName)))
 	os.MkdirAll(root, os.ModePerm)
@@ -149,7 +149,7 @@ func (suite *RootTestSuit) TestRunE() {
 	target := artifact.CurProject().Target()
 	err := rootCmd.RunE(rootCmd, []string{"build"})
 	assert.NoError(suite.T(), err)
-	_, err = os.Stat(filepath.Join(target, lo.If(artifact.Windows(), "gbc.exe").Else("gbc")))
+	_, err = os.Stat(filepath.Join(target, lo.If(artifact.Windows(), "gob.exe").Else("gob")))
 	assert.NoError(suite.T(), err, "binary should be generated")
 	err = rootCmd.RunE(rootCmd, []string{"build", "clean"})
 	assert.NoError(suite.T(), err)
