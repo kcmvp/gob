@@ -125,12 +125,12 @@ var rootCmd = &cobra.Command{
 		if artifact.CurProject().Root() != currentDir {
 			return fmt.Errorf(color.RedString("Please execute the command in the project root dir"))
 		}
-		if err := installPlugins(cmd, args); err != nil {
-			return err
-		}
-		if err := installDeps(cmd, args); err != nil {
-			return err
-		}
+		//if err := installPlugins(cmd, args); err != nil {
+		//	return err
+		//}
+		//if err := installDeps(cmd, args); err != nil {
+		//	return err
+		//}
 		return artifact.CurProject().SetupHooks(false)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -169,7 +169,7 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.Example = rootExample()
+	// rootCmd.Example = rootExample()
 	rootCmd.SetUsageTemplate(usageTemplate())
 	rootCmd.SetErrPrefix(color.RedString("Error:"))
 	rootCmd.SetFlagErrorFunc(func(command *cobra.Command, err error) error {
