@@ -1,0 +1,119 @@
+{
+  "layout": [
+    "testutil/init.go",
+    "app/main.go",
+    "infra"
+  ],
+  "init": [
+    {
+      "name": "lint",
+      "args": "run ./...",
+      "module": "github.com/golangci/golangci-lint",
+      "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
+      "config": ".golangci.yaml",
+      "category": "plugin",
+      "builtin": true,
+      "description": "lint project with golangci-lint"
+    },
+    {
+      "name": "test",
+      "args": "--format testname -- -coverprofile=target/cover.out ./...",
+      "module": "gotest.tools/gotestsum",
+      "category": "plugin",
+      "builtin": true,
+      "description": "pretty test tool"
+    },
+    {
+      "name": "githook",
+      "category": "hook",
+      "builtin": true,
+      "hooks": [
+        {
+          "name": "pre-commit",
+          "shell": "gob exec pre-commit",
+          "args": "lint,test"
+        },
+        {
+          "name": "commit-msg",
+          "shell": "gob exec commit-msg $1",
+          "args": "^#[0-9]+:\\s*.{10,}$"
+        },
+        {
+          "name": "pre-push",
+          "shell": "gob exec pre-push $1 $2",
+          "args": "test"
+        }
+      ],
+      "description": "git local hook"
+    },
+    {
+      "name": "testify",
+      "module": "github.com/stretchr/testify",
+      "builtin": true
+    },
+    {
+      "name": "mysql",
+      "module": "github.com/go-sql-driver/mysql",
+      "deps": ["github.com/kcmvp/gob/dbx"],
+      "auto": "auto_increment",
+      "driver": "mysql",
+      "url": "${user}:${password}@tcp(${host}:${port})/${database}",
+      "category": "db",
+      "application": "datasource",
+      "sideImport": true
+    },
+    {
+      "name": "pg",
+      "driver": "pgx",
+      "module": "github.com/jackc/pgx/v5",
+      "deps": ["github.com/kcmvp/gob/dbx"],
+      "auto": "generated always as identity",
+      "url": "postgres://${user}:${password}@${host}:${port}/${database}?sslmode=verify-full",
+      "category": "db",
+      "application": "datasource",
+      "sideImport": true
+    },
+    {
+      "name": "pg",
+      "driver": "postgres",
+      "module": "github.com/lib/pq",
+      "deps": ["github.com/kcmvp/gob/dbx"],
+      "auto": "generated always as identity",
+      "url": "postgres://${user}:${password}@${host}:${port}/${database}?sslmode=verify-full",
+      "category": "db",
+      "application": "datasource",
+      "sideImport": true
+    },
+    {
+      "name": "sqlite",
+      "driver": "sqlite3",
+      "module": "github.com/mattn/go-sqlite3",
+      "deps": ["github.com/kcmvp/gob/dbx"],
+      "url": "file:test.db?cache=shared&mode=memory",
+      "category": "db",
+      "application": "datasource",
+      "test": true,
+      "sideImport": true
+    },
+    {
+      "name": "gin",
+      "module": "github.com/gin-gonic/gin",
+      "category": "web"
+    },
+    {
+      "name": "echo",
+      "module": "github.com/labstack/echo/v4",
+      "category": "web"
+    },
+    {
+      "name": "chi",
+      "module": "github.com/go-chi/chi/v5",
+      "category": "web"
+    },
+    {
+      "name": "fiber",
+      "module": "github.com/gofiber/fiber/v3",
+      "category": "web"
+    }
+  ]
+}
