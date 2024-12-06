@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color" //nolint
-	"github.com/kcmvp/gob/cmd/gob/utils"
+	"github.com/kcmvp/gob/core/utils"
 	"github.com/samber/lo" //nolint
 	"github.com/samber/mo"
 	"github.com/spf13/viper" //nolint

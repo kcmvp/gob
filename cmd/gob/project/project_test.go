@@ -2,7 +2,7 @@ package project
 
 import (
 	"fmt"
-	"github.com/kcmvp/gob/cmd/gob/utils"
+	"github.com/kcmvp/gob/core/utils"
 	"github.com/samber/lo"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/assert"

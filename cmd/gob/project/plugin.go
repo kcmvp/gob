@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/kcmvp/gob/cmd/gob/utils"
+	"github.com/kcmvp/gob/core/env"
+	"github.com/kcmvp/gob/core/utils"
 	"github.com/samber/lo" //nolint
 	"github.com/samber/mo"
 	"io"
@@ -62,7 +63,7 @@ func (plugin Plugin) validate() mo.Result[string] {
 		return mo.Ok[string]("")
 	}
 	suffix := strings.ReplaceAll(ver.MustGet(), ".", "_")
-	return lo.IfF(utils.WindowsEnv(), func() mo.Result[string] {
+	return lo.IfF(env.WindowsEnv(), func() mo.Result[string] {
 		return mo.Ok(fmt.Sprintf("%s_%s.exe", plugin.Name, suffix))
 	}).Else(mo.Ok(fmt.Sprintf("%s_%s", plugin.Name, suffix)))
 }
@@ -108,7 +109,7 @@ func (plugin Plugin) setup() error {
 		file := dest.MustGet()
 		defer file.Close()
 		buf := bufio.NewWriter(file)
-		buf.WriteString(lo.If(utils.WindowsEnv(), "#!/usr/bin/env bash\n").Else("#!/bin/sh\n"))
+		buf.WriteString(lo.If(env.WindowsEnv(), "#!/usr/bin/env bash\n").Else("#!/bin/sh\n"))
 		buf.WriteString(fmt.Sprintf("\n%s", plugin.Shell))
 		buf.Flush()
 		return nil
@@ -149,7 +150,7 @@ func (plugin Plugin) download() error {
 		}
 		return pair
 	})
-	if err := utils.PtyCmdOutput(cmd, fmt.Sprintf("install %s", plugin.Url), TargetDir(), nil); err != nil {
+	if err := PtyCmdOutput(cmd, fmt.Sprintf("install %s", plugin.Url), TargetDir(), nil); err != nil {
 		return err
 	}
 	return filepath.WalkDir(tempGoPath, func(path string, d fs.DirEntry, err error) error {
@@ -199,7 +200,7 @@ func (plugin Plugin) Execute() error {
 	}
 	// always use absolute path
 	pCmd := exec.Command(abs, plugin.Args...) //nolint #gosec
-	if err := utils.PtyCmdOutput(pCmd, fmt.Sprintf("start %s", plugin.Name), TargetDir(), nil); err != nil {
+	if err := PtyCmdOutput(pCmd, fmt.Sprintf("start %s", plugin.Name), TargetDir(), nil); err != nil {
 		return err
 	}
 	if pCmd.ProcessState.ExitCode() != 0 {
