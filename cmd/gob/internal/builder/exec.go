@@ -5,7 +5,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/kcmvp/gob/cmd/gob/project"
 	"github.com/samber/lo"
-	"github.com/samber/mo"
 	"github.com/spf13/cobra"
 	"runtime"
 	"strings"
@@ -18,8 +17,8 @@ func ExecCmd() *cobra.Command {
 		Long:  color.GreenString(`it should be called from external event`),
 		ValidArgs: func() []string {
 			return lo.FilterMap(project.Plugins(), func(item project.Plugin, _ int) (string, bool) {
-				name := mo.TupleToResult(lo.Last(strings.Split(item.Name, ".")))
-				return name.MustGet(), len(item.Url) < 1
+				// @todo need to review 2024-12-06 15:47:33
+				return lo.Last(strings.Split(item.Name, "."))
 			})
 		}(),
 		Args: func(cmd *cobra.Command, args []string) error {

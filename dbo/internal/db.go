@@ -1,13 +1,8 @@
 package internal
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/kcmvp/gob/core/env"
-	"github.com/samber/do/v2"
-	typetostring "github.com/samber/go-type-to-string"
-	"os"
-	"path/filepath"
+	"github.com/kcmvp/gob/core"
 	"strings"
 
 	"github.com/samber/lo"
@@ -29,6 +24,7 @@ type dataSource struct {
 	Host     string   `mapstructure:"host"`
 	URL      string   `mapstructure:"url"`
 	Scripts  []string `mapstructure:"scripts"`
+	InitDB   bool     `mapstructure:"initDB"` // init database or not, default is false
 }
 
 func (ds dataSource) DSN() string {
@@ -37,49 +33,26 @@ func (ds dataSource) DSN() string {
 	return strings.ReplaceAll(dsn, HostKey, ds.Host)
 }
 
-func dsMap() map[string]dataSource {
+func DSMap() map[string]dataSource {
 	// single data source
-	if v := Cfg().Get(fmt.Sprintf("%s.%s", DSKey, "driver")); v != nil {
+	cfg := core.Cfg()
+	if v := cfg.Get(fmt.Sprintf("%s.%s", DSKey, "driver")); v != nil {
 		var ds dataSource
-		if err := Cfg().UnmarshalKey(DSKey, &ds); err != nil {
+		if err := cfg.UnmarshalKey(DSKey, &ds); err != nil {
 			panic(fmt.Errorf("failed parse datasource: %w", err))
 		}
 		return map[string]dataSource{DefaultDS: ds}
 		// multiple data sources
-	} else if v = Cfg().Get(DSKey); v != nil {
+	} else if v = cfg.Get(DSKey); v != nil {
 		dss := v.(map[string]any)
 		return lo.MapValues(dss, func(_ any, key string) dataSource {
 			var ds dataSource
 			key = fmt.Sprintf("%s.%s", DSKey, key)
-			if err := Cfg().UnmarshalKey(key, &ds); err != nil {
+			if err := cfg.UnmarshalKey(key, &ds); err != nil {
 				panic(fmt.Errorf("failed parse datasource: %w", err))
 			}
 			return ds
 		})
 	}
 	return map[string]dataSource{}
-}
-
-func dbs() []func(do.Injector) {
-	var srvs []func(do.Injector)
-	for name, ds := range dsMap() {
-		if db, err := sql.Open(ds.Driver, ds.DSN()); err == nil {
-			if err = db.Ping(); err != nil {
-				_ = db.Close()
-				panic(fmt.Errorf("failed to initialize %s: %w", name, err))
-			}
-			lo.ForEach(ds.Scripts, func(script string, _ int) {
-				if data, err := os.ReadFile(filepath.Join(env.RootDir(), script)); err == nil {
-					if _, err = db.Exec(string(data)); err != nil {
-						panic(fmt.Errorf("failed to execute %s: %w", script, err))
-					}
-				} else {
-					panic(fmt.Errorf("failed to read %s: %w", script, err))
-				}
-
-			})
-			srvs = append(srvs, do.EagerNamed(fmt.Sprintf("%s_%s", name, typetostring.GetType[*sql.DB]()), db))
-		}
-	}
-	return srvs
 }

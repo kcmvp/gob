@@ -46,24 +46,26 @@ func (plugin *Plugin) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (plugin Plugin) version() mo.Result[string] {
+func (plugin Plugin) version() mo.Option[string] {
 	if strings.Count(plugin.Url, "@") != 1 {
-		return mo.Err[string](fmt.Errorf("invalid plugin url %s", plugin.Url))
+		//@todo need to review for return type 2024-12-06 15:47:23
+		return mo.None[string]()
 	}
 	matched := mo.TupleToResult(regexp.MatchString(urlPattern, plugin.Url))
 	if matched.IsError() || !matched.MustGet() {
-		return mo.Err[string](fmt.Errorf("invalid plugin url %s", plugin.Url))
+		//@todo need to review for return type 2024-12-06 15:47:27
+		return mo.None[string]()
 	}
-	return mo.TupleToResult(lo.Last(strings.Split(plugin.Url, "@")))
+	return mo.TupleToOption(lo.Last(strings.Split(plugin.Url, "@")))
 }
 
 func (plugin Plugin) validate() mo.Result[string] {
 	ver := plugin.version()
-	if ver.IsError() && len(plugin.Url) == 0 {
+	if ver.IsAbsent() && len(plugin.Url) == 0 {
 		return mo.Ok[string]("")
 	}
 	suffix := strings.ReplaceAll(ver.MustGet(), ".", "_")
-	return lo.IfF(env.WindowsEnv(), func() mo.Result[string] {
+	return lo.IfF(internal.WindowsEnv(), func() mo.Result[string] {
 		return mo.Ok(fmt.Sprintf("%s_%s.exe", plugin.Name, suffix))
 	}).Else(mo.Ok(fmt.Sprintf("%s_%s", plugin.Name, suffix)))
 }
@@ -109,7 +111,7 @@ func (plugin Plugin) setup() error {
 		file := dest.MustGet()
 		defer file.Close()
 		buf := bufio.NewWriter(file)
-		buf.WriteString(lo.If(env.WindowsEnv(), "#!/usr/bin/env bash\n").Else("#!/bin/sh\n"))
+		buf.WriteString(lo.If(internal.WindowsEnv(), "#!/usr/bin/env bash\n").Else("#!/bin/sh\n"))
 		buf.WriteString(fmt.Sprintf("\n%s", plugin.Shell))
 		buf.Flush()
 		return nil

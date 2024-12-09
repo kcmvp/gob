@@ -22,7 +22,7 @@ type consoleFormatter func(msg string) string
 func PtyCmdOutput(cmd *exec.Cmd, task string, dir string, formatter consoleFormatter) error {
 	// Start the command with a pty
 	rc, err := func() (io.ReadCloser, error) {
-		if env.WindowsEnv() {
+		if internal.WindowsEnv() {
 			r, err := cmd.StdoutPipe()
 			if err != nil {
 				return r, err

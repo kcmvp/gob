@@ -6,5 +6,5 @@ import (
 )
 
 func TestDSMap(t *testing.T) {
-	assert.Len(t, dsMap(), 1)
+	assert.Len(t, DSMap(), 1)
 }

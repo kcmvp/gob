@@ -6,8 +6,6 @@ require (
 	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.17.0
 	github.com/google/yamlfmt v0.13.0
-	github.com/samber/lo v1.39.0
-	github.com/samber/mo v1.13.0
 	github.com/schollz/progressbar/v3 v3.14.4
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
