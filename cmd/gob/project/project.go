@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color" //nolint
-	"github.com/kcmvp/gob/core/utils"
+	"github.com/kcmvp/gob/core/env"
 	"github.com/samber/lo" //nolint
 	"github.com/samber/mo"
 	"github.com/spf13/viper" //nolint
@@ -45,14 +45,14 @@ type Project struct {
 }
 
 func builder() *viper.Viper {
-	testEnv := utils.TestEnv()
-	key := lo.If(testEnv.IsPresent(), testEnv.MustGet()).Else(defaultCfgKey)
+	profile := env.Active()
+	key := lo.If(profile.Test(), profile.Name()).Else(defaultCfgKey)
 	obj, ok := project.cfgs.Load(key)
 	if ok {
 		return obj.(*viper.Viper)
 	}
 	v := viper.New()
-	path := lo.If(testEnv.IsAbsent(), RootDir()).Else(TargetDir())
+	path := lo.If(profile.Test(), RootDir()).Else(TargetDir())
 	v.SetConfigFile(filepath.Join(path, buildCfg))
 	if err := v.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
@@ -132,8 +132,8 @@ func Module() string {
 
 func TargetDir() string {
 	target := filepath.Join(RootDir(), "target")
-	if testEnv := utils.TestEnv(); testEnv.IsPresent() {
-		target = filepath.Join(target, testEnv.MustGet())
+	if profile := env.Active(); profile.Test() {
+		target = filepath.Join(target, profile.Name())
 	}
 	if rs := mo.TupleToResult(os.Stat(target)); rs.IsError() {
 		_ = os.MkdirAll(target, os.ModePerm)
@@ -202,8 +202,8 @@ func temporaryGoPath() string {
 }
 
 func GoPath() string {
-	if testEnv := utils.TestEnv(); testEnv.IsPresent() {
-		dir := filepath.Join(os.TempDir(), testEnv.MustGet())
+	if profile := env.Active(); profile.Test() {
+		dir := filepath.Join(os.TempDir(), profile.Name())
 		_ = os.MkdirAll(dir, os.ModePerm) //nolint
 		return dir
 	}

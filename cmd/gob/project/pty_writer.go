@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/kcmvp/gob/core/env"
-	"github.com/kcmvp/gob/core/utils"
 	"io"
 	"os"
 	"os/exec"
@@ -22,7 +21,7 @@ type consoleFormatter func(msg string) string
 func PtyCmdOutput(cmd *exec.Cmd, task string, dir string, formatter consoleFormatter) error {
 	// Start the command with a pty
 	rc, err := func() (io.ReadCloser, error) {
-		if internal.WindowsEnv() {
+		if env.WindowsEnv() {
 			r, err := cmd.StdoutPipe()
 			if err != nil {
 				return r, err
@@ -93,7 +92,7 @@ func PtyCmdOutput(cmd *exec.Cmd, task string, dir string, formatter consoleForma
 			_ = progress.Add(1)
 		}
 	}
-	if testEnv := utils.TestEnv(); testEnv.IsPresent() {
+	if env.Active().Test() {
 		fmt.Printf("\r%-15s\n", "")
 	} else {
 		progress.Clear() //nolint

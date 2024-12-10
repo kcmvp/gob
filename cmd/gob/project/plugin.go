@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kcmvp/gob/core/env"
-	"github.com/kcmvp/gob/core/utils"
 	"github.com/samber/lo" //nolint
 	"github.com/samber/mo"
 	"io"
@@ -65,7 +64,7 @@ func (plugin Plugin) validate() mo.Result[string] {
 		return mo.Ok[string]("")
 	}
 	suffix := strings.ReplaceAll(ver.MustGet(), ".", "_")
-	return lo.IfF(internal.WindowsEnv(), func() mo.Result[string] {
+	return lo.IfF(env.WindowsEnv(), func() mo.Result[string] {
 		return mo.Ok(fmt.Sprintf("%s_%s.exe", plugin.Name, suffix))
 	}).Else(mo.Ok(fmt.Sprintf("%s_%s", plugin.Name, suffix)))
 }
@@ -111,7 +110,7 @@ func (plugin Plugin) setup() error {
 		file := dest.MustGet()
 		defer file.Close()
 		buf := bufio.NewWriter(file)
-		buf.WriteString(lo.If(internal.WindowsEnv(), "#!/usr/bin/env bash\n").Else("#!/bin/sh\n"))
+		buf.WriteString(lo.If(env.WindowsEnv(), "#!/usr/bin/env bash\n").Else("#!/bin/sh\n"))
 		buf.WriteString(fmt.Sprintf("\n%s", plugin.Shell))
 		buf.Flush()
 		return nil
@@ -121,8 +120,7 @@ func (plugin Plugin) setup() error {
 func hookDir(hookName string) string {
 	dir := lo.If(strings.HasPrefix(hookName, "git"), filepath.Join(".git", "hooks")).
 		Else("")
-	testEnv := utils.TestEnv()
-	return lo.IfF(testEnv.IsPresent(), func() string {
+	return lo.IfF(env.Active().Test(), func() string {
 		mock := filepath.Join(TargetDir(), dir)
 		if _, err := os.Stat(mock); err != nil {
 			os.MkdirAll(mock, os.ModePerm) //nolint
