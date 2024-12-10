@@ -25,3 +25,4 @@ target
 *.sql
 data
 .DS_Store
+./cmd/gob/gob
