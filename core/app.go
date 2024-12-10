@@ -3,24 +3,20 @@ package core
 import (
 	_ "embed"
 	"fmt"
-	"github.com/kcmvp/gob/core/utils"
+	"github.com/kcmvp/gob/core/env"
 	"github.com/samber/do/v2"
 	"github.com/samber/lo"
-	"github.com/samber/mo"
 	"github.com/spf13/viper"
 	"log"
-	"os"
-	"os/exec"
-	"runtime"
 	"strings"
 	"sync"
 )
 
 var (
-	once    sync.Once
-	app     *Application
-	rootDir string
-	cfg     *viper.Viper
+	once sync.Once
+	app  *Application
+	//rootDir string
+	cfg *viper.Viper
 )
 
 const (
@@ -34,27 +30,21 @@ type Application struct {
 }
 
 func init() {
-	// get project root dir
-	dir, _ := exec.Command("go", "list", "-m", "-f", "{{.Dir}}").CombinedOutput()
-	rootDir = utils.CleanStr(string(dir))
-	if len(rootDir) == 0 {
-		rootDir = mo.TupleToResult(os.Executable()).MustGet()
-	}
 	// init project config
 	cfg = viper.New()
 	cfg.SetConfigName(DefaultCfg)              // name of cfg file (without extension)
 	cfg.SetConfigType("yaml")                  // REQUIRED if the cfg file does not have the extension in the name
-	cfg.AddConfigPath(rootDir)                 // optionally look for cfg in the working directory
+	cfg.AddConfigPath(env.Root())              // optionally look for cfg in the working directory
 	if err := cfg.ReadInConfig(); err != nil { // Find and read the cfg file
 		panic(fmt.Errorf("fatal error cfg file: %w", err))
 	}
 	// merge the configuration
 	// @todo need to support profile environment
-	if test, _ := Caller(); test {
+	if env.Active().Test() {
 		tCfg := viper.New()
 		tCfg.SetConfigName(fmt.Sprintf("%s_test.yaml", DefaultCfg)) // name of cfg file (without extension)
 		tCfg.SetConfigType("yaml")                                  // REQUIRED if the cfg file does not have the extension in the name
-		tCfg.AddConfigPath(rootDir)                                 // optionally look for cfg in the working directory
+		tCfg.AddConfigPath(env.Root())                              // optionally look for cfg in the working directory
 		if err := tCfg.ReadInConfig(); err != nil {
 			panic(fmt.Errorf("failed to merge test configuration file: %w", err))
 		}
@@ -75,33 +65,6 @@ func init() {
 		cfg = tCfg
 	}
 }
-
-func Caller() (bool, string) {
-	var test bool
-	var file string
-	callers := make([]uintptr, 50)
-	n := runtime.Callers(0, callers)
-	frames := runtime.CallersFrames(callers[:n])
-	for !test {
-		frame, more := frames.Next()
-		if !more {
-			break
-		}
-		// fmt.Printf("%s->%s:%d\n", frame.File, frame.Function, frame.Line)
-		if strings.HasPrefix(frame.File, rootDir) {
-			test = strings.HasSuffix(frame.File, "_test.go")
-			items := strings.Split(frame.File, "/")
-			items = lo.Map(items[len(items)-2:], func(item string, _ int) string {
-				return strings.ReplaceAll(item, ".go", "")
-			})
-			uniqueNames := strings.Split(frame.Function, ".")
-			items = append(items, uniqueNames[len(uniqueNames)-1])
-			file = strings.Join(items, "_")
-		}
-	}
-	return test, file
-}
-
 func App() *Application {
 	if app == nil {
 		once.Do(func() {
@@ -117,7 +80,7 @@ func App() *Application {
 					},
 				}),
 				cfg:  cfg,
-				root: rootDir,
+				root: env.Root(),
 			}
 		})
 	}

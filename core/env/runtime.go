@@ -1,20 +1,33 @@
 package env
 
 import (
+	"github.com/kcmvp/gob/core/utils"
 	"github.com/samber/lo"
+	"github.com/samber/mo"
+	"os"
+	"os/exec"
 	"regexp"
 	"runtime"
 	"strings"
 )
 
-type Profile string
+var (
+	rootDir string
+)
 
-func (profile Profile) Test() bool {
-	return strings.HasSuffix(string(profile), "_test.go")
+func init() {
+	dir, _ := exec.Command("go", "list", "-m", "-f", "{{.Dir}}").CombinedOutput()
+	rootDir = utils.CleanStr(string(dir))
+	if len(rootDir) == 0 {
+		rootDir = mo.TupleToResult(os.Executable()).MustGet()
+	}
 }
-func (profile Profile) Name() string {
-	return string(profile)
+
+func Root() string {
+	return rootDir
 }
+
+type Profile string
 
 // Active returns full unique of the method name together a bool value
 // true indicates the caller is from  _test.go. As init() is executed before any
@@ -44,6 +57,13 @@ func Active() Profile {
 	fqn = re.ReplaceAllString(fqn, "")
 	fqn = strings.ReplaceAll(fqn, ".", "_")
 	return Profile(fqn)
+}
+
+func (profile Profile) Test() bool {
+	return strings.HasSuffix(string(profile), "_test.go")
+}
+func (profile Profile) Name() string {
+	return string(profile)
 }
 func WindowsEnv() bool {
 	return runtime.GOOS == "windows"
