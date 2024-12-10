@@ -1,0 +1,40 @@
+[
+  {
+    "name": "lint",
+    "args": ["run ./..."],
+    "url": "github.com/golangci/golangci-lint/cmd/golangci-lint",
+    "module": "github.com/golangci/golangci-lint",
+    "config": ".golangci.yaml",
+    "builtin": true,
+    "description": "lint project with golangci-lint"
+  },
+  {
+    "name": "test",
+    "args": ["--format testname -- -coverprofile=target/cover.out ./..."],
+    "url": "gotest.tools/gotestsum",
+    "builtin": true,
+    "description": "pretty test tool"
+  },
+  {
+    "name": "git.pre-commit",
+    "shell": "gob exec pre-commit",
+    "args": ["lint","test"],
+    "builtin": true,
+    "description": "triggered by git commit command"
+  },
+  {
+    "name": "git.commit-msg",
+    "shell": "gob exec commit-msg $1",
+    "args": ["^#[0-9]+:\\s*.{10,}$"],
+    "builtin": true,
+    "description": "triggered by git commit command, this hook will validate commit message"
+  },
+  {
+    "name": "git.pre-push",
+    "shell": "gob exec pre-push $1 $2",
+    "args": ["test"],
+    "builtin": true,
+    "description": "triggered by git push command"
+  }
+]
+
