@@ -120,7 +120,7 @@ func (plugin Plugin) setup() error {
 func hookDir(hookName string) string {
 	dir := lo.If(strings.HasPrefix(hookName, "git"), filepath.Join(".git", "hooks")).
 		Else("")
-	return lo.IfF(env.Active().Test(), func() string {
+	return lo.IfF(env.ActiveProfile().Test(), func() string {
 		mock := filepath.Join(TargetDir(), dir)
 		if _, err := os.Stat(mock); err != nil {
 			os.MkdirAll(mock, os.ModePerm) //nolint

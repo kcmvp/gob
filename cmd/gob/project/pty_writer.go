@@ -92,7 +92,7 @@ func PtyCmdOutput(cmd *exec.Cmd, task string, dir string, formatter consoleForma
 			_ = progress.Add(1)
 		}
 	}
-	if env.Active().Test() {
+	if env.ActiveProfile().Test() {
 		fmt.Printf("\r%-15s\n", "")
 	} else {
 		progress.Clear() //nolint

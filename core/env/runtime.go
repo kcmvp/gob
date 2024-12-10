@@ -29,10 +29,10 @@ func Root() string {
 
 type Profile string
 
-// Active returns full unique of the method name together a bool value
+// ActiveProfile returns full unique of the method name together a bool value
 // true indicates the caller is from  _test.go. As init() is executed before any
 // other method, so call this method in init() would not return correct result.
-func Active() Profile {
+func ActiveProfile() Profile {
 	// @todo need to support profile
 	var test bool
 	var frame runtime.Frame

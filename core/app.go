@@ -40,7 +40,7 @@ func init() {
 	}
 	// merge the configuration
 	// @todo need to support profile environment
-	if env.Active().Test() {
+	if env.ActiveProfile().Test() {
 		tCfg := viper.New()
 		tCfg.SetConfigName(fmt.Sprintf("%s_test.yaml", DefaultCfg)) // name of cfg file (without extension)
 		tCfg.SetConfigType("yaml")                                  // REQUIRED if the cfg file does not have the extension in the name

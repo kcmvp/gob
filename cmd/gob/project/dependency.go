@@ -40,7 +40,7 @@ func (dep Dependency) Dependencies() []Dependency {
 	return dep.dependencies
 }
 
-func Dependencies() []Dependency {
+func (project *Project) Dependencies() []Dependency {
 	exec.Command("go", "mod", "tidy").CombinedOutput() //nolint
 	cache := []string{os.Getenv("GOPATH"), "pkg", "mod", "cache", "download"}
 	return lo.FilterMap(project.mod.Require, func(mod *modfile.Require, index int) (Dependency, bool) {
