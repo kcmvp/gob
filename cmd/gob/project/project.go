@@ -3,7 +3,6 @@ package project
 import (
 	"embed"
 	"errors"
-	"fmt"
 	"github.com/fatih/color" //nolint
 	"github.com/kcmvp/gob/core/env"
 	"github.com/samber/lo" //nolint
@@ -43,7 +42,6 @@ type Project struct {
 }
 
 func NewProject(root, module string) *Project {
-	fmt.Println(root)
 	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		log.Fatal(color.RedString(err.Error()))
@@ -153,7 +151,7 @@ func (project *Project) RootDir() string {
 
 // Module return current project module name
 func (project *Project) Module() string {
-	return project.mod.Module.Mod.Path
+	return project.module
 }
 
 func (project *Project) TargetDir() string {

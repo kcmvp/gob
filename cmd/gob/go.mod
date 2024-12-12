@@ -6,11 +6,13 @@ require (
 	github.com/creack/pty v1.1.21
 	github.com/fatih/color v1.17.0
 	github.com/google/yamlfmt v0.13.0
+	github.com/kcmvp/gob/core v0.0.0-20241211012851-4b0df1b15d73
+	github.com/samber/lo v1.47.0
+	github.com/samber/mo v1.13.0
 	github.com/schollz/progressbar/v3 v3.14.4
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/xlab/treeprint v1.2.0
 	golang.org/x/mod v0.18.0
 	golang.org/x/tools v0.22.0
 )
@@ -19,6 +21,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.0 // indirect
 	github.com/braydonk/yaml v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dominikbraun/graph v0.23.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
