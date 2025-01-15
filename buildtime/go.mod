@@ -5,6 +5,9 @@ go 1.22.2
 require (
 	github.com/dominikbraun/graph v0.23.0
 	github.com/fatih/color v1.18.0
+	github.com/kcmvp/gob/common v1.0.19
+	github.com/samber/lo v1.47.0
+	github.com/samber/mo v1.13.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/mod v0.22.0
 	golang.org/x/tools v0.28.0
