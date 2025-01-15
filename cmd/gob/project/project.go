@@ -3,9 +3,8 @@ package project
 import (
 	"embed"
 	"errors"
-	"fmt"
 	"github.com/fatih/color" //nolint
-	"github.com/kcmvp/gob/core/env"
+	"github.com/kcmvp/gob/common"
 	"github.com/samber/lo" //nolint
 	"github.com/samber/mo"
 	"github.com/spf13/viper" //nolint
@@ -43,7 +42,6 @@ type Project struct {
 }
 
 func NewProject(root, module string) *Project {
-	fmt.Println(root)
 	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		log.Fatal(color.RedString(err.Error()))
@@ -71,7 +69,7 @@ func (project *Project) SetWorkSpace(workspace string) {
 }
 
 func (project *Project) builder() *viper.Viper {
-	profile := env.ActiveProfile()
+	profile := common.ActiveProfile()
 	key := lo.If(profile.Test(), profile.Name()).Else(defaultCfgKey)
 	obj, ok := project.cfgs.Load(key)
 	if ok {
@@ -153,12 +151,12 @@ func (project *Project) RootDir() string {
 
 // Module return current project module name
 func (project *Project) Module() string {
-	return project.mod.Module.Mod.Path
+	return project.module
 }
 
 func (project *Project) TargetDir() string {
 	target := filepath.Join(project.RootDir(), "target")
-	if profile := env.ActiveProfile(); profile.Test() {
+	if profile := common.ActiveProfile(); profile.Test() {
 		target = filepath.Join(target, profile.Name())
 	}
 	if rs := mo.TupleToResult(os.Stat(target)); rs.IsError() {
@@ -228,7 +226,7 @@ func temporaryGoPath() string {
 }
 
 func GoPath() string {
-	if profile := env.ActiveProfile(); profile.Test() {
+	if profile := common.ActiveProfile(); profile.Test() {
 		dir := filepath.Join(os.TempDir(), profile.Name())
 		_ = os.MkdirAll(dir, os.ModePerm) //nolint
 		return dir

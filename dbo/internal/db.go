@@ -2,7 +2,7 @@ package internal
 
 import (
 	"fmt"
-	"github.com/kcmvp/gob/core"
+	"github.com/kcmvp/gob/runtime"
 	"strings"
 
 	"github.com/samber/lo"
@@ -35,7 +35,7 @@ func (ds dataSource) DSN() string {
 
 func DSMap() map[string]dataSource {
 	// single data source
-	cfg := core.Cfg()
+	cfg := context.Cfg()
 	if v := cfg.Get(fmt.Sprintf("%s.%s", DSKey, "driver")); v != nil {
 		var ds dataSource
 		if err := cfg.UnmarshalKey(DSKey, &ds); err != nil {
