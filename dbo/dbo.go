@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/kcmvp/dbo/internal"
-	"github.com/kcmvp/gob/core"
+	"github.com/kcmvp/gob/runtime"
 	"github.com/samber/do/v2"
 	"github.com/samber/lo"
 	"os"
@@ -106,7 +106,7 @@ func init() {
 			// init database with scripts
 			if ds.InitDB {
 				lo.ForEach(ds.Scripts, func(script string, _ int) {
-					if data, err := os.ReadFile(filepath.Join(core.RootDir(), script)); err == nil {
+					if data, err := os.ReadFile(filepath.Join(context.RootDir(), script)); err == nil {
 						if _, err = db.Exec(string(data)); err != nil {
 							panic(fmt.Errorf("failed to execute %s: %w", script, err))
 						}
@@ -118,7 +118,7 @@ func init() {
 			injector := do.LazyNamed(ds.DB, func(injector do.Injector) (DBO, error) {
 				return &dboImpl{dbo: db}, nil
 			})
-			core.Register(injector)
+			context.Register(injector)
 		}
 	}
 }

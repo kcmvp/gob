@@ -1,9 +1,9 @@
-package core
+package context
 
 import (
 	_ "embed"
 	"fmt"
-	"github.com/kcmvp/gob/core/env"
+	"github.com/kcmvp/gob/common"
 	"github.com/samber/do/v2"
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
@@ -34,17 +34,17 @@ func init() {
 	cfg = viper.New()
 	cfg.SetConfigName(DefaultCfg)              // name of cfg file (without extension)
 	cfg.SetConfigType("yaml")                  // REQUIRED if the cfg file does not have the extension in the name
-	cfg.AddConfigPath(env.Root())              // optionally look for cfg in the working directory
+	cfg.AddConfigPath(common.Root())           // optionally look for cfg in the working directory
 	if err := cfg.ReadInConfig(); err != nil { // Find and read the cfg file
 		panic(fmt.Errorf("fatal error cfg file: %w", err))
 	}
 	// merge the configuration
 	// @todo need to support profile environment
-	if env.ActiveProfile().Test() {
+	if common.ActiveProfile().Test() {
 		tCfg := viper.New()
 		tCfg.SetConfigName(fmt.Sprintf("%s_test.yaml", DefaultCfg)) // name of cfg file (without extension)
 		tCfg.SetConfigType("yaml")                                  // REQUIRED if the cfg file does not have the extension in the name
-		tCfg.AddConfigPath(env.Root())                              // optionally look for cfg in the working directory
+		tCfg.AddConfigPath(common.Root())                           // optionally look for cfg in the working directory
 		if err := tCfg.ReadInConfig(); err != nil {
 			panic(fmt.Errorf("failed to merge test configuration file: %w", err))
 		}
@@ -80,7 +80,7 @@ func App() *Application {
 					},
 				}),
 				cfg:  cfg,
-				root: env.Root(),
+				root: common.Root(),
 			}
 		})
 	}

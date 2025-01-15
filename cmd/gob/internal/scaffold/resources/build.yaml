@@ -1,0 +1,19 @@
+build:
+  name: {{name}}
+plugins:
+  lint:
+    args: run ./...
+    url: github.com/golangci/golangci-lint/cmd/golangci-lint@{{v1}}
+    description: run golangci-lint against project
+  test:
+    args: --format testname -- -coverprofile=target/cover.out ./...
+    url: gotest.tools/gotestsum@{{v2}}
+    description: test project with gotest
+  git.commit-msg:
+    args:
+      - '^#[0-9]+:\s*.{10,}$'
+  git.pre-commit:
+    args: clean,lint,test
+  git.pre-push:
+    args: test,lint
+

@@ -1,9 +1,33 @@
 {
   "modules": [
     {
+      "name": "golangci",
+      "module": "github.com/golangci/golangci-lint/cmd/golangci-lint",
+      "category": "SDLC",
+      "builtin": true
+    },
+    {
+      "name": "gotestsum",
+      "module": "github.com:gotestyourself/gotestsum",
+      "category": "SDLC",
+      "builtin": true
+    },
+    {
+      "name": "githook",
+      "category": "SDLC",
+      "builtin": true,
+      "command": true
+    },
+    {
       "name": "testify",
       "module": "github.com/stretchr/testify",
-      "category": "Test Framework",
+      "category": "Test",
+      "builtin": true
+    },
+    {
+      "name": "gofakeit",
+      "module": "github.com/brianvoe/gofakeit",
+      "category": "Test",
       "builtin": true
     },
     {
@@ -20,7 +44,7 @@
       "sideImport": true
     },
     {
-      "name": "pg",
+      "name": "pgx",
       "driver": "pgx",
       "module": "github.com/jackc/pgx/v5",
       "deps": [
@@ -61,22 +85,22 @@
     {
       "name": "gin",
       "module": "github.com/gin-gonic/gin",
-      "category": "web"
+      "category": "Web Framework"
     },
     {
       "name": "echo",
       "module": "github.com/labstack/echo/v4",
-      "category": "web"
+      "category": "Web Framework"
     },
     {
       "name": "chi",
       "module": "github.com/go-chi/chi/v5",
-      "category": "web"
+      "category": "Web Framework"
     },
     {
       "name": "fiber",
       "module": "github.com/gofiber/fiber/v3",
-      "category": "web"
+      "category": "Web Framework"
     }
   ]
 }

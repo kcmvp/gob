@@ -10,6 +10,12 @@ gob init
 ```
 Execute command without any arguments will do the following initializations:
 
+#### Configurations
+Create below configurations in the workspace or project root directory. 
+workspace root directory take precedence over project root directory.
+* [ ] build.yaml
+* [ ] .golangci.yaml
+
 #### Test Frameworks
 * [ ] [testify](https://github.com/stretchr/testify)
 * [ ] [gofakeit](https://github.com/brianvoe/gofakeit)
@@ -17,22 +23,23 @@ Execute command without any arguments will do the following initializations:
 #### Build Tools(Plugins) & Flow
 * [ ] [golangci-lint](https://github.com/golangci/golangci-lint)
 * [ ] [pretty test](https://github.com/gotestyourself/gotestsum)
-* [ ] Git Hook
 
-### Supported frameworks
+### Support parameters
+
+#### Build(Development) Flow
+* [ ] [GitHub Flow]()
+
 #### Database
-* [ ] [MySQL](https://github.com/go-sql-driver/mysql)
-* [ ] [PostgreSQL](https://github.com/jackc/pgx)
-* [ ] [PostgreSQL](https://github.com/lib/pq)
-* [ ] [SQLite](https://github.com/mattn/go-sqlite3)
+* [ ] [mysql](https://github.com/go-sql-driver/mysql)
+* [ ] [pg](https://github.com/jackc/pgx)
+* [ ] [pg](https://github.com/lib/pq)
+* [ ] [sqlite](https://github.com/mattn/go-sqlite3)
 
 #### Web frameworks
-* [ ] [Gin](https://github.com/gin-gonic/gin)
-* [ ] [Echo](https://github.com/labstack/echo)
-* [ ] [Chi](https://github.com/go-chi/chi)
-* [ ] [Fiber](https://github.com/gofiber/fiber)
+* [ ] [gin](https://github.com/gin-gonic/gin)
+* [ ] [echo](https://github.com/labstack/echo)
+* [ ] [chi](https://github.com/go-chi/chi)
+* [ ] [fiber](https://github.com/gofiber/fiber)
 
-### Development flow
-* [ ] GitFlow
 
 ## dbo command
