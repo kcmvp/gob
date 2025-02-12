@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/cmd/gob/internal/scaffold"
+	"github.com/kcmvp/buildtime"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"os"
@@ -59,7 +59,9 @@ func init() {
 
 func main() {
 	//rootCmd.AddCommand(builder.PluginCmd(), builder.DepCmd(), builder.ExecCmd(), scaffold.InitCmd(), scaffold.DboCmd())
-	rootCmd.AddCommand(scaffold.InitCmd())
+	//rootCmd.AddCommand(scaffold.InitCmd())
+	ws := buildtime.CurrentWS()
+	fmt.Sprintf("ws is %v", ws)
 	ctx := context.Background()
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)

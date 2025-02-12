@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/kcmvp/gob/buildtime"
 	"github.com/olekukonko/tablewriter"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -52,7 +51,7 @@ func InitCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			module := buildtime.Current()
+			module := buildtime.CurrentModule()
 			if module.IsError() {
 				return module.Error()
 			}

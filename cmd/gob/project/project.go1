@@ -4,7 +4,7 @@ import (
 	"embed"
 	"errors"
 	"github.com/fatih/color" //nolint
-	"github.com/kcmvp/gob/common"
+	"github.com/kcmvp/gob/container/util"
 	"github.com/samber/lo" //nolint
 	"github.com/samber/mo"
 	"github.com/spf13/viper" //nolint
@@ -69,7 +69,7 @@ func (project *Project) SetWorkSpace(workspace string) {
 }
 
 func (project *Project) builder() *viper.Viper {
-	profile := common.ActiveProfile()
+	profile := util.ActiveProfile()
 	key := lo.If(profile.Test(), profile.Name()).Else(defaultCfgKey)
 	obj, ok := project.cfgs.Load(key)
 	if ok {
@@ -156,7 +156,7 @@ func (project *Project) Module() string {
 
 func (project *Project) TargetDir() string {
 	target := filepath.Join(project.RootDir(), "target")
-	if profile := common.ActiveProfile(); profile.Test() {
+	if profile := util.ActiveProfile(); profile.Test() {
 		target = filepath.Join(target, profile.Name())
 	}
 	if rs := mo.TupleToResult(os.Stat(target)); rs.IsError() {
@@ -226,7 +226,7 @@ func temporaryGoPath() string {
 }
 
 func GoPath() string {
-	if profile := common.ActiveProfile(); profile.Test() {
+	if profile := util.ActiveProfile(); profile.Test() {
 		dir := filepath.Join(os.TempDir(), profile.Name())
 		_ = os.MkdirAll(dir, os.ModePerm) //nolint
 		return dir
