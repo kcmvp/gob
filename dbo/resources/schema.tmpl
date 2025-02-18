@@ -1,0 +1,7 @@
+{{ range $e := .Tables }}create table {{ $e.Name }}
+(
+    {{ range $e.Columns }}{{printf "%-*s" $e.MaxWidth .Name}}{{.Def (db)}},
+    {{ end }}
+    PRIMARY KEY ({{$e.PK}})
+);
+{{ end }}

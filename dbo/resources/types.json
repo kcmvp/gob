@@ -1,0 +1,82 @@
+{
+  "string": {
+    "mysql": "varchar(25)",
+    "pg": "varchar(25)",
+    "sqlite": "text(25)"
+  },
+  "bool": {
+    "mysql": "boolean",
+    "pg": "boolean",
+    "sqlite": "integer"
+  },
+  "int8": {
+    "mysql": "tinyint",
+    "pg": "int8",
+    "sqlite": "integer"
+  },
+  "uint8": {
+    "mysql": "tinyint unsigned",
+    "pg": "int8",
+    "sqlite": "integer"
+  },
+  "byte": {
+    "mysql": "tinyint unsigned",
+    "pg": "int8",
+    "sqlite": "integer"
+  },
+  "int16": {
+    "mysql": "smallint",
+    "pg": "smallint",
+    "sqlite": "integer"
+  },
+  "uint16": {
+    "mysql": "smallint",
+    "pg": "smallint",
+    "sqlite": "integer"
+  },
+  "int32": {
+    "mysql": "int",
+    "pg": "integer",
+    "sqlite": "integer"
+  },
+  "rune": {
+    "mysql": "int",
+    "pg": "integer",
+    "sqlite": "integer"
+  },
+  "uint32": {
+    "mysql": "int",
+    "pg": "integer",
+    "sqlite": "integer"
+  },
+  "int64": {
+    "mysql": "bigint",
+    "pg": "bigint",
+    "sqlite": "integer"
+  },
+  "int": {
+    "mysql": "bigint",
+    "pg": "bigint",
+    "sqlite": "integer"
+  },
+  "uint64": {
+    "mysql": "bigint",
+    "pg": "bigint",
+    "sqlite": "integer"
+  },
+  "float32": {
+    "mysql": "decimal(38, 2)",
+    "pg": "decimal(38, 2)",
+    "sqlite": "decimal(38, 2)"
+  },
+  "float64": {
+    "mysql": "decimal(38, 2)",
+    "pg": "decimal(38, 2)",
+    "sqlite": "decimal(38, 2)"
+  },
+  "time.Time": {
+    "mysql": "timestamp",
+    "pg": "timestamp",
+    "sqlite": "datetime"
+  }
+}

@@ -1,0 +1,17 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+{{ range .Tables }}
+{{ .Name }}: {
+  shape: sql_table
+
+  {{ range .Columns }}
+  {{ .Attr }}: {{ .AttrType }} {{if .Key.IsPresent}}  {constraint:{{.Key.MustGet}}} {{end}} {{ end }}
+}
+{{ end }}
+
+{{ range .Edges }}
+{{.}}{{ end }}
+

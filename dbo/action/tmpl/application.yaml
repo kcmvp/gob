@@ -1,0 +1,25 @@
+# multiple database
+#datasource:
+#  ds1:
+#    driver: mysql
+#    user: usera
+#    password: passwd1
+#    Host: localhost
+#    url: ${user}:${password}@tcp(${host}:${port})/${database}
+#  ds2:
+#    driver: postgres
+#    user: userb
+#    password: passwd2
+#    url: postgres://${user}:${password}@${host}:${port}/${database}?sslmode=verify-full
+#    scripts:
+#      - schema.sql
+#      - init.sql
+datasource:
+  driver: {{.Driver}}
+  user: user
+  password: passwd1
+  host: localhost
+  port: port
+  url: {{.Url}}
+
+

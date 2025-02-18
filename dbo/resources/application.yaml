@@ -1,0 +1,21 @@
+application:
+  name: "def"
+datasource:
+  ds1:
+    db: mysql
+    driver: mysql
+    user: usera
+    password: passwd1
+    Host: localhost
+    url: ${user}:${password}@tcp(${host}:${port})/${database}
+  ds2:
+    db: pg
+    driver: postgres
+    user: userb
+    password: passwd2
+    url: postgres://${user}:${password}@${host}:${port}/${database}?sslmode=verify-full
+    scripts:
+      - sqlite3-schema.sql
+
+
+

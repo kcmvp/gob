@@ -1,0 +1,30 @@
+[
+  {
+    "DB": "mysql",
+    "Driver": "mysql",
+    "Module": "github.com/go-sql-driver/mysql",
+    "Auto": "auto_increment",
+    "Url": "${user}:${password}@tcp(${host}:${port})/${database}"
+  },
+  {
+    "DB": "pg",
+    "Driver": "pgx",
+    "Module": "github.com/jackc/pgx/v5",
+    "Auto": "generated always as identity",
+    "Url": "postgres://${user}:${password}@${host}:${port}/${database}?sslmode=verify-full",
+    "Default": true
+  },
+  {
+    "DB": "pg",
+    "Driver": "postgres",
+    "Module": "github.com/lib/pq",
+    "Auto": "generated always as identity",
+    "Url": "postgres://${user}:${password}@${host}:${port}/${database}?sslmode=verify-full"
+  },
+  {
+    "DB": "sqlite",
+    "Driver": "sqlite3",
+    "Module": "github.com/mattn/go-sqlite3",
+    "Url": "file:test.db?cache=shared&mode=memory"
+  }
+]

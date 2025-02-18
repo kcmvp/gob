@@ -1,0 +1,9 @@
+datasource:
+    driver: sqlite3
+    user: abc
+    password: 123
+    url: file:test3.db?cache=shared&mode=memory
+    scripts:
+      - sqlite3-schema.sql
+      - sqlite3-init.sql
+
